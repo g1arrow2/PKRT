@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电商单品利润核算器</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --success: #10B981;
+            --danger: #EF4444;
+            --input-bg: #F1F5F9;
+        }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 30px 15px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 960px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+        }
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+        h2 {
+            margin: 0 0 24px 0;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 20px 0 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+        .form-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        label {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        input {
+            width: 100px;
+            padding: 8px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: right;
+            background: var(--input-bg);
+            transition: all 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        .result-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--bg);
+        }
+        .result-value {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        /* 核心利润展示盒 */
+        .profit-box {
+            background: var(--primary);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .profit-box label { color: rgba(255,255,255,0.8); font-size: 0.85rem; margin-bottom: 8px; display: block;}
+        .profit-box .amount { font-size: 2.2rem; font-weight: 800; display: block;}
+        
+        .text-success { color: var(--success); }
+        .text-danger { color: var(--danger); }
+        .badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: #FEE2E2;
+            color: #EF4444;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>📝 输入经营参数</h2>
+        
+        <div class="section-title">订单规模</div>
+        <div class="form-group">
+            <label>总发货单量</label>
+            <input type="number" id="sales" value="260" oninput="calculate()">
+        </div>
+        <div class="form-group">
+            <label>预计退货量 <span class="badge">必填</span></label>
+            <input type="number" id="returnQty" value="78" oninput="calculate()">
+        </div>
+        
+        <div class="section-title">单品财务</div>
+        <div class="form-group">
+            <label>商品售价 (元)</label>
+            <input type="number" id="price" value="140" step="0.1" oninput="calculate()">
+        </div>
+        <div class="form-group">
+            <label>拿货成本 (元)</label>
+            <input type="number" id="cost" value="65" step="0.1" oninput="calculate()">
+        </div>
+        <div class="form-group">
+            <label>平台手续费率 (0.3=30%)</label>
+            <input type="number" id="feeRate" value="0.30" step="0.01" oninput="calculate()">
+        </div>
+
+        <div class="section-title">运营杂费 (每单)</div>
+        <div class="form-group"><label>单笔物流费</label><input type="number" id="logisticsFee" value="7" oninput="calculate()"></div>
+        <div class="form-group"><label>单笔包装费</label><input type="number" id="packFee" value="1" oninput="calculate()"></div>
+        <div class="form-group"><label>其他(吊牌/采购)</label><input type="number" id="otherFee" value="1.3" oninput="calculate()"></div>
+        <div class="form-group"><label>退货损耗补偿费</label><input type="number" id="returnCost" value="5" oninput="calculate()"></div>
+    </div>
+
+    <div class="card">
+        <h2>💰 核算看板</h2>
+        
+        <div class="section-title">关键指标反馈</div>
+        <div class="result-group">
+            <label>计算得出退货率</label>
+            <span class="result-value text-danger" id="outReturnRate">0.00%</span>
+        </div>
+        <div class="result-group">
+            <label>成功交易单量</label>
+            <span class="result-value" id="outSuccessQty">0</span>
+        </div>
+        <div class="result-group">
+            <label>单单必赚 (成功单利润)</label>
+            <span class="result-value text-success" id="outSuccessProfit">￥0.00</span>
+        </div>
+        <div class="result-group">
+            <label>退货损失 (每单亏损)</label>
+            <span class="result-value text-danger" id="outReturnLoss">￥0.00</span>
+        </div>
+
+        <div class="section-title">财务预估汇总</div>
+        <div class="result-group">
+            <label>预估成交总额</label>
+            <span class="result-value" id="outTotalRevenue">￥0.00</span>
+        </div>
+        <div class="result-group">
+            <label>综合利润率</label>
+            <span class="result-value" id="outProfitMargin">0.00%</span>
+        </div>
+
+        <div class="profit-box">
+            <label>预估净利润</label>
+            <span class="amount" id="outTotalProfit">￥0.00</span>
+        </div>
+        
+        <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 25px; line-height: 1.5;">
+            * 注：总利润 = (成功单量 × 单笔利润) - (退货单量 × 退货损失)。<br>
+            退货损失包含：发货运费、包装费、杂费及供应商退货手续费。
+        </p>
+    </div>
+</div>
+
+<script>
+    function calculate() {
+        // 获取输入值
+        const sales = parseFloat(document.getElementById('sales').value) || 0;
+        const returnQty = parseFloat(document.getElementById('returnQty').value) || 0;
+        const price = parseFloat(document.getElementById('price').value) || 0;
+        const cost = parseFloat(document.getElementById('cost').value) || 0;
+        const feeRate = parseFloat(document.getElementById('feeRate').value) || 0;
+        const logisticsFee = parseFloat(document.getElementById('logisticsFee').value) || 0;
+        const packFee = parseFloat(document.getElementById('packFee').value) || 0;
+        const otherFee = parseFloat(document.getElementById('otherFee').value) || 0;
+        const returnCost = parseFloat(document.getElementById('returnCost').value) || 0;
+
+        // 1. 核心比率计算 (固定在右侧显示)
+        const returnRate = sales > 0 ? (returnQty / sales) : 0;
+        const successQty = Math.max(0, sales - returnQty);
+
+        // 2. 单笔模型计算
+        // 成功单：扣除成本、平台费(按售价比例)、包装、杂费、发货运费
+        const successProfit = price - cost - (price * feeRate) - packFee - otherFee - logisticsFee;
+        // 退货单：损失运费、包装、杂费以及供应商端收取的退货费
+        const returnLoss = logisticsFee + packFee + otherFee + returnCost;
+
+        // 3. 总体财务计算
+        const totalProfit = (successQty * successProfit) - (returnQty * returnLoss);
+        const totalRevenue = successQty * price;
+        const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+
+        // 界面数据更新
+        document.getElementById('outReturnRate').innerText = (returnRate * 100).toFixed(2) + '%';
+        document.getElementById('outSuccessQty').innerText = successQty.toString() + ' 单';
+        document.getElementById('outSuccessProfit').innerText = '￥' + successProfit.toFixed(2);
+        document.getElementById('outReturnLoss').innerText = '￥' + returnLoss.toFixed(2);
+        document.getElementById('outTotalRevenue').innerText = '￥' + totalRevenue.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('outTotalProfit').innerText = '￥' + totalProfit.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('outProfitMargin').innerText = profitMargin.toFixed(2) + '%';
+        
+        // 亏损视觉警示
+        const profitBox = document.querySelector('.profit-box');
+        if (totalProfit < 0) {
+            profitBox.style.background = '#EF4444'; // 变为红色
+        } else {
+            profitBox.style.background = '#4F46E5'; // 恢复蓝色
+        }
+    }
+
+    // 页面加载完成后立即执行一次
+    window.onload = calculate;
+</script>
+
+</body>
+</html>
