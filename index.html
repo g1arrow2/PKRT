@@ -524,22 +524,26 @@
             to { transform: rotate(360deg); }
         }
         
-        /* 提示框 */
-/* 右上角提示框样式 */
+/* 居中提示框样式 */
 #toast {
     position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 12px 24px;
-    background: #1E293B;
-    color: white;
+    top: 50%;          /* 距离顶部 50% */
+    left: 50%;         /* 距离左侧 50% */
+    transform: translate(-50%, -50%); /* 向左向上偏移自身的一半，实现完美居中 */
+    background: rgba(0, 0, 0, 0.75);  /* 半透明黑色背景 */
+    color: white;      /* 白色文字 */
+    padding: 12px 25px;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 10000;
-    opacity: 0;
-    transition: 0.3s;
-    pointer-events: none; /* 防止遮挡点击 */
+    font-size: 16px;
+    z-index: 9999;     /* 确保在最顶层 */
+    opacity: 0;        /* 默认透明 */
+    transition: opacity 0.3s ease; /* 消失时的平滑过渡 */
+    pointer-events: none; /* 确保提示框不会遮挡鼠标点击操作 */
+    text-align: center;
+    min-width: 150px;
 }
+
+/* 显示状态 */
 #toast.show {
     opacity: 1;
 }
@@ -1028,8 +1032,21 @@ function bulkSave() {
         const area = document.getElementById('purResultArea'); area.innerHTML = '';
         gs.forEach((v, k) => {
             const all = v.map(x=>x.o).join(',');
-            area.innerHTML += `<div class="card"><h2>📦 ${k} <button class="btn btn-primary" onclick="copyTxt('${all}')">复制所有 (${v.length})</button></h2>
-            <table>${v.map(x=>`<tr><td>${x.o}</td><td>补贴: ¥${x.m||0}</td></tr>`).join('')}</table></div>`;
+           // 找到这行代码并替换（注意 onclick 部分）
+area.innerHTML += `
+    <div class="res-item">
+        <img src="${item.img}" class="res-img">
+        <div style="flex:1">
+            <div>
+                <span class="pdd-oid">PDD: ${item.oid}</span> 
+                <button class="btn-outline" onclick="copyTxt('${item.oid}')">复制</button>
+                
+                ${matchedDws.length > 1 ? '<span style="background:var(--warning); color:white; font-size:12px; padding:2px 6px; border-radius:4px; margin-left:8px;">多单关联</span>' : ''}
+            </div>
+            <div style="font-weight:bold; color:var(--primary); margin:5px 0;">规格: ${item.spec}</div>
+            <input type="text" class="dw-input" id="dwIn_${localIdx}" value="${dwVal}" placeholder="确认得物单号">
+        </div>
+    </div>`;
         });
     }
 
@@ -1050,7 +1067,18 @@ function bulkSave() {
         }
     }
 
-    function copyTxt(s) { navigator.clipboard.writeText(s).then(()=>alert("已复制")); }
+   // 修改单个复制函数
+function copyTxt(s) {
+    if (!s) return;
+    navigator.clipboard.writeText(s).then(() => {
+        // 使用自定义提示，不再使用 alert
+        showToast("已复制单号: " + s); 
+    }).catch(err => {
+        console.error('复制失败', err);
+    });
+}
+
+
     function exportData() {
         const ws = XLSX.utils.json_to_sheet(dataStore.profitList);
         const wb = XLSX.utils.book_new();
