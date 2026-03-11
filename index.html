@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PKRT得物运营</title>
+    <title>得物运营工具-静态</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -863,25 +863,30 @@ function copyTxt(s) {
                 // ⭐ 修改点：获取该拼多多订单关联的所有得物单号（数组）
                 const matchedDws = dataStore.jstMap.get(String(item.oid).trim()) || [""];
                 
-                // ⭐ 修改点：循环数组，每一个关联单号都生成一个输入框
-                matchedDws.forEach((dwVal) => {
-                    const localIdx = currentMatchItems.length;
-                    currentMatchItems.push({ track, pdd: item.oid, spec: item.spec, idx: localIdx });
-                    
-                    area.innerHTML += `
-                        <div class="res-item">
-                            <img src="${item.img}" class="res-img">
-                            <div style="flex:1">
-                                <div>
-                                    <span class="pdd-oid">PDD: ${item.oid}</span> 
-                                    ${matchedDws.length > 1 ? '<span style="background:var(--warning); color:white; font-size:12px; padding:2px 6px; border-radius:4px; margin-left:8px;">一单多货/关联</span>' : ''}
-                                    <button class="btn-outline" onclick="copyTxt('${item.oid}')">复制</button>
-                                </div>
-                                <div style="font-weight:bold; color:var(--primary); margin:5px 0;">规格: ${item.spec}</div>
-                                <input type="text" class="dw-input" id="dwIn_${localIdx}" value="${dwVal}" placeholder="确认得物单号" onkeypress="if(event.key==='Enter')bulkSave()">
-                            </div>
-                        </div>`;
-                });
+ // 在 scanIn 的监听器内部替换生成 HTML 的部分
+matchedDws.forEach((dwVal) => {
+    const localIdx = currentMatchItems.length;
+    currentMatchItems.push({ track, pdd: item.oid, spec: item.spec, idx: localIdx });
+    
+    area.innerHTML += `
+        <div class="res-item">
+            <img src="${item.img}" class="res-img">
+            <div style="flex:1">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <span class="pdd-oid">PDD: ${item.oid}</span>
+                        <button class="btn-outline" onclick="copyTxt('${item.oid}')">复制</button>
+                    </div>
+                    <button class="btn" style="background:#6366F1; color:white; padding:4px 10px; font-size:12px;" 
+                        onclick="addFromMatchToPending('${item.oid}', '${item.spec}')">
+                        📥 录入待匹配
+                    </button>
+                </div>
+                <div style="font-weight:bold; color:var(--primary); margin:5px 0;">规格: ${item.spec}</div>
+                <input type="text" class="dw-input" id="dwIn_${localIdx}" value="${dwVal}" placeholder="确认得物单号">
+            </div>
+        </div>`;
+});
             });
             bulkBtnGroup.style.display = 'flex';
             setTimeout(() => document.getElementById('dwIn_0').focus(), 100);
@@ -1066,7 +1071,42 @@ area.innerHTML += `
             btn.style.background = "";
         }
     }
+// ⭐ 新增：从匹配模块一键录入到待匹配模块
+function addFromMatchToPending(oid, spec) {
+    // 1. 弹出快速输入框获取货号和尺码
+    const sku = prompt("请输入【货号】:", "");
+    if (sku === null) return; // 取消操作
+    if (!sku.trim()) {
+        showToast("❌ 货号不能为空");
+        return;
+    }
 
+    const size = prompt("请输入【尺码】 (例如: M, 42, XL):", "");
+    if (size === null) return;
+
+    // 2. 构造新记录
+    const newEntry = {
+        oid: oid,           // 拼多多订单号
+        sku: sku.trim(),    // 手写货号
+        spec: spec,         // 拼多多规格
+        size: size.trim() || "均码", // 手写尺码
+        state: "已到仓"      // 默认状态
+    };
+
+    // 3. 插入到待匹配列表的最前面
+    pendingList.unshift(newEntry);
+    
+    // 4. 持久化存储
+    localStorage.setItem(PENDING_KEY, JSON.stringify(pendingList));
+    
+    // 5. 刷新待匹配模块的界面显示
+    if (typeof renderPending === "function") {
+        renderPending();
+    }
+    
+    // 6. 居中提示成功
+    showToast("✅ 已成功录入待匹配模块");
+}
    // 修改单个复制函数
 function copyTxt(s) {
     if (!s) return;
