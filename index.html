@@ -525,18 +525,24 @@
         }
         
         /* 提示框 */
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 16px 24px;
-            background: var(--card);
-            border-radius: 12px;
-            box-shadow: var(--shadow-lg);
-            border-left: 4px solid var(--primary);
-            animation: slideIn 0.3s ease;
-            z-index: 1000;
-        }
+/* 右上角提示框样式 */
+#toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    background: #1E293B;
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    opacity: 0;
+    transition: 0.3s;
+    pointer-events: none; /* 防止遮挡点击 */
+}
+#toast.show {
+    opacity: 1;
+}
         
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
@@ -545,6 +551,7 @@
     </style>
 </head>
 <body>
+<div id="toast"></div>
 <div class="container">
     <!-- 导航 -->
     <div class="nav-tabs">
@@ -739,6 +746,24 @@
     let logs = JSON.parse(localStorage.getItem(LOG_KEY)) || [];
     let currentMatchItems = [];
     let clearConfirmStage = 0;
+// 通用的自动消失提示函数
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    if (toast) {
+        toast.innerText = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    } else {
+        console.log(msg); // 防止 HTML 中没写 toast 元素
+    }
+}
+
+// 修改原有的 copyTxt 函数，去掉 alert
+function copyTxt(s) {
+    navigator.clipboard.writeText(s).then(() => {
+        showToast("内容已复制"); 
+    });
+}
 
     function switchTab(id) {
         document.querySelectorAll('.module-content').forEach(m => m.classList.remove('active'));
@@ -762,79 +787,154 @@
         reader.readAsArrayBuffer(file);
     }
 
-    function processData(lines, type) {
-        const head = lines[0];
-        if(!head) return;
-        if(type === 'pdd') {
-            const iT = head.indexOf('物流单号'), iO = head.indexOf('订单号'), iI = head.indexOf('商品主图'), iP = head.indexOf('订单金额'), iQ = head.indexOf('数量'), iS = 11;
-            lines.slice(1).forEach(cols => {
-                const track = String(cols[iT]).trim();
-                if(!track || track === "undefined") return;
-                dataStore.pddPrice.set(String(cols[iO]).trim(), (parseFloat(cols[iP])||0)/(parseInt(cols[iQ])||1));
-                if(!dataStore.pddMap.has(track)) dataStore.pddMap.set(track, []);
-                dataStore.pddMap.get(track).push({ oid: cols[iO], img: cols[iI], spec: cols[iS] });
-            });
-        } else if(type === 'jst') {
-            lines.slice(1).forEach(cols => {
-                const pddOid = String(cols[2]||cols[1]).replace(':','').trim();
-                if(pddOid) dataStore.jstMap.set(pddOid, String(cols[0]).trim());
-            });
-        } else if(type === 'pur') renderPur(lines, head);
-        else if(type === 'profit') prepareProfit(lines, head);
-        else if(type === 'aftersale') renderAfter(lines, head);
-    }
+   function processData(lines, type) {
+    const head = lines[0];
+    if(!head) return;
 
-    // 快递匹配
-    document.getElementById('scanIn').addEventListener('keypress', function(e) {
-        if(e.key === 'Enter') {
-            const track = this.value.trim();
-            const items = dataStore.pddMap.get(track);
-            const area = document.getElementById('matchResArea');
-            const bulkBtnGroup = document.getElementById('bulkSaveArea');
-            area.innerHTML = ''; currentMatchItems = [];
-            if(items) {
-                items.forEach((item, idx) => {
-                    const matchedDw = dataStore.jstMap.get(String(item.oid).trim()) || "";
-                    currentMatchItems.push({ track, pdd: item.oid, spec: item.spec, idx: idx });
-                    area.innerHTML += `<div class="res-item"><img src="${item.img}" class="res-img"><div style="flex:1">
-                        <div><span class="pdd-oid">PDD: ${item.oid}</span> <button class="btn-outline" onclick="copyTxt('${item.oid}')">复制</button></div>
-                        <div style="font-weight:bold; color:var(--primary); margin:5px 0;">规格: ${item.spec}</div>
-                        <input type="text" class="dw-input" id="dwIn_${idx}" value="${matchedDw}" placeholder="确认得物单号" onkeypress="if(event.key==='Enter')bulkSave()">
-                    </div></div>`;
-                });
-                bulkBtnGroup.style.display = 'flex';
-                setTimeout(() => document.getElementById('dwIn_0').focus(), 100);
-            } else {
-                area.innerHTML = '<div style="color:red; font-weight:bold; padding:10px;">❌ 未查到物流信息</div>';
-                bulkBtnGroup.style.display = 'none';
+    if(type === 'pdd') {
+        const iT = head.indexOf('物流单号'), iO = head.indexOf('订单号'), iI = head.indexOf('商品主图'), iP = head.indexOf('订单金额'), iQ = head.indexOf('数量'), iS = 11;
+        lines.slice(1).forEach(cols => {
+            const track = String(cols[iT]).trim();
+            if(!track || track === "undefined") return;
+            dataStore.pddPrice.set(String(cols[iO]).trim(), (parseFloat(cols[iP])||0)/(parseInt(cols[iQ])||1));
+            if(!dataStore.pddMap.has(track)) dataStore.pddMap.set(track, []);
+            dataStore.pddMap.get(track).push({ oid: cols[iO], img: cols[iI], spec: cols[iS] });
+        });
+    } else if(type === 'jst') {
+        // ⭐ 修改点：支持一个PDD单号对应多个得物单号
+        lines.slice(1).forEach(cols => {
+            const pddOid = String(cols[2]||cols[1]).replace(':','').trim();
+            const dwOid = String(cols[0]).trim();
+            if(pddOid && dwOid) {
+                if(!dataStore.jstMap.has(pddOid)) {
+                    dataStore.jstMap.set(pddOid, []); // 创建数组
+                }
+                if(!dataStore.jstMap.get(pddOid).includes(dwOid)) {
+                    dataStore.jstMap.get(pddOid).push(dwOid); // 存入数组
+                }
             }
-            this.select();
+        });
+    } else if(type === 'pur') {
+        renderPur(lines, head);
+    } else if(type === 'profit') {
+        // ⭐ 修改点：利润对账时，通过得物号反查拼多多号
+        const iOid = head.indexOf('订单号'), iN = 13;
+        dataStore.profitList = [];
+        
+        // 构建“得物->拼多多”的反向映射表
+        let dwToPdd = new Map();
+        dataStore.jstMap.forEach((dwList, pdd) => {
+            dwList.forEach(dw => dwToPdd.set(dw, pdd));
+        });
+
+        lines.slice(1).forEach(cols => {
+            if(!cols[iOid]) return;
+            const dw = String(cols[iOid]).trim();
+            const pdd = dwToPdd.get(dw) || "";
+            dataStore.profitList.push({ 
+                dw, 
+                pdd, 
+                inc: parseFloat(cols[iN])||0, 
+                cost: dataStore.pddPrice.get(pdd)||0 
+            });
+        });
+        renderProfitTable();
+    } else if(type === 'aftersale') {
+        renderAfter(lines, head);
+    }
+}
+    // 快递匹配
+   document.getElementById('scanIn').addEventListener('keypress', function(e) {
+    if(e.key === 'Enter') {
+        const track = this.value.trim();
+        const items = dataStore.pddMap.get(track);
+        const area = document.getElementById('matchResArea');
+        const bulkBtnGroup = document.getElementById('bulkSaveArea');
+        
+        area.innerHTML = ''; 
+        currentMatchItems = []; // 清空当前匹配记录
+        
+        if(items) {
+            items.forEach((item) => {
+                // ⭐ 修改点：获取该拼多多订单关联的所有得物单号（数组）
+                const matchedDws = dataStore.jstMap.get(String(item.oid).trim()) || [""];
+                
+                // ⭐ 修改点：循环数组，每一个关联单号都生成一个输入框
+                matchedDws.forEach((dwVal) => {
+                    const localIdx = currentMatchItems.length;
+                    currentMatchItems.push({ track, pdd: item.oid, spec: item.spec, idx: localIdx });
+                    
+                    area.innerHTML += `
+                        <div class="res-item">
+                            <img src="${item.img}" class="res-img">
+                            <div style="flex:1">
+                                <div>
+                                    <span class="pdd-oid">PDD: ${item.oid}</span> 
+                                    ${matchedDws.length > 1 ? '<span style="background:var(--warning); color:white; font-size:12px; padding:2px 6px; border-radius:4px; margin-left:8px;">一单多货/关联</span>' : ''}
+                                    <button class="btn-outline" onclick="copyTxt('${item.oid}')">复制</button>
+                                </div>
+                                <div style="font-weight:bold; color:var(--primary); margin:5px 0;">规格: ${item.spec}</div>
+                                <input type="text" class="dw-input" id="dwIn_${localIdx}" value="${dwVal}" placeholder="确认得物单号" onkeypress="if(event.key==='Enter')bulkSave()">
+                            </div>
+                        </div>`;
+                });
+            });
+            bulkBtnGroup.style.display = 'flex';
+            setTimeout(() => document.getElementById('dwIn_0').focus(), 100);
+        } else {
+            area.innerHTML = '<div style="color:red; font-weight:bold; padding:10px;">❌ 未查到物流信息</div>';
+            bulkBtnGroup.style.display = 'none';
+        }
+        this.select();
+    }
+});
+function copyCurrentDwOnly() {
+    let dwList = [];
+    currentMatchItems.forEach(item => {
+        const inputEl = document.getElementById(`dwIn_${item.idx}`);
+        if(inputEl) {
+            const val = inputEl.value.trim();
+            if(val) dwList.push(val);
         }
     });
-
-    function copyCurrentDwOnly() {
-        let dwList = [];
-        currentMatchItems.forEach(item => {
-            const val = document.getElementById(`dwIn_${item.idx}`).value.trim();
-            if(val) dwList.push(val);
+    
+    if(dwList.length > 0) {
+        const textToCopy = dwList.join(',');
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            // ⭐ 这里改成了 showToast，不再弹窗让你点确定
+            showToast("已复制 " + dwList.length + " 个单号");
         });
-        if(dwList.length > 0) copyTxt(dwList.join(','));
-        else alert("无得物单号可复制");
+    } else {
+        showToast("没有可复制的内容");
     }
-
-    function bulkSave() {
-        if(currentMatchItems.length === 0) return;
-        const time = new Date().toLocaleString();
-        currentMatchItems.forEach(item => {
-            const val = document.getElementById(`dwIn_${item.idx}`).value.trim();
-            if(val) logs.unshift({ time, track: item.track, dw: val, spec: item.spec });
-        });
-        localStorage.setItem(LOG_KEY, JSON.stringify(logs));
-        renderLogs();
-        document.getElementById('matchResArea').innerHTML = '<div style="color:var(--success); font-weight:bold; padding:20px; text-align:center;">✅ 存档成功</div>';
-        document.getElementById('bulkSaveArea').style.display = 'none';
-    }
-
+}
+function bulkSave() {
+    if(currentMatchItems.length === 0) return;
+    const time = new Date().toLocaleString();
+    let saveCount = 0;
+    
+    currentMatchItems.forEach(item => {
+        const inputEl = document.getElementById(`dwIn_${item.idx}`);
+        if (inputEl) {
+            const val = inputEl.value.trim();
+            if(val) {
+                logs.unshift({ time, track: item.track, dw: val, spec: item.spec });
+                saveCount++;
+            }
+        }
+    });
+    
+    localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+    renderLogs();
+    
+    // 界面反馈：使用 showToast 代替 alert
+    showToast(`成功存档 ${saveCount} 条记录`);
+    
+    document.getElementById('matchResArea').innerHTML = '';
+    document.getElementById('bulkSaveArea').style.display = 'none';
+    document.getElementById('scanIn').value = '';
+    document.getElementById('scanIn').focus();
+}
     function renderLogs() {
         const df = document.getElementById('dateFilter').value;
         const b = document.getElementById('logBody');
