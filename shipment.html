@@ -79,7 +79,7 @@
         }
         
         .list-area {
-            max-height: 420px; overflow-y: auto; margin-top: 16px;
+            max-height: 460px; overflow-y: auto; margin-top: 16px;
         }
         
         table {
@@ -93,6 +93,10 @@
         th { background: var(--bg); font-weight: 600; color: var(--text-light); }
         
         tr:hover td { background: var(--primary-light); }
+        
+        tr.duplicate { background-color: var(--warning-light) !important; }
+        .ignored { color: #64748B !important; text-decoration: line-through; }
+        .dup-text { color: #f59e0b; font-weight: 700; }
         
         .summary-box {
             background: var(--primary-light); border-radius: 12px;
@@ -128,7 +132,6 @@
             font-size: 2rem; font-weight: 700; color: var(--primary);
         }
         
-        /* Toast */
         .toast {
             position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.85);
             color: white; padding: 12px 24px; border-radius: 8px;
@@ -136,48 +139,28 @@
         }
         .toast.show { opacity: 1; transform: translateY(0); }
         
-        /* Modal（页面内弹窗） */
         .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.75);
-            z-index: 10000;
-            align-items: center;
-            justify-content: center;
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.75);
+            z-index: 10000; align-items: center; justify-content: center;
         }
         .modal-content {
-            background: var(--card);
-            max-width: 860px;
-            width: 92%;
-            border-radius: 16px;
-            box-shadow: var(--shadow-lg);
-            max-height: 85vh;
-            display: flex;
-            flex-direction: column;
+            background: var(--card); max-width: 860px; width: 92%;
+            border-radius: 16px; box-shadow: var(--shadow-lg);
+            max-height: 85vh; display: flex; flex-direction: column;
         }
         .modal-header {
-            padding: 16px 24px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 16px 24px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
         }
         .modal-body {
-            padding: 20px;
-            overflow: auto;
-            flex: 1;
-            font-family: monospace;
-            background: #f8fafc;
-            white-space: pre-wrap;
-            word-break: break-all;
-            line-height: 1.6;
-            font-size: 0.95rem;
+            padding: 20px; overflow: auto; flex: 1;
+            font-family: monospace; background: #f8fafc;
+            white-space: pre-wrap; word-break: break-all;
+            line-height: 1.6; font-size: 0.95rem;
         }
         .modal-footer {
-            padding: 16px 24px;
-            border-top: 1px solid var(--border);
+            padding: 16px 24px; border-top: 1px solid var(--border);
             text-align: right;
         }
         
@@ -190,7 +173,6 @@
 <body>
 <div id="toast" class="toast"></div>
 
-<!-- 页面内弹窗 Modal -->
 <div id="modal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -205,7 +187,6 @@
 </div>
 
 <div class="container">
-    <!-- 导航 -->
     <div class="nav-tabs">
         <button class="nav-btn active" onclick="switchTab('record-mod')">📦 每日发货记录</button>
         <button class="nav-btn" onclick="switchTab('summary-mod')">📋 汇总导出</button>
@@ -221,7 +202,7 @@
             <div class="stat-grid" style="margin-top:24px;">
                 <div class="stat-item">
                     <div id="todayCount" class="stat-value">0</div>
-                    <div style="color:var(--text-light);font-weight:600;">今日已录入</div>
+                    <div style="color:var(--text-light);font-weight:600;">今日有效记录</div>
                 </div>
                 <div class="stat-item">
                     <div id="todayDate" class="stat-value" style="font-size:1.1rem;color:var(--text-light);">2026-03-19</div>
@@ -232,7 +213,13 @@
             <div class="list-area">
                 <table>
                     <thead>
-                        <tr><th>序号</th><th>快递单号</th><th>录入时间</th><th>操作</th></tr>
+                        <tr>
+                            <th>序号</th>
+                            <th>快递单号</th>
+                            <th>录入时间</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
                     </thead>
                     <tbody id="recordList"></tbody>
                 </table>
@@ -259,7 +246,7 @@
         </div>
     </div>
 
-    <!-- 历史记录模块 -->
+    <!-- 历史记录模块（已修改为 全部 / 有效） -->
     <div id="history-mod" class="module-content">
         <div class="card">
             <h2>🕒 历史发货记录</h2>
@@ -268,7 +255,13 @@
                 <button class="btn btn-primary" onclick="loadHistory()">查询</button>
             </div>
             <table>
-                <thead><tr><th>日期</th><th>单号数量</th><th>操作</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>全部 / 有效</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
                 <tbody id="historyBody"></tbody>
             </table>
         </div>
@@ -279,6 +272,7 @@
     const STORAGE_KEY = 'daily_express_v1';
     let todayList = [];
     let allHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    let pendingDeleteIndex = -1;
 
     function getTodayKey() {
         const d = new Date();
@@ -287,10 +281,15 @@
 
     function loadToday() {
         const key = getTodayKey();
-        todayList = allHistory[key] || [];
+        let raw = allHistory[key] || [];
+        todayList = raw.map(item => ({
+            number: item.number,
+            time: item.time,
+            status: item.status || 'normal'
+        }));
         renderRecordList();
         renderSummary();
-        document.getElementById('todayCount').textContent = todayList.length;
+        updateCount();
         document.getElementById('todayDate').textContent = key;
     }
 
@@ -300,28 +299,60 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(allHistory));
     }
 
+    function getNormalList() {
+        return todayList.filter(it => it.status === 'normal');
+    }
+
+    function updateCount() {
+        document.getElementById('todayCount').textContent = getNormalList().length;
+    }
+
     function renderRecordList() {
         const tbody = document.getElementById('recordList');
         tbody.innerHTML = '';
+
+        const numCount = {};
+        todayList.forEach(it => numCount[it.number] = (numCount[it.number] || 0) + 1);
+        const dups = new Set(Object.keys(numCount).filter(k => numCount[k] > 1));
+
         todayList.forEach((item, i) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${i+1}</td>
-                <td style="font-family:monospace;font-weight:600;">${item.number}</td>
-                <td>${item.time}</td>
-                <td><button class="btn btn-danger" style="padding:4px 10px;font-size:0.8rem;" onclick="deleteItem(${i})">删除</button></td>
-            `;
-            tbody.appendChild(tr);
+            const isDup = dups.has(item.number);
+            const isIgnored = item.status !== 'normal';
+            const isPending = pendingDeleteIndex === i;
+
+            const rowHTML = `
+                <tr class="${isDup ? 'duplicate' : ''}">
+                    <td>${i+1}</td>
+                    <td class="${isIgnored ? 'ignored' : ''} ${isDup ? 'dup-text' : ''}" style="font-family:monospace;font-weight:600;">
+                        ${item.number}
+                    </td>
+                    <td>${item.time}</td>
+                    <td>
+                        <select onchange="changeStatus(${i}, this.value)" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg);">
+                            <option value="normal" ${item.status==='normal'?'selected':''}>正常</option>
+                            <option value="canceled" ${item.status==='canceled'?'selected':''}>已取消</option>
+                            <option value="intercepted" ${item.status==='intercepted'?'selected':''}>已拦截</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="btn btn-danger" style="padding:6px 12px;font-size:0.85rem;" 
+                            onclick="handleDeleteClick(${i}, this)">
+                            ${isPending ? '确认删除？' : '删除'}
+                        </button>
+                    </td>
+                </tr>`;
+            tbody.innerHTML += rowHTML;
         });
     }
 
     function renderSummary() {
         const box = document.getElementById('summaryText');
-        if (todayList.length === 0) {
-            box.textContent = '暂无记录';
+        const normal = getNormalList();
+        if (normal.length === 0) {
+            box.textContent = '暂无有效记录';
             return;
         }
-        const numbers = todayList.map(item => item.number);
+        const numbers = normal.map(item => item.number);
         const chunks = [];
         for (let i = 0; i < numbers.length; i += 19) {
             chunks.push(numbers.slice(i, i + 19).join(','));
@@ -332,31 +363,46 @@
     function addExpress(number) {
         if (!number.trim()) return;
         const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
-        todayList.unshift({ number: number.trim(), time });
+        todayList.unshift({ number: number.trim(), time, status: 'normal' });
         saveToday();
         renderRecordList();
         renderSummary();
-        document.getElementById('todayCount').textContent = todayList.length;
+        updateCount();
     }
 
-    function deleteItem(index) {
-        if (confirm('确定删除这条记录？')) {
+    function changeStatus(index, newStatus) {
+        todayList[index].status = newStatus;
+        saveToday();
+        renderRecordList();
+        renderSummary();
+        updateCount();
+    }
+
+    function handleDeleteClick(index, btn) {
+        if (pendingDeleteIndex === index) {
             todayList.splice(index, 1);
             saveToday();
             renderRecordList();
             renderSummary();
-            document.getElementById('todayCount').textContent = todayList.length;
+            updateCount();
+            pendingDeleteIndex = -1;
+            showToast('✅ 已删除该记录');
+        } else {
+            pendingDeleteIndex = index;
+            renderRecordList();
+            showToast('再次点击“确认删除？”完成删除');
+            setTimeout(() => {
+                if (pendingDeleteIndex === index) {
+                    pendingDeleteIndex = -1;
+                    renderRecordList();
+                }
+            }, 8000);
         }
     }
 
-    // 清空今日记录 —— 直接两次原生 confirm 弹窗
     function clearToday() {
-        if (!confirm('⚠️ 第一次确认：您确定要清空今日所有快递记录吗？')) {
-            return;
-        }
-        if (!confirm('⚠️ 第二次确认：此操作不可恢复！真的要全部清空吗？')) {
-            return;
-        }
+        if (!confirm('⚠️ 第一次确认：您确定要清空今日所有快递记录吗？')) return;
+        if (!confirm('⚠️ 第二次确认：此操作不可恢复！真的要全部清空吗？')) return;
 
         todayList = [];
         const key = getTodayKey();
@@ -365,13 +411,13 @@
         
         renderRecordList();
         renderSummary();
-        document.getElementById('todayCount').textContent = '0';
+        updateCount();
         showToast('✅ 今日记录已全部清空');
     }
 
     function copySummary() {
         const text = document.getElementById('summaryText').textContent;
-        if (text === '暂无记录') return;
+        if (text === '暂无有效记录') return;
         navigator.clipboard.writeText(text).then(() => showToast('✅ 汇总文本已复制！'));
     }
 
@@ -381,9 +427,10 @@
     }
 
     function exportTodayExcel() {
-        if (todayList.length === 0) return showToast('没有数据可导出');
-        const data = [['序号', '快递单号', '录入时间']];
-        todayList.forEach((item, i) => data.push([i+1, item.number, item.time]));
+        const normal = getNormalList();
+        if (normal.length === 0) return showToast('没有有效数据可导出');
+        const data = [['序号', '快递单号', '录入时间', '状态']];
+        normal.forEach((item, i) => data.push([i+1, item.number, item.time, '正常']));
         const ws = XLSX.utils.aoa_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, '今日发货');
@@ -395,7 +442,7 @@
         const toast = document.getElementById('toast');
         toast.textContent = msg;
         toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2500);
+        setTimeout(() => toast.classList.remove('show'), 2800);
     }
 
     function switchTab(id) {
@@ -407,16 +454,21 @@
         if (id === 'history-mod') renderHistory();
     }
 
-    // ====================== 历史记录 ======================
+    // ====================== 历史记录（全部 / 有效） ======================
     function renderHistory() {
         const tbody = document.getElementById('historyBody');
         tbody.innerHTML = '';
         Object.keys(allHistory).sort().reverse().forEach(date => {
-            const count = allHistory[date].length;
+            const records = allHistory[date] || [];
+            const total = records.length;
+            const valid = records.filter(r => (r.status || 'normal') === 'normal').length;
+            
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${date}</td>
-                <td style="font-weight:600;color:var(--primary);">${count} 单</td>
+                <td style="font-weight:600;color:var(--primary);">
+                    全部: <strong>${total}</strong> / 有效: <strong>${valid}</strong>
+                </td>
                 <td>
                     <button class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;" onclick="viewHistory('${date}')">查看</button>
                 </td>
@@ -433,14 +485,19 @@
         const list = allHistory[date] || [];
         if (list.length === 0) return showToast('无数据');
 
-        const numbers = list.map(item => item.number);
+        const validList = list.filter(item => (item.status || 'normal') === 'normal');
+        const total = list.length;
+        const validCount = validList.length;
+
+        const numbers = validList.map(item => item.number);
         let str = '';
         for (let i = 0; i < numbers.length; i += 19) {
             str += numbers.slice(i, i + 19).join(',') + (i + 19 < numbers.length ? ',\n' : '');
         }
 
-        document.getElementById('modalTitle').innerHTML = `${date} 发货汇总 <span style="font-size:0.9rem;color:var(--text-light)">(${list.length}单)</span>`;
-        document.getElementById('modalContent').textContent = str;
+        document.getElementById('modalTitle').innerHTML = `${date} 发货汇总<br>
+            <span style="font-size:0.9rem;color:var(--text-light)">全部: ${total} / 有效: ${validCount}</span>`;
+        document.getElementById('modalContent').textContent = str || '（无有效记录）';
         document.getElementById('modal').style.display = 'flex';
     }
 
@@ -453,7 +510,6 @@
         navigator.clipboard.writeText(text).then(() => showToast('✅ 已复制到剪贴板'));
     }
 
-    // 扫码输入
     document.getElementById('scanIn').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             const val = this.value.trim();
@@ -465,7 +521,6 @@
         }
     });
 
-    // 初始化
     window.onload = function() {
         loadToday();
         renderHistory();
