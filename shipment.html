@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日快递发货记录器</title>
+    <title>每日快递发货记录</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -246,12 +246,13 @@
         </div>
     </div>
 
-    <!-- 历史记录模块（已修改为 全部 / 有效） -->
+    <!-- 历史记录模块 -->
     <div id="history-mod" class="module-content">
         <div class="card">
             <h2>🕒 历史发货记录</h2>
-            <div style="margin-bottom:16px;">
+            <div style="margin-bottom:16px; display:flex; gap:8px; flex-wrap:wrap;">
                 <input type="date" id="historyDate" style="padding:10px 14px;border:2px solid var(--border);border-radius:8px;">
+                <input type="text" id="historySearch" placeholder="🔍 输入快递单号搜索" style="flex:1; min-width:220px; padding:10px 14px;border:2px solid var(--border);border-radius:8px;">
                 <button class="btn btn-primary" onclick="loadHistory()">查询</button>
             </div>
             <table>
@@ -320,6 +321,8 @@
             const isIgnored = item.status !== 'normal';
             const isPending = pendingDeleteIndex === i;
 
+            const btnStyle = isPending ? 'background:#f59e0b !important;color:white;' : '';
+
             const rowHTML = `
                 <tr class="${isDup ? 'duplicate' : ''}">
                     <td>${i+1}</td>
@@ -335,10 +338,8 @@
                         </select>
                     </td>
                     <td>
-                        <button class="btn btn-danger" style="padding:6px 12px;font-size:0.85rem;" 
-                            onclick="handleDeleteClick(${i}, this)">
-                            ${isPending ? '确认删除？' : '删除'}
-                        </button>
+                        <button class="btn btn-danger" style="padding:6px 12px;font-size:0.85rem;${btnStyle}" 
+                            onclick="handleDeleteClick(${i})">删除</button>
                     </td>
                 </tr>`;
             tbody.innerHTML += rowHTML;
@@ -378,8 +379,9 @@
         updateCount();
     }
 
-    function handleDeleteClick(index, btn) {
+    function handleDeleteClick(index) {
         if (pendingDeleteIndex === index) {
+            // 第二次点击 → 删除
             todayList.splice(index, 1);
             saveToday();
             renderRecordList();
@@ -388,9 +390,10 @@
             pendingDeleteIndex = -1;
             showToast('✅ 已删除该记录');
         } else {
+            // 第一次点击 → 只提示
             pendingDeleteIndex = index;
             renderRecordList();
-            showToast('再次点击“确认删除？”完成删除');
+            showToast('再次点击“删除”按钮确认删除');
             setTimeout(() => {
                 if (pendingDeleteIndex === index) {
                     pendingDeleteIndex = -1;
@@ -454,15 +457,24 @@
         if (id === 'history-mod') renderHistory();
     }
 
-    // ====================== 历史记录（全部 / 有效） ======================
+    // ====================== 历史记录（新增搜索框） ======================
     function renderHistory() {
         const tbody = document.getElementById('historyBody');
         tbody.innerHTML = '';
+        const searchTerm = (document.getElementById('historySearch') || {value: ''}).value.trim().toLowerCase();
+
         Object.keys(allHistory).sort().reverse().forEach(date => {
             const records = allHistory[date] || [];
             const total = records.length;
             const valid = records.filter(r => (r.status || 'normal') === 'normal').length;
-            
+
+            // 搜索过滤
+            let match = !searchTerm;
+            if (searchTerm) {
+                match = records.some(r => (r.number || '').toLowerCase().includes(searchTerm));
+            }
+            if (!match) return;
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${date}</td>
@@ -510,6 +522,7 @@
         navigator.clipboard.writeText(text).then(() => showToast('✅ 已复制到剪贴板'));
     }
 
+    // 扫码输入
     document.getElementById('scanIn').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             const val = this.value.trim();
@@ -521,6 +534,7 @@
         }
     });
 
+    // 初始化
     window.onload = function() {
         loadToday();
         renderHistory();
