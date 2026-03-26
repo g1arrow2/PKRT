@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日快递发货记录</title>
+    <title>每日快递发货记录器</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -145,9 +145,9 @@
             z-index: 10000; align-items: center; justify-content: center;
         }
         .modal-content {
-            background: var(--card); max-width: 860px; width: 92%;
+            background: var(--card); max-width: 920px; width: 92%;
             border-radius: 16px; box-shadow: var(--shadow-lg);
-            max-height: 85vh; display: flex; flex-direction: column;
+            max-height: 88vh; display: flex; flex-direction: column;
         }
         .modal-header {
             padding: 16px 24px; border-bottom: 1px solid var(--border);
@@ -155,9 +155,7 @@
         }
         .modal-body {
             padding: 20px; overflow: auto; flex: 1;
-            font-family: monospace; background: #f8fafc;
-            white-space: pre-wrap; word-break: break-all;
-            line-height: 1.6; font-size: 0.95rem;
+            background: #f8fafc;
         }
         .modal-footer {
             padding: 16px 24px; border-top: 1px solid var(--border);
@@ -176,10 +174,12 @@
 <div id="modal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 id="modalTitle">历史发货汇总</h3>
+            <h3 id="modalTitle">历史发货明细</h3>
             <button class="btn btn-danger" onclick="closeModal()">关闭</button>
         </div>
-        <pre id="modalContent" class="modal-body"></pre>
+        <div id="modalBody" class="modal-body">
+            <!-- 动态生成表格 -->
+        </div>
         <div class="modal-footer">
             <button class="btn btn-success" onclick="copyModalContent()">📋 复制汇总文本</button>
         </div>
@@ -193,20 +193,29 @@
         <button class="nav-btn" onclick="switchTab('history-mod')">🕒 历史记录</button>
     </div>
 
-    <!-- 发货记录模块 -->
+    <!-- 每日发货记录模块（已支持切换任意日期） -->
     <div id="record-mod" class="module-content active">
         <div class="card">
-            <h2>🚚 快递单号录入（支持扫码）</h2>
+            <h2>🚚 快递单号录入（支持任意日期）</h2>
+            
+            <!-- 新增：日期切换器 -->
+            <div style="margin-bottom:24px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <span style="font-weight:600; white-space:nowrap;">选择日期：</span>
+                <input type="date" id="recordDate" onchange="loadSelectedDate()" 
+                       style="padding:10px 14px; border:2px solid var(--border); border-radius:8px; font-weight:600;">
+                <span id="dateLabel" style="color:var(--text-light); font-size:0.95rem;"></span>
+            </div>
+            
             <input type="text" id="scanIn" placeholder="🔍 扫码或输入快递单号后按回车" autofocus>
             
             <div class="stat-grid" style="margin-top:24px;">
                 <div class="stat-item">
-                    <div id="todayCount" class="stat-value">0</div>
-                    <div style="color:var(--text-light);font-weight:600;">今日有效记录</div>
+                    <div id="countDisplay" class="stat-value">0</div>
+                    <div style="color:var(--text-light);font-weight:600;">有效记录</div>
                 </div>
                 <div class="stat-item">
-                    <div id="todayDate" class="stat-value" style="font-size:1.1rem;color:var(--text-light);">2026-03-19</div>
-                    <div style="color:var(--text-light);font-weight:600;">当前日期</div>
+                    <div id="selectedDateDisplay" class="stat-value" style="font-size:1.1rem;color:var(--text-light);">2026-03-27</div>
+                    <div style="color:var(--text-light);font-weight:600;">当前查看日期</div>
                 </div>
             </div>
 
@@ -226,7 +235,7 @@
             </div>
 
             <div style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap;">
-                <button class="btn btn-danger" onclick="clearToday()">🗑️ 清空今日记录</button>
+                <button class="btn btn-danger" onclick="clearCurrentDate()">🗑️ 清空当前日期记录</button>
                 <button class="btn btn-success" onclick="copySummaryFromRecord()">📋 复制汇总文本</button>
             </div>
         </div>
@@ -235,18 +244,18 @@
     <!-- 汇总导出模块 -->
     <div id="summary-mod" class="module-content">
         <div class="card">
-            <h2>📋 今日发货汇总（已自动每19个换行）</h2>
+            <h2>📋 当前日期发货汇总（已自动每19个换行）</h2>
             <div id="summaryText" class="summary-box" style="min-height:320px;"></div>
             
             <div style="margin-top:16px; display:flex; gap:12px;">
                 <button class="btn btn-primary" onclick="copySummary()">📋 一键复制汇总</button>
-                <button class="btn btn-success" onclick="exportTodayExcel()">📥 导出Excel</button>
-                <button class="btn btn-danger" onclick="clearToday()">🗑️ 清空今日</button>
+                <button class="btn btn-success" onclick="exportCurrentExcel()">📥 导出Excel</button>
+                <button class="btn btn-danger" onclick="clearCurrentDate()">🗑️ 清空当前日期</button>
             </div>
         </div>
     </div>
 
-    <!-- 历史记录模块 -->
+    <!-- 历史记录模块（保留原有搜索功能） -->
     <div id="history-mod" class="module-content">
         <div class="card">
             <h2>🕒 历史发货记录</h2>
@@ -271,41 +280,42 @@
 
 <script>
     const STORAGE_KEY = 'daily_express_v1';
-    let todayList = [];
     let allHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    let currentDateKey = '';
+    let currentList = [];
     let pendingDeleteIndex = -1;
 
-    function getTodayKey() {
-        const d = new Date();
-        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    function getDateKey(dateStr) {
+        return dateStr || new Date().toISOString().slice(0,10);
     }
 
-    function loadToday() {
-        const key = getTodayKey();
-        let raw = allHistory[key] || [];
-        todayList = raw.map(item => ({
+    function loadSelectedDate() {
+        currentDateKey = document.getElementById('recordDate').value;
+        document.getElementById('selectedDateDisplay').textContent = currentDateKey;
+        document.getElementById('dateLabel').textContent = currentDateKey === getDateKey() ? '（今日）' : '';
+        
+        currentList = (allHistory[currentDateKey] || []).map(item => ({
             number: item.number,
             time: item.time,
             status: item.status || 'normal'
         }));
+        
         renderRecordList();
         renderSummary();
         updateCount();
-        document.getElementById('todayDate').textContent = key;
     }
 
-    function saveToday() {
-        const key = getTodayKey();
-        allHistory[key] = todayList;
+    function saveCurrentDate() {
+        allHistory[currentDateKey] = currentList;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(allHistory));
     }
 
     function getNormalList() {
-        return todayList.filter(it => it.status === 'normal');
+        return currentList.filter(it => it.status === 'normal');
     }
 
     function updateCount() {
-        document.getElementById('todayCount').textContent = getNormalList().length;
+        document.getElementById('countDisplay').textContent = getNormalList().length;
     }
 
     function renderRecordList() {
@@ -313,14 +323,13 @@
         tbody.innerHTML = '';
 
         const numCount = {};
-        todayList.forEach(it => numCount[it.number] = (numCount[it.number] || 0) + 1);
+        currentList.forEach(it => numCount[it.number] = (numCount[it.number] || 0) + 1);
         const dups = new Set(Object.keys(numCount).filter(k => numCount[k] > 1));
 
-        todayList.forEach((item, i) => {
+        currentList.forEach((item, i) => {
             const isDup = dups.has(item.number);
             const isIgnored = item.status !== 'normal';
             const isPending = pendingDeleteIndex === i;
-
             const btnStyle = isPending ? 'background:#f59e0b !important;color:white;' : '';
 
             const rowHTML = `
@@ -338,8 +347,7 @@
                         </select>
                     </td>
                     <td>
-                        <button class="btn btn-danger" style="padding:6px 12px;font-size:0.85rem;${btnStyle}" 
-                            onclick="handleDeleteClick(${i})">删除</button>
+                        <button class="btn btn-danger" style="padding:6px 12px;font-size:0.85rem;${btnStyle}" onclick="handleDeleteClick(${i})">删除</button>
                     </td>
                 </tr>`;
             tbody.innerHTML += rowHTML;
@@ -364,16 +372,16 @@
     function addExpress(number) {
         if (!number.trim()) return;
         const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
-        todayList.unshift({ number: number.trim(), time, status: 'normal' });
-        saveToday();
+        currentList.unshift({ number: number.trim(), time, status: 'normal' });
+        saveCurrentDate();
         renderRecordList();
         renderSummary();
         updateCount();
     }
 
     function changeStatus(index, newStatus) {
-        todayList[index].status = newStatus;
-        saveToday();
+        currentList[index].status = newStatus;
+        saveCurrentDate();
         renderRecordList();
         renderSummary();
         updateCount();
@@ -381,16 +389,14 @@
 
     function handleDeleteClick(index) {
         if (pendingDeleteIndex === index) {
-            // 第二次点击 → 删除
-            todayList.splice(index, 1);
-            saveToday();
+            currentList.splice(index, 1);
+            saveCurrentDate();
             renderRecordList();
             renderSummary();
             updateCount();
             pendingDeleteIndex = -1;
             showToast('✅ 已删除该记录');
         } else {
-            // 第一次点击 → 只提示
             pendingDeleteIndex = index;
             renderRecordList();
             showToast('再次点击“删除”按钮确认删除');
@@ -403,19 +409,18 @@
         }
     }
 
-    function clearToday() {
-        if (!confirm('⚠️ 第一次确认：您确定要清空今日所有快递记录吗？')) return;
+    function clearCurrentDate() {
+        if (!confirm('⚠️ 第一次确认：您确定要清空当前日期所有记录吗？')) return;
         if (!confirm('⚠️ 第二次确认：此操作不可恢复！真的要全部清空吗？')) return;
 
-        todayList = [];
-        const key = getTodayKey();
-        delete allHistory[key];
+        delete allHistory[currentDateKey];
         localStorage.setItem(STORAGE_KEY, JSON.stringify(allHistory));
+        currentList = [];
         
         renderRecordList();
         renderSummary();
         updateCount();
-        showToast('✅ 今日记录已全部清空');
+        showToast('✅ 当前日期记录已全部清空');
     }
 
     function copySummary() {
@@ -429,15 +434,15 @@
         copySummary();
     }
 
-    function exportTodayExcel() {
+    function exportCurrentExcel() {
         const normal = getNormalList();
         if (normal.length === 0) return showToast('没有有效数据可导出');
         const data = [['序号', '快递单号', '录入时间', '状态']];
         normal.forEach((item, i) => data.push([i+1, item.number, item.time, '正常']));
         const ws = XLSX.utils.aoa_to_sheet(data);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, '今日发货');
-        XLSX.writeFile(wb, `每日发货记录_${getTodayKey()}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, '发货记录');
+        XLSX.writeFile(wb, `发货记录_${currentDateKey}.xlsx`);
         showToast('✅ Excel 已导出');
     }
 
@@ -454,10 +459,10 @@
         document.getElementById(id).classList.add('active');
         document.querySelector(`button[onclick="switchTab('${id}')"]`).classList.add('active');
         if (id === 'summary-mod') renderSummary();
-        if (id === 'history-mod') renderHistory();
+        if (id === 'history-mod') loadHistory();
     }
 
-    // ====================== 历史记录（新增搜索框） ======================
+    // ====================== 历史记录 ======================
     function renderHistory() {
         const tbody = document.getElementById('historyBody');
         tbody.innerHTML = '';
@@ -468,7 +473,6 @@
             const total = records.length;
             const valid = records.filter(r => (r.status || 'normal') === 'normal').length;
 
-            // 搜索过滤
             let match = !searchTerm;
             if (searchTerm) {
                 match = records.some(r => (r.number || '').toLowerCase().includes(searchTerm));
@@ -497,19 +501,26 @@
         const list = allHistory[date] || [];
         if (list.length === 0) return showToast('无数据');
 
-        const validList = list.filter(item => (item.status || 'normal') === 'normal');
-        const total = list.length;
-        const validCount = validList.length;
+        let html = `<table style="width:100%;border-collapse:collapse;"><thead><tr>
+            <th style="background:#f1f5f9;padding:10px;">快递单号</th>
+            <th style="background:#f1f5f9;padding:10px;">录入时间</th>
+            <th style="background:#f1f5f9;padding:10px;">状态</th>
+        </tr></thead><tbody>`;
 
-        const numbers = validList.map(item => item.number);
-        let str = '';
-        for (let i = 0; i < numbers.length; i += 19) {
-            str += numbers.slice(i, i + 19).join(',') + (i + 19 < numbers.length ? ',\n' : '');
-        }
+        list.forEach(item => {
+            const statusText = item.status === 'normal' ? '正常' : (item.status === 'canceled' ? '已取消' : '已拦截');
+            const style = item.status !== 'normal' ? 'color:#64748b;text-decoration:line-through;' : '';
+            html += `<tr style="${style}">
+                <td style="padding:10px;font-family:monospace;">${item.number}</td>
+                <td style="padding:10px;">${item.time}</td>
+                <td style="padding:10px;">${statusText}</td>
+            </tr>`;
+        });
 
-        document.getElementById('modalTitle').innerHTML = `${date} 发货汇总<br>
-            <span style="font-size:0.9rem;color:var(--text-light)">全部: ${total} / 有效: ${validCount}</span>`;
-        document.getElementById('modalContent').textContent = str || '（无有效记录）';
+        html += '</tbody></table>';
+
+        document.getElementById('modalTitle').innerHTML = `${date} 发货明细`;
+        document.getElementById('modalBody').innerHTML = html;
         document.getElementById('modal').style.display = 'flex';
     }
 
@@ -518,8 +529,17 @@
     }
 
     function copyModalContent() {
-        const text = document.getElementById('modalContent').textContent;
-        navigator.clipboard.writeText(text).then(() => showToast('✅ 已复制到剪贴板'));
+        // 从表格中提取有效单号汇总
+        const rows = document.querySelectorAll('#modalBody tbody tr');
+        let numbers = [];
+        rows.forEach(row => {
+            const cells = row.cells;
+            if (cells[2].textContent === '正常') {
+                numbers.push(cells[0].textContent);
+            }
+        });
+        const text = numbers.join(',');
+        navigator.clipboard.writeText(text).then(() => showToast('✅ 已复制有效单号汇总'));
     }
 
     // 扫码输入
@@ -536,7 +556,13 @@
 
     // 初始化
     window.onload = function() {
-        loadToday();
+        // 默认加载今天
+        const today = getDateKey();
+        document.getElementById('recordDate').value = today;
+        currentDateKey = today;
+        document.getElementById('selectedDateDisplay').textContent = today;
+        loadSelectedDate();
+        
         renderHistory();
         setTimeout(() => document.getElementById('scanIn').focus(), 300);
     };
