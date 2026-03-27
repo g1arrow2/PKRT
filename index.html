@@ -24,9 +24,9 @@
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-       
+      
         * { margin:0; padding:0; box-sizing:border-box; }
-       
+      
         body {
             font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             background: var(--bg);
@@ -34,62 +34,62 @@
             padding: 24px;
             min-height: 100vh;
         }
-       
+      
         .container { max-width: 1440px; width: 100%; margin: 0 auto; }
-       
+      
         .nav-tabs { display:flex; gap:6px; margin-bottom:24px; background:var(--card); padding:8px; border-radius:16px; box-shadow:var(--shadow); flex-wrap:wrap; }
-       
+      
         .nav-btn { padding:12px 20px; border:none; background:transparent; border-radius:10px; cursor:pointer; font-weight:600; font-size:0.9rem; color:var(--text-light); transition:all 0.3s ease; display:flex; align-items:center; gap:8px; }
-       
+      
         .nav-btn:hover { background:var(--primary-light); color:var(--primary); }
         .nav-btn.active { background:var(--primary); color:white; box-shadow:0 4px 12px rgba(99,102,241,0.3); }
-       
+      
         .module-content { display:none; animation:fadeIn 0.3s ease; }
         .module-content.active { display:block; }
-       
+      
         @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-       
+      
         .card { background:var(--card); border-radius:16px; padding:24px; box-shadow:var(--shadow); border:1px solid var(--border); margin-bottom:20px; transition:all 0.3s ease; }
         .card:hover { box-shadow:var(--shadow-lg); }
-       
+      
         h2 { margin:0 0 20px 0; color:var(--text); font-size:1.25rem; font-weight:700; display:flex; justify-content:space-between; align-items:center; padding-bottom:16px; border-bottom:2px solid var(--primary-light); }
-       
+      
         #scanIn { width:100%; padding:18px 20px; font-size:1.2rem; border:2px solid var(--primary); border-radius:12px; font-weight:600; background:var(--primary-light); }
-       
+      
         .file-box { border:2px dashed var(--border); border-radius:12px; padding:32px 24px; text-align:center; cursor:pointer; position:relative; background:var(--card); transition:all 0.3s ease; font-weight:600; color:var(--text-light); }
         .file-box:hover { border-color:var(--primary); background:var(--primary-light); color:var(--primary); transform:translateY(-2px); }
         .file-box input { position:absolute; inset:0; opacity:0; cursor:pointer; }
-       
+      
         .status { font-size:0.85rem; color:var(--text-light); margin-top:12px; font-weight:500; }
-       
+      
         .res-item { display:flex; align-items:center; gap:20px; padding:20px; border:1px solid var(--border); border-radius:12px; margin-bottom:12px; background:var(--card); transition:all 0.3s ease; }
         .res-item:hover { border-color:var(--primary); box-shadow:var(--shadow); }
-       
+      
         .res-img { width:100px; height:100px; border-radius:10px; object-fit:cover; border:2px solid var(--border); }
-       
+      
         .pdd-oid { font-family:'SF Mono',Monaco,monospace; font-size:0.85rem; color:var(--text-light); background:var(--bg); padding:6px 12px; border-radius:8px; font-weight:600; }
-       
+      
         .dw-input { flex:1; padding:14px 16px; border:2px solid var(--border); border-radius:10px; font-size:1rem; font-weight:500; transition:all 0.3s ease; background:var(--bg); }
         .dw-input:focus { border-color:var(--primary); outline:none; background:var(--primary-light); box-shadow:0 0 0 3px rgba(99,102,241,0.1); }
-       
+      
         .recent-box { margin-top:20px; background:var(--bg); padding:16px; border-radius:12px; border:1px solid var(--border); }
-       
+      
         .recent-item { font-size:0.85rem; color:var(--text-light); display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--border); }
         .recent-item:last-child { border-bottom:none; }
-       
+      
         .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
-       
+      
         .stat-item { background:var(--card); padding:20px; border-radius:12px; border:1px solid var(--border); text-align:center; transition:all 0.3s ease; }
         .stat-item:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); }
-       
+      
         .stat-value { font-size:1.5rem; font-weight:700; color:var(--primary); margin-bottom:8px; }
-       
+      
         /* 全局表格样式 */
         table { width:100%; border-collapse:collapse; font-size:0.9rem; }
         th, td { padding:14px 16px; border:1px solid var(--border); text-align:left; }
         th { background:var(--bg); color:var(--text-light); font-weight:600; text-transform:uppercase; font-size:0.8rem; letter-spacing:0.5px; }
         tr:hover td { background:var(--primary-light); }
-       
+      
         /* 售后高亮样式 */
         .warn-row {
             background-color: var(--warning-light) !important;
@@ -98,7 +98,7 @@
             color: #92400E;
             font-weight: 600;
         }
-       
+      
         .btn { padding:10px 20px; border-radius:10px; border:none; cursor:pointer; font-weight:600; font-size:0.9rem; transition:all 0.3s ease; display:inline-flex; align-items:center; gap:6px; }
         .btn:hover { transform:translateY(-2px); box-shadow:var(--shadow); }
         .btn-primary { background:var(--primary); color:white; }
@@ -108,10 +108,10 @@
         .btn-danger { background:var(--danger); color:white; }
         .btn-danger:hover { background:#DC2626; }
         .btn-outline { background:white; border:1px solid var(--border); color:var(--text-light); font-size:0.8rem; padding:6px 12px; }
-       
+      
         .toast { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.75); color:white; padding:12px 25px; border-radius:8px; font-size:16px; z-index:9999; opacity:0; transition:opacity 0.3s ease; pointer-events:none; text-align:center; min-width:150px; }
         .toast.show { opacity:1; }
-       
+      
         /* 手动录入弹窗 */
         .manual-modal {
             display: none;
@@ -131,7 +131,7 @@
             box-shadow: var(--shadow-lg);
             padding: 24px;
         }
-       
+      
         /* 待匹配订单样式 */
         .pending-input-grid {
             display: grid;
@@ -143,7 +143,7 @@
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
         }
-       
+      
         .pending-input-grid input,
         .pending-input-grid select {
             padding: 14px 16px;
@@ -154,7 +154,7 @@
             transition: all 0.3s ease;
             background: var(--bg);
         }
-       
+      
         .pending-input-grid input:focus,
         .pending-input-grid select:focus {
             border-color: var(--primary);
@@ -162,13 +162,13 @@
             background: var(--primary-light);
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
-       
+      
         #pendingArea table {
             width: 100%;
             table-layout: fixed;
             border-collapse: collapse;
         }
-       
+      
         #pendingArea th,
         #pendingArea td {
             padding: 14px 16px;
@@ -176,19 +176,19 @@
             word-break: break-word;
             vertical-align: middle;
         }
-       
+      
         #pendingArea th {
             background: var(--bg);
             color: var(--text-light);
             font-weight: 600;
         }
-       
+      
         /* 状态标签 */
         .state-arrived { background: var(--success-light); color: #065F46; font-weight: 600; padding: 4px 12px; border-radius: 6px; }
         .state-transit { background: var(--warning-light); color: #92400E; font-weight: 600; padding: 4px 12px; border-radius: 6px; }
         .state-return { background: var(--danger-light); color: #991B1B; font-weight: 600; padding: 4px 12px; border-radius: 6px; }
         .state-matched { background: var(--bg); color: var(--text-light); font-weight: 600; padding: 4px 12px; border-radius: 6px; }
-       
+      
         @media (max-width: 1200px) {
             .pending-input-grid { grid-template-columns: repeat(3, 1fr); }
         }
@@ -327,7 +327,7 @@
         </div>
     </div>
 
-    <!-- 售后模块（已新增高亮） -->
+    <!-- 售后模块 -->
     <div id="aftersale-mod" class="module-content">
         <div class="card">
             <h2>售后统计概览</h2>
@@ -418,10 +418,6 @@
         }
     }
 
-    function copyTxt(s) {
-        navigator.clipboard.writeText(s).then(() => showToast("内容已复制"));
-    }
-
     function switchTab(id) {
         document.querySelectorAll('.module-content').forEach(m => m.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -485,21 +481,24 @@
         }
     }
 
-    // 快递匹配
+    // ==================== 快递匹配（已修复复制按钮） ====================
     document.getElementById('scanIn').addEventListener('keypress', function(e) {
         if(e.key === 'Enter') {
             const track = this.value.trim();
             const items = dataStore.pddMap.get(track);
             const area = document.getElementById('matchResArea');
             const bulkBtnGroup = document.getElementById('bulkSaveArea');
+            
             area.innerHTML = '';
             currentMatchItems = [];
+
             if(items) {
                 items.forEach((item) => {
                     const matchedDws = dataStore.jstMap.get(String(item.oid).trim()) || [""];
                     matchedDws.forEach((dwVal) => {
                         const localIdx = currentMatchItems.length;
                         currentMatchItems.push({ track, pdd: item.oid, spec: item.spec, idx: localIdx });
+
                         area.innerHTML += `
                             <div class="res-item">
                                 <img src="${item.img}" class="res-img">
@@ -507,7 +506,8 @@
                                     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                                         <div>
                                             <span class="pdd-oid">PDD: ${item.oid}</span>
-                                            <button class="btn-outline" onclick="copyTxt('${item.oid}')">复制</button>
+                                            <!-- 改为 data-attribute + 统一事件委托，避免引号转义问题 -->
+                                            <button class="btn-outline copy-pdd-btn" data-oid="${item.oid}">复制</button>
                                         </div>
                                         <button class="btn" style="background:#6366F1; color:white; padding:4px 10px; font-size:12px;" onclick="addFromMatchToPending('${item.oid}', '${item.spec}')">📥 录入待匹配</button>
                                     </div>
@@ -517,6 +517,17 @@
                             </div>`;
                     });
                 });
+
+                // 绑定复制按钮（事件委托，彻底解决引号问题）
+                area.querySelectorAll('.copy-pdd-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const oid = this.getAttribute('data-oid');
+                        navigator.clipboard.writeText(oid).then(() => {
+                            showToast("内容已复制");
+                        });
+                    });
+                });
+
                 bulkBtnGroup.style.display = 'flex';
                 setTimeout(() => document.getElementById('dwIn_0').focus(), 100);
             } else {
