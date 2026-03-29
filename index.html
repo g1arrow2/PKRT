@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PKRT得物运营-本地缓存</title>
+    <title>PKRT得物运营-本地缓存 (库存比对版)</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -61,10 +61,10 @@
         }
         .card:hover { box-shadow:var(--shadow-lg); }
         
-        /* 已采购样式 - 固定、美观、风格统一 */
+        /* 已采购样式 */
         .card.purchased { 
-            border: 2px solid var(--success); 
-            background: #f8fdf9; 
+            border: 2px solid var(--success) !important; 
+            background: #f8fdf9 !important; 
         }
         .purchased-badge {
             position: absolute;
@@ -93,7 +93,7 @@
         .status { font-size:0.85rem; color:var(--text-light); margin-top:12px; font-weight:500; }
       
         .res-item { display:flex; align-items:center; gap:20px; padding:20px; border:1px solid var(--border); border-radius:12px; margin-bottom:12px; background:var(--card); transition:all 0.3s ease; }
-        .res-item:hover { border-color:var(--primary); box-shadow:var(--shadow); }
+        .res-item:hover { box-shadow:var(--shadow); }
       
         .res-img { width:100px; height:100px; border-radius:10px; object-fit:cover; border:2px solid var(--border); }
       
@@ -132,8 +132,8 @@
         .btn-danger:hover { background:#DC2626; }
         .btn-outline { background:white; border:1px solid var(--border); color:var(--text-light); font-size:0.8rem; padding:6px 12px; }
       
-        .toast { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.75); color:white; padding:12px 25px; border-radius:8px; font-size:16px; z-index:9999; opacity:0; transition:opacity 0.3s ease; pointer-events:none; text-align:center; min-width:150px; }
-        .toast.show { opacity:1; }
+        .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(17, 24, 39, 0.9); color:white; padding:12px 30px; border-radius:8px; font-size:15px; font-weight:bold; z-index:9999; opacity:0; transition:all 0.3s ease; pointer-events:none; text-align:center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: -20px; }
+        .toast.show { opacity:1; margin-top: 0; }
       
         .manual-modal {
             display: none;
@@ -222,7 +222,6 @@
 <body>
 <div id="toast"></div>
 
-<!-- 手动录入弹窗 -->
 <div id="manualModal" class="manual-modal">
     <div class="manual-content">
         <h2 style="margin-bottom:20px;">📝 手动录入历史记录</h2>
@@ -257,7 +256,6 @@
         <button class="nav-btn" onclick="switchTab('pending-mod')">📦 待匹配订单</button>
     </div>
 
-    <!-- 快递匹配模块 -->
     <div id="match-mod" class="module-content active">
         <div class="card">
             <h2>数据源上传</h2>
@@ -298,20 +296,26 @@
         </div>
     </div>
 
-    <!-- 采购汇总模块（已采购样式已优化：固定、美观、风格统一） -->
     <div id="purchase-mod" class="module-content">
         <div class="card">
-            <h2>上传得物订单表</h2>
-            <div class="file-box">
-                <div style="font-size:2rem; margin-bottom:8px;">📦</div>
-                <div>点击上传得物订单表</div>
-                <div class="status">未上传</div>
-                <input type="file" onchange="handleExcel(this, 'pur')">
+            <h2>采购与库存比对数据上传</h2>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                <div class="file-box">
+                    <div style="font-size:2rem; margin-bottom:8px;">📦</div>
+                    <div>1. 上传得物订单表</div>
+                    <div class="status">未上传</div>
+                    <input type="file" onchange="handleExcel(this, 'pur')">
+                </div>
+                <div class="file-box">
+                    <div style="font-size:2rem; margin-bottom:8px;">⏳</div>
+                    <div>2. 上传【剩余待匹配】表</div>
+                    <div class="status">未上传</div>
+                    <input type="file" onchange="handleExcel(this, 'pending_match')">
+                </div>
             </div>
         </div>
         <div id="purResultArea"></div>
         
-        <!-- 一键复制单件订单按钮 -->
         <div style="text-align:right; margin-top:16px;">
             <button class="btn btn-success" onclick="copyAllSingleOrders()" style="padding:12px 24px;">
                 📋 一键复制所有单件订单号
@@ -319,7 +323,6 @@
         </div>
     </div>
 
-    <!-- 利润对账模块 -->
     <div id="profit-mod" class="module-content">
         <div class="card">
             <h2>利润统计概览</h2>
@@ -354,7 +357,6 @@
         </div>
     </div>
 
-    <!-- 售后模块 -->
     <div id="aftersale-mod" class="module-content">
         <div class="card">
             <h2>售后统计概览</h2>
@@ -378,7 +380,6 @@
         </div>
     </div>
 
-    <!-- 管理中心 -->
     <div id="admin-mod" class="module-content">
         <div class="card">
             <h2>数据导出与清理</h2>
@@ -402,7 +403,6 @@
         </div>
     </div>
 
-    <!-- 待匹配订单 -->
     <div id="pending-mod" class="module-content">
         <div class="card">
             <h2>新增待匹配订单</h2>
@@ -430,19 +430,24 @@
 </div>
 
 <script>
-    let dataStore = { pddMap: new Map(), jstMap: new Map(), pddPrice: new Map(), profitList: [], afterList: [] };
+    // 增加 pendingMatchSkus 缓存用于货号比对
+    let dataStore = { pddMap: new Map(), jstMap: new Map(), pddPrice: new Map(), profitList: [], afterList: [], pendingMatchSkus: new Map() };
     const LOG_KEY = 'sys_logs_v53';
     let logs = JSON.parse(localStorage.getItem(LOG_KEY)) || [];
     let currentMatchItems = [];
     let clearConfirmStage = 0;
     let purchasedSkus = new Set();
+    
+    // 保存得物订单数据以便重新渲染
+    let lastPurLines = [];
+    let lastPurHead = [];
 
     function showToast(msg) {
         const toast = document.getElementById('toast');
         if (toast) {
             toast.innerText = msg;
             toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2500);
+            setTimeout(() => toast.classList.remove('show'), 2000);
         }
     }
 
@@ -490,6 +495,8 @@
                 }
             });
         } else if(type === 'pur') {
+            lastPurLines = lines;
+            lastPurHead = head;
             renderPur(lines, head);
         } else if(type === 'profit') {
             const iOid = head.indexOf('订单号'), iN = 13;
@@ -505,6 +512,17 @@
             renderProfitTable();
         } else if(type === 'aftersale') {
             renderAfter(lines, head);
+        } else if(type === 'pending_match') {
+            dataStore.pendingMatchSkus.clear();
+            // 假设 B 列是货号 (索引1)
+            lines.slice(1).forEach(cols => {
+                const sku = String(cols[1] || '').trim();
+                if(sku) {
+                    dataStore.pendingMatchSkus.set(sku, (dataStore.pendingMatchSkus.get(sku) || 0) + 1);
+                }
+            });
+            highlightPendingSkus();
+            showToast(`✅ 待匹配库解析完成，发现 ${dataStore.pendingMatchSkus.size} 款货号库存`);
         }
     }
 
@@ -548,7 +566,7 @@
                             this.innerHTML = '✅ 已复制';
                             this.style.background = '#10B981';
                             this.style.color = 'white';
-                            showToast('拼多多订单号已复制');
+                            showToast('复制成功: ' + oid);
                             setTimeout(() => {
                                 this.innerHTML = original;
                                 this.style.background = '';
@@ -662,12 +680,42 @@
                     </div>
                     <div style="margin-top:8px; font-size:0.9rem; color:var(--text-light);">订单号：${orderList}</div>
                     <div style="margin-top:12px; display:flex; gap:8px;">
-                        <button class="btn btn-outline" onclick="copyText('${sku}')">复制货号</button>
-                        <button class="btn btn-outline" onclick="copyText('${orderList}')">复制订单号</button>
+                        <button class="btn btn-outline" onclick="copyText('${sku}', '货号')">复制货号</button>
+                        <button class="btn btn-outline" onclick="copyText('${orderList}', '订单号')">复制订单号</button>
                     </div>
                 </div>
                 ${isPurchased ? '<div class="purchased-badge">✅ 已采购</div>' : ''}
             </div>`;
+        });
+
+        // 渲染完得物清单后，立即检查是否有需要高亮的待匹配库存
+        highlightPendingSkus();
+    }
+
+    // 独立的高亮逻辑函数
+    window.highlightPendingSkus = function() {
+        if(dataStore.pendingMatchSkus.size === 0) return;
+        const cards = document.querySelectorAll('#purResultArea .res-item');
+        cards.forEach(card => {
+            const sku = card.getAttribute('data-sku');
+            const existingBadge = card.querySelector('.pending-stock-badge');
+            if (existingBadge) existingBadge.remove();
+
+            if (dataStore.pendingMatchSkus.has(sku)) {
+                const count = dataStore.pendingMatchSkus.get(sku);
+                
+                if(!card.classList.contains('purchased')) {
+                    card.style.border = '2px solid var(--warning)';
+                    card.style.backgroundColor = '#FFFAF0';
+                }
+                
+                const badge = document.createElement('div');
+                badge.className = 'pending-stock-badge';
+                badge.style.cssText = 'margin-top:12px; display:inline-block; background:var(--warning); color:white; padding:4px 12px; border-radius:6px; font-size:0.85rem; font-weight:bold; box-shadow:0 2px 4px rgba(245,158,11,0.3); animation: fadeIn 0.5s;';
+                badge.innerHTML = `⚠️ 仓库剩余待匹配有此货号 (${count} 件)`;
+                
+                card.querySelector('div[style*="flex:1"]').appendChild(badge);
+            }
         });
     }
 
@@ -675,11 +723,8 @@
         if (checked) purchasedSkus.add(sku);
         else purchasedSkus.delete(sku);
         showToast(checked ? '✅ 已标记为已采购' : '标记已取消');
-        // 重新渲染当前采购汇总
-        const fileInput = document.querySelector('#purchase-mod input[type="file"]');
-        if (fileInput && fileInput.files.length > 0) {
-            // 实际项目中可保存最后一次lines，这里直接刷新页面效果
-            renderPur(lastPurLines || [], lastPurHead || []); // 简化处理，实际使用时可全局保存
+        if (lastPurLines.length > 0) {
+            renderPur(lastPurLines, lastPurHead);
         }
     }
 
@@ -702,8 +747,8 @@
         });
     }
 
-    window.copyText = function(text) {
-        navigator.clipboard.writeText(text).then(() => showToast("已复制"));
+    window.copyText = function(text, typeName = '内容') {
+        navigator.clipboard.writeText(text).then(() => showToast(`✅ ${typeName}复制成功`));
     };
 
     function renderProfitTable() {
@@ -775,7 +820,7 @@
         } else {
             localStorage.removeItem(LOG_KEY);
             logs = []; renderLogs();
-            alert("总库已清空");
+            showToast("✅ 总库已清空");
             clearConfirmStage = 0;
             btn.innerText = "🗑️ 清空总库历史 (点两次)";
             btn.style.background = "";
@@ -832,7 +877,7 @@
         const spec = document.getElementById("p_spec").value.trim();
         const size = document.getElementById("p_size").value;
         const state = document.getElementById("p_state").value;
-        if (!oid || !sku) { alert("订单和货号不能为空"); return; }
+        if (!oid || !sku) { showToast("❌ 订单和货号不能为空"); return; }
         pendingList.unshift({ oid, sku, spec, size, state });
         savePending();
         renderPending();
@@ -848,7 +893,7 @@
     }
 
     function clearPending() {
-        if (!confirm("确认清空全部记录？")) return;
+        if (!confirm("确认清空全部待匹配记录吗？")) return;
         pendingList = [];
         savePending();
         renderPending();
@@ -886,7 +931,7 @@ ${list.map(it => {
     }
 
     function exportPending() {
-        if (pendingList.length === 0) { alert("没有数据"); return; }
+        if (pendingList.length === 0) { showToast("❌ 没有数据可导出"); return; }
         let exportData = [["订单","货号","规格","号型","状态"]];
         pendingList.forEach(it => exportData.push([it.oid, it.sku, it.spec || "-", it.size, it.state]));
         const ws = XLSX.utils.aoa_to_sheet(exportData);
