@@ -60,27 +60,6 @@
             position:relative; 
         }
         .card:hover { box-shadow:var(--shadow-lg); }
-        
-        /* 已采购样式 */
-        .card.purchased { 
-            border: 2px solid var(--success) !important; 
-            background: #f8fdf9 !important; 
-        }
-        .purchased-badge {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: var(--success);
-            color: white;
-            font-size: 0.8rem;
-            font-weight: 600;
-            padding: 4px 14px;
-            border-radius: 9999px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            box-shadow: 0 2px 4px rgba(16,185,129,0.3);
-        }
       
         h2 { margin:0 0 20px 0; color:var(--text); font-size:1.25rem; font-weight:700; display:flex; justify-content:space-between; align-items:center; padding-bottom:16px; border-bottom:2px solid var(--primary-light); }
       
@@ -135,88 +114,56 @@
         .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(17, 24, 39, 0.9); color:white; padding:12px 30px; border-radius:8px; font-size:15px; font-weight:bold; z-index:9999; opacity:0; transition:all 0.3s ease; pointer-events:none; text-align:center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: -20px; }
         .toast.show { opacity:1; margin-top: 0; }
       
-        .manual-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.75);
-            z-index: 10000;
-            align-items: center;
-            justify-content: center;
-        }
-        .manual-content {
-            background: var(--card);
-            width: 92%;
-            max-width: 620px;
-            border-radius: 16px;
-            box-shadow: var(--shadow-lg);
-            padding: 24px;
-        }
+        .manual-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 10000; align-items: center; justify-content: center; }
+        .manual-content { background: var(--card); width: 92%; max-width: 620px; border-radius: 16px; box-shadow: var(--shadow-lg); padding: 24px; }
       
-        .pending-input-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 16px;
-            background: var(--card);
-            padding: 24px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
-        }
+        .pending-input-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; background: var(--card); padding: 24px; border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+        .pending-input-grid input, .pending-input-grid select { padding: 14px 16px; border-radius: 10px; border: 2px solid var(--border); font-size: 0.95rem; font-weight: 500; transition: all 0.3s ease; background: var(--bg); }
+        .pending-input-grid input:focus, .pending-input-grid select:focus { border-color: var(--primary); outline: none; background: var(--primary-light); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
       
-        .pending-input-grid input,
-        .pending-input-grid select {
-            padding: 14px 16px;
-            border-radius: 10px;
-            border: 2px solid var(--border);
-            font-size: 0.95rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            background: var(--bg);
-        }
-      
-        .pending-input-grid input:focus,
-        .pending-input-grid select:focus {
-            border-color: var(--primary);
-            outline: none;
-            background: var(--primary-light);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-      
-        #pendingArea table {
-            width: 100%;
-            table-layout: fixed;
-            border-collapse: collapse;
-        }
-      
-        #pendingArea th,
-        #pendingArea td {
-            padding: 14px 16px;
-            border: 1px solid var(--border);
-            word-break: break-word;
-            vertical-align: middle;
-        }
-      
-        #pendingArea th {
-            background: var(--bg);
-            color: var(--text-light);
-            font-weight: 600;
-        }
+        #pendingArea table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+        #pendingArea th, #pendingArea td { padding: 14px 16px; border: 1px solid var(--border); word-break: break-word; vertical-align: middle; }
+        #pendingArea th { background: var(--bg); color: var(--text-light); font-weight: 600; }
       
         .state-arrived { background: var(--success-light); color: #065F46; font-weight: 600; padding: 4px 12px; border-radius: 6px; }
         .state-transit { background: var(--warning-light); color: #92400E; font-weight: 600; padding: 4px 12px; border-radius: 6px; }
         .state-return { background: var(--danger-light); color: #991B1B; font-weight: 600; padding: 4px 12px; border-radius: 6px; }
         .state-matched { background: var(--bg); color: var(--text-light); font-weight: 600; padding: 4px 12px; border-radius: 6px; }
       
-        @media (max-width: 1200px) {
-            .pending-input-grid { grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 1200px) { .pending-input-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 768px) { body { padding: 16px; } .nav-tabs { flex-direction: column; } .pending-input-grid { grid-template-columns: 1fr; } }
+
+        /* --- 全新升级的组件样式 --- */
+        
+        /* 1. 现代化的复制按钮 */
+        .btn-copy-modern {
+            background: var(--bg); color: var(--text-light); border: 1px solid var(--border);
+            border-radius: 6px; padding: 4px 10px; font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 4px;
         }
-        @media (max-width: 768px) {
-            body { padding: 16px; }
-            .nav-tabs { flex-direction: column; }
-            .pending-input-grid { grid-template-columns: 1fr; }
-        }
+        .btn-copy-modern:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+        .btn-copy-modern.copied { background: var(--success); color: white; border-color: var(--success); }
+
+        /* 2. 采购卡片全新排版 */
+        .pur-card { flex-direction: column; align-items: stretch; gap: 0; padding: 0; overflow: hidden; }
+        .pur-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #FAFAFA; border-bottom: 1px solid var(--border); transition: background 0.3s; }
+        .pur-body { padding: 16px 20px; }
+        .pur-sku-title { font-size: 1.15rem; font-weight: 800; color: var(--text); font-family: 'SF Mono', Monaco, monospace; display: flex; align-items: center; gap: 8px; }
+        
+        /* 3. 自定义精美复选框 */
+        .custom-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+        .custom-checkbox input { display: none; }
+        .chk-box { width: 22px; height: 22px; border: 2px solid #CBD5E1; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; background: white; }
+        .custom-checkbox input:checked + .chk-box { background: var(--success); border-color: var(--success); }
+        .custom-checkbox input:checked + .chk-box::after { content: '✔'; color: white; font-size: 14px; font-weight: bold; }
+        .chk-label { font-size: 0.95rem; font-weight: 600; color: var(--text-light); transition: color 0.2s; }
+        .custom-checkbox input:checked ~ .chk-label { color: var(--success); }
+
+        /* 4. 已采购状态的卡片质感 */
+        .pur-card.is-purchased { border-color: var(--success); box-shadow: 0 0 0 1px var(--success); }
+        .pur-card.is-purchased .pur-header { background: var(--success-light); }
+        .pur-card.is-purchased .pur-sku-title { color: #065F46; }
+        .pur-card.is-purchased .count-badge { background: white; color: var(--success) !important; }
     </style>
 </head>
 <body>
@@ -314,9 +261,9 @@
                 </div>
             </div>
         </div>
-        <div id="purResultArea"></div>
+        <div id="purResultArea" style="display:flex; flex-direction:column; gap:16px;"></div>
         
-        <div style="text-align:right; margin-top:16px;">
+        <div style="text-align:right; margin-top:20px;">
             <button class="btn btn-success" onclick="copyAllSingleOrders()" style="padding:12px 24px;">
                 📋 一键复制所有单件订单号
             </button>
@@ -541,18 +488,18 @@
                         const localIdx = currentMatchItems.length;
                         currentMatchItems.push({ track, pdd: item.oid, spec: item.spec, idx: localIdx });
                         area.innerHTML += `
-                            <div class="res-item">
+                            <div class="res-item" style="align-items: flex-start;">
                                 <img src="${item.img}" class="res-img">
-                                <div style="flex:1">
-                                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                                        <div>
+                                <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <div style="display:flex; align-items:center; gap:10px;">
                                             <span class="pdd-oid">PDD: ${item.oid}</span>
-                                            <button class="btn-outline copy-pdd-btn" data-oid="${item.oid}">复制</button>
+                                            <button class="btn-copy-modern copy-pdd-btn" data-oid="${item.oid}">📋 复制单号</button>
                                         </div>
-                                        <button class="btn" style="background:#6366F1; color:white; padding:4px 10px; font-size:12px;" onclick="addFromMatchToPending('${item.oid}', '${item.spec}')">📥 录入待匹配</button>
+                                        <button class="btn" style="background:var(--primary-light); color:var(--primary); padding:6px 12px; font-size:12px; box-shadow:none;" onclick="addFromMatchToPending('${item.oid}', '${item.spec}')">📥 录入待匹配</button>
                                     </div>
-                                    <div style="font-weight:bold; color:var(--primary); margin:5px 0;">规格: ${item.spec}</div>
-                                    <input type="text" class="dw-input" id="dwIn_${localIdx}" value="${dwVal}" placeholder="确认得物单号">
+                                    <div style="font-weight:700; color:var(--text); font-size:0.95rem;">规格: <span style="color:var(--primary)">${item.spec}</span></div>
+                                    <input type="text" class="dw-input" id="dwIn_${localIdx}" value="${dwVal}" placeholder="请在此扫描或确认得物单号..." style="margin-top:4px;">
                                 </div>
                             </div>`;
                     });
@@ -561,18 +508,7 @@
                 area.querySelectorAll('.copy-pdd-btn').forEach(btn => {
                     btn.addEventListener('click', function() {
                         const oid = this.getAttribute('data-oid');
-                        navigator.clipboard.writeText(oid).then(() => {
-                            const original = this.innerHTML;
-                            this.innerHTML = '✅ 已复制';
-                            this.style.background = '#10B981';
-                            this.style.color = 'white';
-                            showToast('复制成功: ' + oid);
-                            setTimeout(() => {
-                                this.innerHTML = original;
-                                this.style.background = '';
-                                this.style.color = '';
-                            }, 1800);
-                        });
+                        window.copyText(oid, '拼多多单号', this);
                     });
                 });
 
@@ -596,7 +532,7 @@
             }
         });
         if(dwList.length > 0) {
-            navigator.clipboard.writeText(dwList.join(',')).then(() => showToast("已复制 " + dwList.length + " 个单号"));
+            window.copyText(dwList.join(','), `共 ${dwList.length} 个单号`);
         } else {
             showToast("没有可复制的内容");
         }
@@ -643,13 +579,14 @@
     function exportMatchLogs() {
         const df = document.getElementById('dateFilter').value;
         const filtered = logs.filter(l => !df || l.time.includes(df));
-        if(filtered.length === 0) return alert("当前无可导出的记录");
+        if(filtered.length === 0) return showToast("当前无可导出的记录");
         const ws = XLSX.utils.json_to_sheet(filtered);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "匹配历史");
         XLSX.writeFile(wb, `快递匹配存档_${df || '全部'}.xlsx`);
     }
 
+    // 全新重构的采购汇总渲染逻辑
     function renderPur(lines, head) {
         const iA = head.indexOf('货号'), iO = head.indexOf('订单号'), iM = 12;
         const gs = new Map();
@@ -663,28 +600,34 @@
         const sortedSkus = Array.from(gs.entries()).sort((a, b) => b[1].length - a[1].length);
         const area = document.getElementById('purResultArea');
         area.innerHTML = '';
+        
         sortedSkus.forEach(([sku, orders]) => {
             const orderList = orders.map(o => o.oid).join(', ');
             const count = orders.length;
             const isPurchased = purchasedSkus.has(sku);
+            
             area.innerHTML += `
-            <div class="res-item card ${isPurchased ? 'purchased' : ''}" data-sku="${sku}">
-                <div style="flex:1">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span class="pdd-oid">货号: ${sku}</span>
-                        <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; cursor:pointer; user-select:none;">
-                            <input type="checkbox" ${isPurchased ? 'checked' : ''} onchange="togglePurchased('${sku}', this.checked)" style="width:18px;height:18px;">
-                            <span style="font-weight:600;color:${isPurchased?'var(--success)':'var(--text-light)'};">已采购</span>
-                        </label>
-                        <span style="background:var(--success-light); color:#065F46; padding:4px 10px; border-radius:6px; font-size:0.85rem;">${count} 单</span>
+            <div class="res-item card pur-card ${isPurchased ? 'is-purchased' : ''}" data-sku="${sku}">
+                <div class="pur-header">
+                    <div class="pur-sku-title">
+                        📦 ${sku} 
+                        <span class="count-badge" style="background:var(--primary-light); color:var(--primary-dark); padding:4px 10px; border-radius:6px; font-size:0.85rem; font-weight:700;">${count} 单</span>
                     </div>
-                    <div style="margin-top:8px; font-size:0.9rem; color:var(--text-light);">订单号：${orderList}</div>
-                    <div style="margin-top:12px; display:flex; gap:8px;">
-                        <button class="btn btn-outline" onclick="copyText('${sku}', '货号')">复制货号</button>
-                        <button class="btn btn-outline" onclick="copyText('${orderList}', '订单号')">复制订单号</button>
+                    <label class="custom-checkbox">
+                        <input type="checkbox" ${isPurchased ? 'checked' : ''} onchange="togglePurchased('${sku}', this.checked)">
+                        <div class="chk-box"></div>
+                        <span class="chk-label">已完成采购</span>
+                    </label>
+                </div>
+                <div class="pur-body">
+                    <div style="font-size:0.9rem; color:var(--text-light); line-height:1.5; margin-bottom:12px; word-break:break-all;">
+                        <strong style="color:var(--text);">相关订单：</strong><br>${orderList}
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="btn-copy-modern" onclick="copyText('${sku}', '货号', this)">📋 复制货号</button>
+                        <button class="btn-copy-modern" onclick="copyText('${orderList}', '订单号', this)">📋 复制所有单号</button>
                     </div>
                 </div>
-                ${isPurchased ? '<div class="purchased-badge">✅ 已采购</div>' : ''}
             </div>`;
         });
 
@@ -704,17 +647,18 @@
             if (dataStore.pendingMatchSkus.has(sku)) {
                 const count = dataStore.pendingMatchSkus.get(sku);
                 
-                if(!card.classList.contains('purchased')) {
+                if(!card.classList.contains('is-purchased')) {
                     card.style.border = '2px solid var(--warning)';
                     card.style.backgroundColor = '#FFFAF0';
                 }
                 
                 const badge = document.createElement('div');
                 badge.className = 'pending-stock-badge';
-                badge.style.cssText = 'margin-top:12px; display:inline-block; background:var(--warning); color:white; padding:4px 12px; border-radius:6px; font-size:0.85rem; font-weight:bold; box-shadow:0 2px 4px rgba(245,158,11,0.3); animation: fadeIn 0.5s;';
+                badge.style.cssText = 'margin-top:12px; display:inline-flex; align-items:center; background:var(--warning); color:white; padding:6px 14px; border-radius:6px; font-size:0.85rem; font-weight:bold; box-shadow:0 2px 4px rgba(245,158,11,0.3); animation: fadeIn 0.5s;';
                 badge.innerHTML = `⚠️ 仓库剩余待匹配有此货号 (${count} 件)`;
                 
-                card.querySelector('div[style*="flex:1"]').appendChild(badge);
+                // 插入到卡片的 Body 部分
+                card.querySelector('.pur-body').appendChild(badge);
             }
         });
     }
@@ -722,7 +666,7 @@
     function togglePurchased(sku, checked) {
         if (checked) purchasedSkus.add(sku);
         else purchasedSkus.delete(sku);
-        showToast(checked ? '✅ 已标记为已采购' : '标记已取消');
+        showToast(checked ? '✅ 已标记为已完成采购' : '标记已取消');
         if (lastPurLines.length > 0) {
             renderPur(lastPurLines, lastPurHead);
         }
@@ -732,23 +676,36 @@
     function copyAllSingleOrders() {
         const singleOids = [];
         document.querySelectorAll('#purResultArea .res-item').forEach(card => {
-            const countSpan = card.querySelector('span:last-child');
-            if (countSpan && countSpan.textContent.includes('1 单')) {
-                const orderDiv = card.querySelector('div[style*="margin-top:8px"]');
-                if (orderDiv) {
-                    const oids = orderDiv.textContent.replace('订单号：', '').trim();
-                    if (oids) singleOids.push(oids);
+            const countBadge = card.querySelector('.count-badge');
+            if (countBadge && countBadge.textContent.includes('1 单')) {
+                // 提取相关订单文本
+                const bodyText = card.querySelector('.pur-body').textContent;
+                const match = bodyText.match(/相关订单：\s*([\w\d]+)/);
+                if (match && match[1]) {
+                    singleOids.push(match[1].trim());
                 }
             }
         });
         if (singleOids.length === 0) return showToast("没有找到单件订单");
-        navigator.clipboard.writeText(singleOids.join(',')).then(() => {
-            showToast(`✅ 已复制 ${singleOids.length} 个单件订单号`);
-        });
+        window.copyText(singleOids.join(','), `共 ${singleOids.length} 个单件订单号`);
     }
 
-    window.copyText = function(text, typeName = '内容') {
-        navigator.clipboard.writeText(text).then(() => showToast(`✅ ${typeName}复制成功`));
+    // 全新升级的全局复制函数 (带防抖与交互动画)
+    window.copyText = function(text, typeName = '内容', btnElement = null) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(`✅ ${typeName}复制成功`);
+            if(btnElement) {
+                const originalHTML = btnElement.innerHTML;
+                btnElement.classList.add('copied');
+                btnElement.innerHTML = '✔ 复制成功';
+                setTimeout(() => {
+                    btnElement.classList.remove('copied');
+                    btnElement.innerHTML = originalHTML;
+                }, 1500);
+            }
+        }).catch(err => {
+            showToast('❌ 复制失败，请重试');
+        });
     };
 
     function renderProfitTable() {
@@ -827,15 +784,58 @@
         }
     }
 
+    // 修复弹窗录入时的体验，不再使用prompt阻断式弹窗
     function addFromMatchToPending(oid, spec) {
-        const sku = prompt("请输入【货号】:", "");
-        if (sku === null || !sku.trim()) return showToast("❌ 货号不能为空");
-        const size = prompt("请输入【尺码】 (例如: M, 42, XL):", "") || "均码";
-        const newEntry = { oid, sku: sku.trim(), spec, size, state: "已到仓" };
-        pendingList.unshift(newEntry);
-        localStorage.setItem(PENDING_KEY, JSON.stringify(pendingList));
-        if (typeof renderPending === "function") renderPending();
-        showToast("✅ 已成功录入待匹配模块");
+        // 创建一个非阻断的悬浮录入框
+        const currentOverlay = document.createElement('div');
+        currentOverlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10001; display:flex; align-items:center; justify-content:center;';
+        
+        currentOverlay.innerHTML = `
+            <div class="manual-content" style="max-width:400px; animation:fadeIn 0.2s;">
+                <h3 style="margin-top:0; color:var(--text); margin-bottom:15px;">📥 录入到待匹配</h3>
+                <div style="margin-bottom:12px;">
+                    <label style="display:block; margin-bottom:4px; font-size:0.85rem; color:var(--text-light);">关联订单号</label>
+                    <input type="text" value="${oid}" disabled style="width:100%; padding:10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; font-size:0.9rem;">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="display:block; margin-bottom:4px; font-size:0.85rem; color:var(--text-light); font-weight:bold;">货号 (必填) <span style="color:red">*</span></label>
+                    <input type="text" id="quickSkuInput" placeholder="请输入货号" style="width:100%; padding:10px; border:2px solid var(--border); border-radius:8px; font-size:0.9rem;" autofocus>
+                </div>
+                <div style="margin-bottom:20px;">
+                    <label style="display:block; margin-bottom:4px; font-size:0.85rem; color:var(--text-light);">尺码/规格 (选填)</label>
+                    <input type="text" id="quickSizeInput" placeholder="例如: M, 42, 均码" style="width:100%; padding:10px; border:2px solid var(--border); border-radius:8px; font-size:0.9rem;">
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button class="btn btn-outline" id="quickCancelBtn">取消</button>
+                    <button class="btn btn-primary" id="quickConfirmBtn">确认录入</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(currentOverlay);
+        
+        // 自动聚焦
+        setTimeout(() => document.getElementById('quickSkuInput').focus(), 100);
+
+        document.getElementById('quickCancelBtn').onclick = () => currentOverlay.remove();
+        document.getElementById('quickConfirmBtn').onclick = () => {
+            const sku = document.getElementById('quickSkuInput').value.trim();
+            const size = document.getElementById('quickSizeInput').value.trim() || "均码";
+            
+            if (!sku) {
+                showToast("❌ 货号不能为空");
+                document.getElementById('quickSkuInput').focus();
+                return;
+            }
+            
+            const newEntry = { oid, sku, spec, size, state: "已到仓" };
+            pendingList.unshift(newEntry);
+            localStorage.setItem(PENDING_KEY, JSON.stringify(pendingList));
+            if (typeof renderPending === "function") renderPending();
+            
+            showToast("✅ 已成功录入待匹配模块");
+            currentOverlay.remove();
+        };
     }
 
     function exportData() {
@@ -892,11 +892,13 @@
         renderPending();
     }
 
+    // 这里由于清空操作属于极高危操作，我保留了原生的 confirm 来避免误触清空所有数据
     function clearPending() {
         if (!confirm("确认清空全部待匹配记录吗？")) return;
         pendingList = [];
         savePending();
         renderPending();
+        showToast("✅ 数据已全部清空");
     }
 
     function renderPending() {
