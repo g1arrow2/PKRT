@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>电商单品利润核算器</title>
+    <title>PKRT计算器</title>
     <style>
         :root {
             --primary: #4F46E5;
@@ -80,8 +80,9 @@
 <div class="container">
     <!-- 切换按钮 -->
     <div class="nav-tabs">
-        <button class="nav-btn active" onclick="switchModule(0)">📝 利润核算器</button>
-        <button class="nav-btn" onclick="switchModule(1)">📊 ROI核算器</button>
+        <button class="nav-btn active" onclick="switchModule(0)">📝 利润估算器</button>
+        <button class="nav-btn" onclick="switchModule(1)">📊 ROI测算器</button>
+        <button class="nav-btn" onclick="switchModule(2)">💹 定价核算器</button>
     </div>
 
     <!-- 模块1：利润核算器（左右布局） -->
@@ -130,7 +131,7 @@
                 <div class="form-group"><label>商品售价 (元)</label><input type="number" id="roi_price" value="100" oninput="calculate()"></div>
                 <div class="form-group"><label>产品成本 (元)</label><input type="number" id="roi_cost" value="30" oninput="calculate()"></div>
                 <div class="form-group"><label>平台扣点率 (%)</label><input type="number" id="roi_feeRate" value="30" oninput="calculate()"></div>
-                <div class="form-group"><label>快递费 (元)</label><input type="number" id="roi_logistics" value="8" oninput="calculate()"></div>
+                <div class="form-group"><label>快递费 (元)</label><input type="number" id="roi_logistics" value="5" oninput="calculate()"></div>
                 <div class="form-group"><label>其他成本 (元)</label><input type="number" id="roi_other" value="2" oninput="calculate()"></div>
                 <div class="form-group"><label>退货款率 (%)</label><input type="number" id="roi_returnRate" value="30" oninput="calculate()"></div>
                 <div class="form-group"><label>每单成交费用 (元)</label><input type="number" id="roi_perOrderFee" value="35" oninput="calculate()"></div>
@@ -148,6 +149,55 @@
                 <div class="roi-box">
                     <label>盈亏平衡ROI</label>
                     <span class="amount" id="outBreakEvenROI">0.00倍</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模块3：定价测算（左右布局） -->
+    <div id="module-2" class="module">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+            <div class="card">
+                <h2>💹 定价测算参数</h2>
+                <div class="section-title">定价与费率</div>
+                <div class="form-group"><label>定价 (元)</label><input type="number" id="price_price" value="109" oninput="calculate()"></div>
+                <div class="form-group"><label>平台费率 (%)</label><input type="number" id="price_feeRate" value="30" oninput="calculate()"></div>
+                <div class="form-group"><label>运费 (元)</label><input type="number" id="price_shipping" value="10" oninput="calculate()"></div>
+
+                <div class="section-title">成本明细</div>
+                <div class="form-group"><label>吊牌成本 (元)</label><input type="number" id="price_tagCost" value="0.15" step="0.01" oninput="calculate()"></div>
+                <div class="form-group"><label>包装成本 (元)</label><input type="number" id="price_packCost" value="0.7" step="0.01" oninput="calculate()"></div>
+                <div class="form-group"><label>其他成本 (元)</label><input type="number" id="price_otherCost" value="0.15" step="0.01" oninput="calculate()"></div>
+                <div class="form-group"><label>可能退货成本 (元)</label><input type="number" id="price_returnCost" value="1.5" step="0.01" oninput="calculate()"></div>
+                <div class="form-group"><label>产品成本 (元)</label><input type="number" id="price_productCost" value="30" oninput="calculate()"></div>
+
+                <div class="section-title">利润设定</div>
+                <div class="form-group"><label>目标利润 (元)</label><input type="number" id="price_targetProfit" value="20" oninput="calculate()"></div>
+            </div>
+
+            <div class="card">
+                <h2>📈 测算结果</h2>
+                <div class="section-title">利润率分析</div>
+                <div class="result-group"><label>成本净利润</label><span class="result-value" id="outCostNetProfit">￥0.00</span></div>
+                <div class="result-group"><label>成本净利润率</label><span class="result-value" id="outCostNetMargin">0.00%</span></div>
+                <div class="result-group"><label>收入利润率</label><span class="result-value" id="outRevenueMargin">0.00%</span></div>
+                
+                <div class="section-title">产品成本分析</div>
+                <div class="result-group"><label>产品成本线</label><span class="result-value" id="outProductCostLine">￥0.00</span></div>
+
+                <div class="profit-box">
+                    <label>预估利润</label>
+                    <span class="amount" id="outEstProfit">￥0.00</span>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+                    <div class="card" style="padding:16px; margin:0;">
+                        <label style="font-size:0.85rem; color:var(--text-muted);">打9折利润</label>
+                        <div style="font-weight:700; font-size:1.2rem;" id="outProfit90">￥0.00</div>
+                    </div>
+                    <div class="card" style="padding:16px; margin:0;">
+                        <label style="font-size:0.85rem; color:var(--text-muted);">打8折利润</label>
+                        <div style="font-weight:700; font-size:1.2rem;" id="outProfit80">￥0.00</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -219,6 +269,37 @@
             document.getElementById('outNetMargin').innerText = (netMargin * 100).toFixed(2) + '%';
             document.getElementById('outExpectedROI').innerText = expectedROI.toFixed(2) + '%';
             document.getElementById('outBreakEvenROI').innerText = breakEvenROI.toFixed(2) + '倍';
+        }
+        // ==================== 模块3：定价测算 ====================
+        const price_price = parseFloat(document.getElementById('price_price').value) || 0;
+        const price_feeRate = parseFloat(document.getElementById('price_feeRate').value) / 100 || 0;
+        const price_shipping = parseFloat(document.getElementById('price_shipping').value) || 0;
+        const price_tagCost = parseFloat(document.getElementById('price_tagCost').value) || 0;
+        const price_packCost = parseFloat(document.getElementById('price_packCost').value) || 0;
+        const price_otherCost = parseFloat(document.getElementById('price_otherCost').value) || 0;
+        const price_returnCost = parseFloat(document.getElementById('price_returnCost').value) || 0;
+        const price_productCost = parseFloat(document.getElementById('price_productCost').value) || 0;
+        const price_targetProfit = parseFloat(document.getElementById('price_targetProfit').value) || 0;
+
+        const fixedCosts = price_shipping + price_tagCost + price_packCost + price_otherCost + price_returnCost;
+        const estProfit = price_price - (price_price * price_feeRate) - fixedCosts - price_productCost;
+        const profit90 = price_price * 0.9 - (price_price * 0.9 * price_feeRate) - fixedCosts - price_productCost;
+        const profit80 = price_price * 0.8 - (price_price * 0.8 * price_feeRate) - fixedCosts - price_productCost;
+        const costNetProfit = estProfit;
+        const costNetMargin = price_productCost > 0 ? (costNetProfit / price_productCost) * 100 : 0;
+        const revenueProfit = estProfit;
+        const revenueMargin = price_price > 0 ? (revenueProfit / price_price) * 100 : 0;
+        const productCostLine = price_price - (price_price * price_feeRate) - fixedCosts - price_targetProfit;
+
+        if (document.getElementById('outEstProfit')) {
+            document.getElementById('outEstProfit').innerText = '￥' + estProfit.toFixed(2);
+            document.getElementById('outProfit90').innerText = '￥' + profit90.toFixed(2);
+            document.getElementById('outProfit80').innerText = '￥' + profit80.toFixed(2);
+            document.getElementById('outCostNetProfit').innerText = '￥' + costNetProfit.toFixed(2);
+            document.getElementById('outCostNetMargin').innerText = costNetMargin.toFixed(2) + '%';
+            document.getElementById('outRevenueProfit').innerText = '￥' + revenueProfit.toFixed(2);
+            document.getElementById('outRevenueMargin').innerText = revenueMargin.toFixed(2) + '%';
+            document.getElementById('outProductCostLine').innerText = '￥' + productCostLine.toFixed(2);
         }
     }
 
