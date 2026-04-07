@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PKRT得物运营-本地缓存 (库存比对版)</title>
+    <title>PKRT得物运营-本地缓存 (库存比对+提成对账终极版)</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -92,14 +92,17 @@
         .stat-item:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); }
       
         .stat-value { font-size:1.5rem; font-weight:700; color:var(--primary); margin-bottom:8px; }
+        .stat-value.profit { color: var(--success); }
+        .stat-value.cost { color: var(--danger); }
       
         table { width:100%; border-collapse:collapse; font-size:0.9rem; }
-        th, td { padding:14px 16px; border:1px solid var(--border); text-align:left; }
+        th, td { padding:14px 16px; border:1px solid var(--border); text-align:left; vertical-align: middle; }
         th { background:var(--bg); color:var(--text-light); font-weight:600; text-transform:uppercase; font-size:0.8rem; letter-spacing:0.5px; }
         tr:hover td { background:var(--primary-light); }
       
         .warn-row { background-color: var(--warning-light) !important; }
         .warn-row td { color: #92400E; font-weight: 600; }
+        .row-return { background-color: #FEF2F2 !important; }
       
         .btn { padding:10px 20px; border-radius:10px; border:none; cursor:pointer; font-weight:600; font-size:0.9rem; transition:all 0.3s ease; display:inline-flex; align-items:center; gap:6px; }
         .btn:hover { transform:translateY(-2px); box-shadow:var(--shadow); }
@@ -130,27 +133,15 @@
         .state-return { background: var(--danger-light); color: #991B1B; font-weight: 600; padding: 4px 12px; border-radius: 6px; }
         .state-matched { background: var(--bg); color: var(--text-light); font-weight: 600; padding: 4px 12px; border-radius: 6px; }
       
-        @media (max-width: 1200px) { .pending-input-grid { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 768px) { body { padding: 16px; } .nav-tabs { flex-direction: column; } .pending-input-grid { grid-template-columns: 1fr; } }
-
-        /* --- 全新升级的组件样式 --- */
-        
-        /* 1. 现代化的复制按钮 */
-        .btn-copy-modern {
-            background: var(--bg); color: var(--text-light); border: 1px solid var(--border);
-            border-radius: 6px; padding: 4px 10px; font-size: 0.8rem; font-weight: 600;
-            cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 4px;
-        }
+        .btn-copy-modern { background: var(--bg); color: var(--text-light); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 4px; }
         .btn-copy-modern:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
         .btn-copy-modern.copied { background: var(--success); color: white; border-color: var(--success); }
 
-        /* 2. 采购卡片全新排版 */
         .pur-card { flex-direction: column; align-items: stretch; gap: 0; padding: 0; overflow: hidden; }
         .pur-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #FAFAFA; border-bottom: 1px solid var(--border); transition: background 0.3s; }
         .pur-body { padding: 16px 20px; }
         .pur-sku-title { font-size: 1.15rem; font-weight: 800; color: var(--text); font-family: 'SF Mono', Monaco, monospace; display: flex; align-items: center; gap: 8px; }
         
-        /* 3. 自定义精美复选框 */
         .custom-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
         .custom-checkbox input { display: none; }
         .chk-box { width: 22px; height: 22px; border: 2px solid #CBD5E1; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; background: white; }
@@ -159,11 +150,19 @@
         .chk-label { font-size: 0.95rem; font-weight: 600; color: var(--text-light); transition: color 0.2s; }
         .custom-checkbox input:checked ~ .chk-label { color: var(--success); }
 
-        /* 4. 已采购状态的卡片质感 */
         .pur-card.is-purchased { border-color: var(--success); box-shadow: 0 0 0 1px var(--success); }
         .pur-card.is-purchased .pur-header { background: var(--success-light); }
         .pur-card.is-purchased .pur-sku-title { color: #065F46; }
         .pur-card.is-purchased .count-badge { background: white; color: var(--success) !important; }
+
+        .search-input { padding: 10px 16px; border: 2px solid var(--border); border-radius: 8px; font-size: 0.95rem; outline: none; transition: 0.3s; width: 250px; }
+        .search-input:focus { border-color: var(--primary); background: var(--primary-light); }
+        .table-input { width: 100%; padding: 8px; border: 2px solid var(--border); border-radius: 6px; font-size: 0.9rem; outline: none; box-sizing: border-box; transition: 0.3s; }
+        .table-input:focus { border-color: var(--primary); }
+        .table-select { padding: 8px; border: 2px solid var(--border); border-radius: 6px; font-size: 0.9rem; outline: none; }
+
+        @media (max-width: 1200px) { .pending-input-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 768px) { body { padding: 16px; } .nav-tabs { flex-direction: column; } .pending-input-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -198,6 +197,7 @@
         <button class="nav-btn active" onclick="switchTab('match-mod')">📦 快递匹配</button>
         <button class="nav-btn" onclick="switchTab('purchase-mod')">📋 采购汇总</button>
         <button class="nav-btn" onclick="switchTab('profit-mod')">💰 利润对账</button>
+        <button class="nav-btn" onclick="switchTab('commission-mod')">📊 提成对帐</button>
         <button class="nav-btn" onclick="switchTab('aftersale-mod')">⚠️ 售后信息</button>
         <button class="nav-btn" onclick="switchTab('admin-mod')">⚙️ 管理中心</button>
         <button class="nav-btn" onclick="switchTab('pending-mod')">📦 待匹配订单</button>
@@ -262,11 +262,8 @@
             </div>
         </div>
         <div id="purResultArea" style="display:flex; flex-direction:column; gap:16px;"></div>
-        
         <div style="text-align:right; margin-top:20px;">
-            <button class="btn btn-success" onclick="copyAllSingleOrders()" style="padding:12px 24px;">
-                📋 一键复制所有单件订单号
-            </button>
+            <button class="btn btn-success" onclick="copyAllSingleOrders()" style="padding:12px 24px;">📋 一键复制所有单件订单号</button>
         </div>
     </div>
 
@@ -290,17 +287,77 @@
             <h2>利润明细（可编辑）</h2>
             <table>
                 <thead>
-                    <tr>
-                        <th>得物单号</th>
-                        <th>拼多多单号</th>
-                        <th>收入 (¥)</th>
-                        <th>成本 (¥)</th>
-                        <th>单利 (¥)</th>
-                        <th>利润率</th>
-                    </tr>
+                    <tr><th>得物单号</th><th>拼多多单号</th><th>收入 (¥)</th><th>成本 (¥)</th><th>单利 (¥)</th><th>利润率</th></tr>
                 </thead>
                 <tbody id="profitBody"></tbody>
             </table>
+        </div>
+    </div>
+
+    <div id="commission-mod" class="module-content">
+        <div class="card">
+            <h2>PKRT提成对帐单 - 数据概览</h2>
+            <div class="stat-grid" style="grid-template-columns: repeat(5, 1fr);">
+                <div class="stat-item">
+                    <div id="comm-stat-income" class="stat-value" style="color: #3B82F6;">¥0.00</div>
+                    <div style="color:var(--text-light); font-weight:600;">总收入</div>
+                </div>
+                <div class="stat-item">
+                    <div id="comm-stat-cost" class="stat-value cost">¥0.00</div>
+                    <div style="color:var(--text-light); font-weight:600;">总成本</div>
+                </div>
+                <div class="stat-item">
+                    <div id="comm-stat-profit" class="stat-value profit">¥0.00</div>
+                    <div style="color:var(--text-light); font-weight:600;">总利润</div>
+                </div>
+                <div class="stat-item">
+                    <div id="comm-stat-qty" class="stat-value" style="color: var(--text);">0</div>
+                    <div style="color:var(--text-light); font-weight:600;">订单数量</div>
+                </div>
+                <div class="stat-item">
+                    <div id="comm-stat-commission" class="stat-value" style="color: #F59E0B;">¥0.00</div>
+                    <div style="color:var(--text-light); font-weight:600;">总提成 (利润×20%)</div>
+                </div>
+            </div>
+            
+            <div class="file-box">
+                <div style="font-size:2rem; margin-bottom:8px;">📊</div>
+                <div>点击或拖拽上传《销售订单表》(包含退货工作表)</div>
+                <div id="comm-upload-status" style="font-size:0.85rem; margin-top:8px;">自动解析工作表1(销售数据) 与 "退货退款"工作表(CA列扣减)</div>
+                <input type="file" accept=".xlsx, .xls, .csv" onchange="handleCommissionExcel(this)">
+            </div>
+        </div>
+
+        <div class="card" id="comm-details-card" style="display: none;">
+            <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap;">
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-outline" onclick="markAsSharedGroup()">🔗 标记共用</button>
+                    <button class="btn btn-outline" onclick="clearSharedGroup()" style="color:var(--danger); border-color:var(--danger-light);">🚫 解除标记</button>
+                    <button class="btn btn-primary" onclick="copyFilteredCommissionOids()">📋 复制单号</button>
+                    <button class="btn btn-success" onclick="exportCommissionData()">📤 导出当前明细</button>
+                </div>
+                <input type="text" id="commSkuFilter" class="search-input" placeholder="🔍 输入货号进行筛选" onkeyup="renderCommissionTable()">
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 40px; text-align: center;"><input type="checkbox" id="commSelectAll" onchange="toggleAllCommissionSelect(this.checked)"></th>
+                            <th style="width: 140px;">订单号 (A)</th>
+                            <th style="width: 100px;">货号 (D)</th>
+                            <th style="width: 75px;">退货</th>
+                            <th style="width: 90px;">收入 (CF)</th>
+                            <th style="width: 130px;">成本 (¥)</th>
+                            <th style="width: 90px;">其他成本</th>
+                            <th style="width: 90px;">退货成本</th>
+                            <th style="width: 95px;">退货扣减</th>
+                            <th style="width: 60px;">数量</th>
+                            <th style="width: 90px;">利润 (¥)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="commBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -358,9 +415,7 @@
                 <input id="p_sku" placeholder="🏷️ 货号">
                 <input id="p_spec" placeholder="📏 规格">
                 <select id="p_size">
-                    <option>XS</option><option>S</option><option>M</option>
-                    <option>L</option><option>XL</option><option>XXL</option>
-                    <option>3XL</option><option>其他</option>
+                    <option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>3XL</option><option>其他</option>
                 </select>
                 <select id="p_state">
                     <option>已到仓</option><option>在途</option><option>已退货</option><option>已匹配</option>
@@ -377,25 +432,24 @@
 </div>
 
 <script>
-    // 增加 pendingMatchSkus 缓存用于货号比对
+    // ===== 全局状态与基础函数 =====
     let dataStore = { pddMap: new Map(), jstMap: new Map(), pddPrice: new Map(), profitList: [], afterList: [], pendingMatchSkus: new Map() };
     const LOG_KEY = 'sys_logs_v53';
     let logs = JSON.parse(localStorage.getItem(LOG_KEY)) || [];
     let currentMatchItems = [];
     let clearConfirmStage = 0;
     let purchasedSkus = new Set();
-    
-    // 保存得物订单数据以便重新渲染
     let lastPurLines = [];
     let lastPurHead = [];
+    
+    // 提成对账专用缓存
+    let commissionData = [];
+    let returnDataMap = new Map();
+    let groupCounter = 1;
 
     function showToast(msg) {
         const toast = document.getElementById('toast');
-        if (toast) {
-            toast.innerText = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
-        }
+        if (toast) { toast.innerText = msg; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2500); }
     }
 
     function switchTab(id) {
@@ -405,6 +459,17 @@
         if(event) event.currentTarget.classList.add('active');
     }
 
+    window.copyText = function(text, typeName = '内容', btnElement = null) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(`✅ ${typeName}复制成功`);
+            if(btnElement) {
+                const originalHTML = btnElement.innerHTML; btnElement.classList.add('copied'); btnElement.innerHTML = '✔ 成功';
+                setTimeout(() => { btnElement.classList.remove('copied'); btnElement.innerHTML = originalHTML; }, 1500);
+            }
+        }).catch(err => showToast('❌ 复制失败，请重试'));
+    };
+
+    // ===== 原有模块解析逻辑 =====
     function handleExcel(input, type) {
         const file = input.files[0];
         if(!file) return;
@@ -423,10 +488,18 @@
     function processData(lines, type) {
         const head = lines[0];
         if(!head) return;
+        
         if(type === 'pdd') {
-            const iT = head.indexOf('物流单号'), iO = head.indexOf('订单号'), iI = head.indexOf('商品主图'), iP = head.indexOf('订单金额'), iQ = head.indexOf('数量'), iS = 11;
+            // ✨ 修复：强制将物流单号指定为 Y列 (索引 24)
+            const iT = 24; 
+            const iO = head.indexOf('订单号') > -1 ? head.indexOf('订单号') : 0;
+            const iI = head.indexOf('商品主图') > -1 ? head.indexOf('商品主图') : 0;
+            const iP = head.indexOf('订单金额') > -1 ? head.indexOf('订单金额') : 0;
+            const iQ = head.indexOf('数量') > -1 ? head.indexOf('数量') : 0;
+            const iS = 11;
+            
             lines.slice(1).forEach(cols => {
-                const track = String(cols[iT]).trim();
+                const track = String(cols[iT] || '').trim();
                 if(!track || track === "undefined") return;
                 dataStore.pddPrice.set(String(cols[iO]).trim(), (parseFloat(cols[iP])||0)/(parseInt(cols[iQ])||1));
                 if(!dataStore.pddMap.has(track)) dataStore.pddMap.set(track, []);
@@ -434,26 +507,22 @@
             });
         } else if(type === 'jst') {
             lines.slice(1).forEach(cols => {
-                const pddOid = String(cols[2]||cols[1]).replace(':','').trim();
-                const dwOid = String(cols[0]).trim();
+                const pddOid = String(cols[2]||cols[1]||'').replace(':','').trim();
+                const dwOid = String(cols[0]||'').trim();
                 if(pddOid && dwOid) {
                     if(!dataStore.jstMap.has(pddOid)) dataStore.jstMap.set(pddOid, []);
                     if(!dataStore.jstMap.get(pddOid).includes(dwOid)) dataStore.jstMap.get(pddOid).push(dwOid);
                 }
             });
         } else if(type === 'pur') {
-            lastPurLines = lines;
-            lastPurHead = head;
-            renderPur(lines, head);
+            lastPurLines = lines; lastPurHead = head; renderPur(lines, head);
         } else if(type === 'profit') {
             const iOid = head.indexOf('订单号'), iN = 13;
-            dataStore.profitList = [];
-            let dwToPdd = new Map();
+            dataStore.profitList = []; let dwToPdd = new Map();
             dataStore.jstMap.forEach((dwList, pdd) => dwList.forEach(dw => dwToPdd.set(dw, pdd)));
             lines.slice(1).forEach(cols => {
                 if(!cols[iOid]) return;
-                const dw = String(cols[iOid]).trim();
-                const pdd = dwToPdd.get(dw) || "";
+                const dw = String(cols[iOid]).trim(); const pdd = dwToPdd.get(dw) || "";
                 dataStore.profitList.push({ dw, pdd, inc: parseFloat(cols[iN])||0, cost: dataStore.pddPrice.get(pdd)||0 });
             });
             renderProfitTable();
@@ -461,41 +530,228 @@
             renderAfter(lines, head);
         } else if(type === 'pending_match') {
             dataStore.pendingMatchSkus.clear();
-            // 假设 B 列是货号 (索引1)
             lines.slice(1).forEach(cols => {
                 const sku = String(cols[1] || '').trim();
-                if(sku) {
-                    dataStore.pendingMatchSkus.set(sku, (dataStore.pendingMatchSkus.get(sku) || 0) + 1);
-                }
+                if(sku) dataStore.pendingMatchSkus.set(sku, (dataStore.pendingMatchSkus.get(sku) || 0) + 1);
             });
-            highlightPendingSkus();
-            showToast(`✅ 待匹配库解析完成，发现 ${dataStore.pendingMatchSkus.size} 款货号库存`);
+            highlightPendingSkus(); showToast(`✅ 待匹配库解析完成，发现 ${dataStore.pendingMatchSkus.size} 款货号库存`);
         }
     }
 
+    // ===== ✨ 提成对账模块逻辑 ✨ =====
+    function handleCommissionExcel(input) {
+        const file = input.files[0];
+        if(!file) return;
+        
+        document.getElementById('comm-upload-status').innerText = "加载中...";
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                
+                // 1. 读取退货退款订单缓存
+                returnDataMap.clear();
+                const returnSheetName = wb.SheetNames.find(name => name.includes('退货') || name.includes('退款'));
+                if (returnSheetName) {
+                    const returnLines = XLSX.utils.sheet_to_json(wb.Sheets[returnSheetName], { header: 1, defval: "" });
+                    const COL_OID = 0, COL_CA = 78;
+                    returnLines.slice(1).forEach(row => {
+                        const oid = String(row[COL_OID] || '').trim();
+                        if(oid) returnDataMap.set(oid, parseFloat(row[COL_CA]) || 0);
+                    });
+                } else {
+                    showToast("⚠️ 未找到包含“退货/退款”的工作表，自动扣减将失效");
+                }
+
+                // 2. 读取销售订单表
+                const salesLines = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: "" });
+                processCommissionData(salesLines);
+                
+                document.getElementById('comm-upload-status').innerText = `✅ 成功: 加载 ${commissionData.length} 条销售记录, ${returnDataMap.size} 条退货规则`;
+                document.getElementById('comm-details-card').style.display = 'block';
+            } catch(err) { 
+                showToast("文件解析错误，请检查Excel文件");
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function processCommissionData(lines) {
+        commissionData = [];
+        const COL_A = 0, COL_D = 3, COL_CF = 83; 
+
+        lines.slice(1).forEach((row, index) => {
+            const oid = String(row[COL_A] || '').trim();
+            if(!oid) return; 
+
+            commissionData.push({
+                _id: index, oid: oid, sku: String(row[COL_D] || '').trim(),
+                isReturn: '否', income: parseFloat(row[COL_CF]) || 0,  
+                cost: 0, otherCost: 3, returnCost: 0, returnDeduction: 0, qty: 1,
+                selected: false, groupId: null
+            });
+        });
+        renderCommissionTable();
+    }
+
+    function renderCommissionTable() {
+        const filterStr = document.getElementById('commSkuFilter').value.trim().toUpperCase();
+        const tbody = document.getElementById('commBody');
+        tbody.innerHTML = '';
+        
+        let sumCost = 0, sumProfit = 0, sumQty = 0, sumIncome = 0;
+
+        commissionData.forEach((item) => {
+            if (filterStr && !item.sku.toUpperCase().includes(filterStr)) return;
+
+            const isRet = item.isReturn === '是';
+            const rawDeduction = item.returnDeduction === '?' ? 0 : Number(item.returnDeduction);
+            const actualDeduction = Math.abs(rawDeduction); // 绝对值防错
+            
+            const rowCost = Number(item.cost) + Number(item.otherCost) + Number(item.returnCost) + actualDeduction;
+            const rowProfit = Number(item.income) - rowCost;
+
+            sumCost += rowCost; sumProfit += rowProfit; sumQty += Number(item.qty); sumIncome += Number(item.income);
+
+            const groupBadge = item.groupId ? `<div style="display:inline-block; background:#E0E7FF; color:#4F46E5; padding:2px 6px; border-radius:4px; font-size:11px; margin-left:6px; font-weight:bold;">📦组${item.groupId}</div>` : '';
+            const tr = document.createElement('tr');
+            if (isRet) tr.className = 'row-return'; 
+            
+            tr.innerHTML = `
+                <td style="text-align: center;"><input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleCommissionSelect(${item._id}, this.checked)"></td>
+                <td style="font-size: 0.85rem;">${item.oid}${groupBadge}</td>
+                <td style="font-family: monospace; font-weight: bold;">${item.sku}</td>
+                <td><select class="table-select" style="padding: 6px; font-size: 0.85rem;" onchange="updateCommissionField(${item._id}, 'isReturn', this.value)"><option value="否" ${!isRet ? 'selected' : ''}>否</option><option value="是" ${isRet ? 'selected' : ''}>是</option></select></td>
+                <td><input type="number" class="table-input" value="${item.income}" onchange="updateCommissionField(${item._id}, 'income', this.value)"></td>
+                <td>
+                    <div style="display: flex; gap: 4px; align-items: center;">
+                        <input type="number" class="table-input" value="${item.cost}" onchange="updateCommissionField(${item._id}, 'cost', this.value)">
+                        <button class="btn-outline" style="padding: 4px 6px; font-size: 14px; cursor: pointer;" onclick="calcMultiCost(${item._id}, ${item.qty})" title="多单计算">🧮</button>
+                    </div>
+                </td>
+                <td><input type="number" class="table-input" value="${item.otherCost}" onchange="updateCommissionField(${item._id}, 'otherCost', this.value)"></td>
+                <td><input type="number" class="table-input" value="${item.returnCost}" onchange="updateCommissionField(${item._id}, 'returnCost', this.value)"></td>
+                <td><input type="text" class="table-input" value="${item.returnDeduction}" placeholder="0" style="${item.returnDeduction === '?' ? 'color: var(--danger); font-weight: bold; background: var(--danger-light); text-align: center;' : ''}" onchange="updateCommissionField(${item._id}, 'returnDeduction', this.value)"></td>
+                <td><input type="number" class="table-input" value="${item.qty}" min="1" onchange="updateCommissionField(${item._id}, 'qty', this.value)"></td>
+                <td style="font-weight: bold; color: ${rowProfit < 0 ? 'var(--danger)' : 'var(--success)'};">¥${rowProfit.toFixed(2)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('comm-stat-income').innerText = '¥' + sumIncome.toFixed(2);
+        document.getElementById('comm-stat-cost').innerText = '¥' + sumCost.toFixed(2);
+        document.getElementById('comm-stat-profit').innerText = '¥' + sumProfit.toFixed(2);
+        document.getElementById('comm-stat-qty').innerText = sumQty;
+        document.getElementById('comm-stat-commission').innerText = '¥' + (sumProfit > 0 ? sumProfit * 0.2 : 0).toFixed(2);
+    }
+
+    function updateCommissionField(id, field, value) {
+        const item = commissionData.find(d => d._id === id);
+        if(!item) return;
+
+        // 自动平摊计算
+        if (field === 'cost' && item.groupId) {
+            const totalGroupCost = value === '' ? 0 : parseFloat(value) || 0;
+            const groupItems = commissionData.filter(d => d.groupId === item.groupId);
+            const totalQty = groupItems.reduce((sum, d) => sum + Number(d.qty), 0);
+            const singleCost = totalQty > 0 ? (totalGroupCost / totalQty) : 0;
+            groupItems.forEach(d => { d.cost = singleCost.toFixed(2); });
+            showToast(`🧮 [组${item.groupId}] 总成本 ¥${totalGroupCost} 已平摊至 ${totalQty} 件商品`);
+            renderCommissionTable(); return;
+        }
+
+        if (field === 'isReturn') {
+            item.isReturn = value;
+            if (value === '是') {
+                item.cost = 0; item.returnCost = 5.05;
+                if (typeof returnDataMap !== 'undefined' && returnDataMap.has(item.oid)) {
+                    item.returnDeduction = returnDataMap.get(item.oid);
+                } else { item.returnDeduction = '?'; }
+            } else {
+                item.returnCost = 0; item.returnDeduction = 0;
+            }
+        } else {
+            if (value === '?') item[field] = '?';
+            else item[field] = value === '' ? 0 : parseFloat(value) || 0;
+        }
+        renderCommissionTable();
+    }
+
+    window.calcMultiCost = function(id, qty) {
+        const input = prompt(`🧮 多单成本计算\n\n请输入该批订单的总成本(支持算式，如 150 或 50*3+10)\n将自动除以数量(${qty})填入：`);
+        if (!input) return;
+        try {
+            const exp = input.replace(/（/g, '(').replace(/）/g, ')').replace(/＋/g, '+').replace(/－/g, '-').replace(/×/g, '*').replace(/÷/g, '/');
+            if (!/^[\d\.\+\-\*\/\(\) ]+$/.test(exp)) return showToast("❌ 输入包含无效字符");
+            const total = new Function('return ' + exp)();
+            if (isNaN(total) || total === null) throw new Error();
+            updateCommissionField(id, 'cost', (total / (qty || 1)).toFixed(2));
+            showToast("✅ 计算成功");
+        } catch (e) { showToast("❌ 计算格式错误"); }
+    };
+
+    function toggleCommissionSelect(id, checked) { const item = commissionData.find(d => d._id === id); if(item) item.selected = checked; }
+    function toggleAllCommissionSelect(checked) {
+        const filterStr = document.getElementById('commSkuFilter').value.trim().toUpperCase();
+        commissionData.forEach(item => { if (!filterStr || item.sku.toUpperCase().includes(filterStr)) item.selected = checked; });
+        renderCommissionTable();
+    }
+
+    function markAsSharedGroup() {
+        const selectedItems = commissionData.filter(d => d.selected);
+        if (selectedItems.length < 2) return showToast("⚠️ 请至少勾选2个订单进行合并");
+        const gId = groupCounter++;
+        selectedItems.forEach(item => { item.groupId = gId; item.selected = false; });
+        document.getElementById('commSelectAll').checked = false;
+        renderCommissionTable(); showToast(`✅ 已合并为 [📦组${gId}]`);
+    }
+
+    function clearSharedGroup() {
+        const selectedItems = commissionData.filter(d => d.selected);
+        if (selectedItems.length === 0) return showToast("⚠️ 请先勾选要解除的订单");
+        selectedItems.forEach(item => { item.groupId = null; item.selected = false; });
+        document.getElementById('commSelectAll').checked = false;
+        renderCommissionTable(); showToast(`✅ 已解除共用标记`);
+    }
+
+    function copyFilteredCommissionOids() {
+        const filterStr = document.getElementById('commSkuFilter').value.trim().toUpperCase();
+        const oidsToCopy = commissionData.filter(item => !filterStr || item.sku.toUpperCase().includes(filterStr)).map(item => item.oid);
+        if (oidsToCopy.length === 0) return showToast("没有找到可复制的订单号");
+        window.copyText(oidsToCopy.join(','), `共 ${oidsToCopy.length} 个订单号`);
+    }
+
+    function exportCommissionData() {
+        if (commissionData.length === 0) return showToast("❌ 没有数据可导出");
+        const exportArr = commissionData.map(item => {
+            const actualDeduction = Math.abs(item.returnDeduction === '?' ? 0 : Number(item.returnDeduction));
+            const rowCost = Number(item.cost) + Number(item.otherCost) + Number(item.returnCost) + actualDeduction;
+            return {
+                "批次标记": item.groupId ? `组${item.groupId}` : '-', "订单号": item.oid, "货号": item.sku, "是否退货": item.isReturn,
+                "收入": item.income, "成本": item.cost, "其他成本": item.otherCost, "退货成本": item.returnCost, "退货扣减": item.returnDeduction, "数量": item.qty, "单行利润": (Number(item.income) - rowCost).toFixed(2)
+            };
+        });
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exportArr), "提成明细");
+        XLSX.writeFile(wb, `提成明细报表_${new Date().toLocaleDateString()}.xlsx`);
+    }
+
+    // ===== 原有交互与事件绑定 =====
     document.getElementById('scanIn').addEventListener('keypress', function(e) {
         if(e.key === 'Enter') {
-            const track = this.value.trim();
-            const items = dataStore.pddMap.get(track);
-            const area = document.getElementById('matchResArea');
-            const bulkBtnGroup = document.getElementById('bulkSaveArea');
-            area.innerHTML = '';
-            currentMatchItems = [];
+            const track = this.value.trim(); const items = dataStore.pddMap.get(track);
+            const area = document.getElementById('matchResArea'); const bulkBtnGroup = document.getElementById('bulkSaveArea');
+            area.innerHTML = ''; currentMatchItems = [];
             if(items) {
                 items.forEach((item) => {
                     const matchedDws = dataStore.jstMap.get(String(item.oid).trim()) || [""];
                     matchedDws.forEach((dwVal) => {
-                        const localIdx = currentMatchItems.length;
-                        currentMatchItems.push({ track, pdd: item.oid, spec: item.spec, idx: localIdx });
+                        const localIdx = currentMatchItems.length; currentMatchItems.push({ track, pdd: item.oid, spec: item.spec, idx: localIdx });
                         area.innerHTML += `
                             <div class="res-item" style="align-items: flex-start;">
                                 <img src="${item.img}" class="res-img">
                                 <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
                                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                                        <div style="display:flex; align-items:center; gap:10px;">
-                                            <span class="pdd-oid">PDD: ${item.oid}</span>
-                                            <button class="btn-copy-modern copy-pdd-btn" data-oid="${item.oid}">📋 复制单号</button>
-                                        </div>
+                                        <div style="display:flex; align-items:center; gap:10px;"><span class="pdd-oid">PDD: ${item.oid}</span><button class="btn-copy-modern copy-pdd-btn" data-oid="${item.oid}">📋 复制单号</button></div>
                                         <button class="btn" style="background:var(--primary-light); color:var(--primary); padding:6px 12px; font-size:12px; box-shadow:none;" onclick="addFromMatchToPending('${item.oid}', '${item.spec}')">📥 录入待匹配</button>
                                     </div>
                                     <div style="font-weight:700; color:var(--text); font-size:0.95rem;">规格: <span style="color:var(--primary)">${item.spec}</span></div>
@@ -504,89 +760,45 @@
                             </div>`;
                     });
                 });
-
-                area.querySelectorAll('.copy-pdd-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const oid = this.getAttribute('data-oid');
-                        window.copyText(oid, '拼多多单号', this);
-                    });
-                });
-
-                bulkBtnGroup.style.display = 'flex';
-                setTimeout(() => document.getElementById('dwIn_0').focus(), 100);
-            } else {
-                area.innerHTML = '<div style="color:red; font-weight:bold; padding:10px;">❌ 未查到物流信息</div>';
-                bulkBtnGroup.style.display = 'none';
-            }
+                area.querySelectorAll('.copy-pdd-btn').forEach(btn => { btn.addEventListener('click', function() { window.copyText(this.getAttribute('data-oid'), '拼多多单号', this); }); });
+                bulkBtnGroup.style.display = 'flex'; setTimeout(() => document.getElementById('dwIn_0').focus(), 100);
+            } else { area.innerHTML = '<div style="color:red; font-weight:bold; padding:10px;">❌ 未查到物流信息</div>'; bulkBtnGroup.style.display = 'none'; }
             this.select();
         }
     });
 
     function copyCurrentDwOnly() {
         let dwList = [];
-        currentMatchItems.forEach(item => {
-            const inputEl = document.getElementById(`dwIn_${item.idx}`);
-            if(inputEl) {
-                const val = inputEl.value.trim();
-                if(val) dwList.push(val);
-            }
-        });
-        if(dwList.length > 0) {
-            window.copyText(dwList.join(','), `共 ${dwList.length} 个单号`);
-        } else {
-            showToast("没有可复制的内容");
-        }
+        currentMatchItems.forEach(item => { const val = document.getElementById(`dwIn_${item.idx}`)?.value.trim(); if(val) dwList.push(val); });
+        if(dwList.length > 0) window.copyText(dwList.join(','), `共 ${dwList.length} 个单号`); else showToast("没有可复制的内容");
     }
 
     function bulkSave() {
         if(currentMatchItems.length === 0) return;
-        const time = new Date().toLocaleString();
-        let saveCount = 0;
+        const time = new Date().toLocaleString(); let saveCount = 0;
         currentMatchItems.forEach(item => {
-            const inputEl = document.getElementById(`dwIn_${item.idx}`);
-            if (inputEl) {
-                const val = inputEl.value.trim();
-                if(val) {
-                    logs.unshift({ time, track: item.track, dw: val, spec: item.spec });
-                    saveCount++;
-                }
-            }
+            const val = document.getElementById(`dwIn_${item.idx}`)?.value.trim();
+            if(val) { logs.unshift({ time, track: item.track, dw: val, spec: item.spec }); saveCount++; }
         });
-        localStorage.setItem(LOG_KEY, JSON.stringify(logs));
-        renderLogs();
-        showToast(`成功存档 ${saveCount} 条记录`);
-        document.getElementById('matchResArea').innerHTML = '';
-        document.getElementById('bulkSaveArea').style.display = 'none';
-        document.getElementById('scanIn').value = '';
-        document.getElementById('scanIn').focus();
+        localStorage.setItem(LOG_KEY, JSON.stringify(logs)); renderLogs(); showToast(`成功存档 ${saveCount} 条记录`);
+        document.getElementById('matchResArea').innerHTML = ''; document.getElementById('bulkSaveArea').style.display = 'none';
+        document.getElementById('scanIn').value = ''; document.getElementById('scanIn').focus();
     }
 
     function renderLogs() {
-        const df = document.getElementById('dateFilter').value;
-        const b = document.getElementById('logBody');
-        const rList = document.getElementById('recentList');
-        if(b) b.innerHTML = '';
-        if(rList) rList.innerHTML = '';
-        const filtered = logs.filter(l => !df || l.time.includes(df));
-        filtered.forEach(l => {
-            if(b) b.innerHTML += `<tr><td>${l.time}</td><td>${l.track}</td><td>${l.dw}</td><td>${l.spec}</td></tr>`;
-        });
-        logs.slice(0, 3).forEach(l => {
-            if(rList) rList.innerHTML += `<div class="recent-item"><span>${l.track} → ${l.dw}</span><span>${l.time.split(' ')[1]}</span></div>`;
-        });
+        const df = document.getElementById('dateFilter').value; const b = document.getElementById('logBody'); const rList = document.getElementById('recentList');
+        if(b) b.innerHTML = ''; if(rList) rList.innerHTML = '';
+        logs.filter(l => !df || l.time.includes(df)).forEach(l => { if(b) b.innerHTML += `<tr><td>${l.time}</td><td>${l.track}</td><td>${l.dw}</td><td>${l.spec}</td></tr>`; });
+        logs.slice(0, 3).forEach(l => { if(rList) rList.innerHTML += `<div class="recent-item"><span>${l.track} → ${l.dw}</span><span>${l.time.split(' ')[1]}</span></div>`; });
     }
 
     function exportMatchLogs() {
-        const df = document.getElementById('dateFilter').value;
-        const filtered = logs.filter(l => !df || l.time.includes(df));
+        const df = document.getElementById('dateFilter').value; const filtered = logs.filter(l => !df || l.time.includes(df));
         if(filtered.length === 0) return showToast("当前无可导出的记录");
-        const ws = XLSX.utils.json_to_sheet(filtered);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "匹配历史");
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filtered), "匹配历史");
         XLSX.writeFile(wb, `快递匹配存档_${df || '全部'}.xlsx`);
     }
 
-    // 全新重构的采购汇总渲染逻辑
     function renderPur(lines, head) {
         const iA = head.indexOf('货号'), iO = head.indexOf('订单号'), iM = 12;
         const gs = new Map();
@@ -598,139 +810,74 @@
             }
         });
         const sortedSkus = Array.from(gs.entries()).sort((a, b) => b[1].length - a[1].length);
-        const area = document.getElementById('purResultArea');
-        area.innerHTML = '';
+        const area = document.getElementById('purResultArea'); area.innerHTML = '';
         
         sortedSkus.forEach(([sku, orders]) => {
-            const orderList = orders.map(o => o.oid).join(', ');
-            const count = orders.length;
-            const isPurchased = purchasedSkus.has(sku);
-            
+            const orderList = orders.map(o => o.oid).join(', '), count = orders.length, isPurchased = purchasedSkus.has(sku);
             area.innerHTML += `
             <div class="res-item card pur-card ${isPurchased ? 'is-purchased' : ''}" data-sku="${sku}">
                 <div class="pur-header">
-                    <div class="pur-sku-title">
-                        📦 ${sku} 
-                        <span class="count-badge" style="background:var(--primary-light); color:var(--primary-dark); padding:4px 10px; border-radius:6px; font-size:0.85rem; font-weight:700;">${count} 单</span>
-                    </div>
-                    <label class="custom-checkbox">
-                        <input type="checkbox" ${isPurchased ? 'checked' : ''} onchange="togglePurchased('${sku}', this.checked)">
-                        <div class="chk-box"></div>
-                        <span class="chk-label">已完成采购</span>
-                    </label>
+                    <div class="pur-sku-title">📦 ${sku} <span class="count-badge" style="background:var(--primary-light); color:var(--primary-dark); padding:4px 10px; border-radius:6px; font-size:0.85rem; font-weight:700;">${count} 单</span></div>
+                    <label class="custom-checkbox"><input type="checkbox" ${isPurchased ? 'checked' : ''} onchange="togglePurchased('${sku}', this.checked)"><div class="chk-box"></div><span class="chk-label">已完成采购</span></label>
                 </div>
                 <div class="pur-body">
-                    <div style="font-size:0.9rem; color:var(--text-light); line-height:1.5; margin-bottom:12px; word-break:break-all;">
-                        <strong style="color:var(--text);">相关订单：</strong><br>${orderList}
-                    </div>
+                    <div style="font-size:0.9rem; color:var(--text-light); line-height:1.5; margin-bottom:12px; word-break:break-all;"><strong style="color:var(--text);">相关订单：</strong><br>${orderList}</div>
                     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        <button class="btn-copy-modern" onclick="copyText('${sku}', '货号', this)">📋 复制货号</button>
-                        <button class="btn-copy-modern" onclick="copyText('${orderList}', '订单号', this)">📋 复制所有单号</button>
+                        <button class="btn-copy-modern" onclick="copyText('${sku}', '货号', this)">📋 复制货号</button><button class="btn-copy-modern" onclick="copyText('${orderList}', '订单号', this)">📋 复制所有单号</button>
                     </div>
                 </div>
             </div>`;
         });
-
-        // 渲染完得物清单后，立即检查是否有需要高亮的待匹配库存
         highlightPendingSkus();
     }
 
-    // 独立的高亮逻辑函数
     window.highlightPendingSkus = function() {
         if(dataStore.pendingMatchSkus.size === 0) return;
-        const cards = document.querySelectorAll('#purResultArea .res-item');
-        cards.forEach(card => {
-            const sku = card.getAttribute('data-sku');
-            const existingBadge = card.querySelector('.pending-stock-badge');
-            if (existingBadge) existingBadge.remove();
-
+        document.querySelectorAll('#purResultArea .res-item').forEach(card => {
+            const sku = card.getAttribute('data-sku'); card.querySelector('.pending-stock-badge')?.remove();
             if (dataStore.pendingMatchSkus.has(sku)) {
-                const count = dataStore.pendingMatchSkus.get(sku);
-                
-                if(!card.classList.contains('is-purchased')) {
-                    card.style.border = '2px solid var(--warning)';
-                    card.style.backgroundColor = '#FFFAF0';
-                }
-                
-                const badge = document.createElement('div');
-                badge.className = 'pending-stock-badge';
+                if(!card.classList.contains('is-purchased')) { card.style.border = '2px solid var(--warning)'; card.style.backgroundColor = '#FFFAF0'; }
+                const badge = document.createElement('div'); badge.className = 'pending-stock-badge';
                 badge.style.cssText = 'margin-top:12px; display:inline-flex; align-items:center; background:var(--warning); color:white; padding:6px 14px; border-radius:6px; font-size:0.85rem; font-weight:bold; box-shadow:0 2px 4px rgba(245,158,11,0.3); animation: fadeIn 0.5s;';
-                badge.innerHTML = `⚠️ 仓库剩余待匹配有此货号 (${count} 件)`;
-                
-                // 插入到卡片的 Body 部分
+                badge.innerHTML = `⚠️ 仓库剩余待匹配有此货号 (${dataStore.pendingMatchSkus.get(sku)} 件)`;
                 card.querySelector('.pur-body').appendChild(badge);
             }
         });
     }
 
     function togglePurchased(sku, checked) {
-        if (checked) purchasedSkus.add(sku);
-        else purchasedSkus.delete(sku);
-        showToast(checked ? '✅ 已标记为已完成采购' : '标记已取消');
-        if (lastPurLines.length > 0) {
-            renderPur(lastPurLines, lastPurHead);
-        }
+        checked ? purchasedSkus.add(sku) : purchasedSkus.delete(sku); showToast(checked ? '✅ 已标记为已完成采购' : '标记已取消');
+        if (lastPurLines.length > 0) renderPur(lastPurLines, lastPurHead);
     }
 
-    // 一键复制所有单件订单号
     function copyAllSingleOrders() {
         const singleOids = [];
         document.querySelectorAll('#purResultArea .res-item').forEach(card => {
-            const countBadge = card.querySelector('.count-badge');
-            if (countBadge && countBadge.textContent.includes('1 单')) {
-                // 提取相关订单文本
-                const bodyText = card.querySelector('.pur-body').textContent;
-                const match = bodyText.match(/相关订单：\s*([\w\d]+)/);
-                if (match && match[1]) {
-                    singleOids.push(match[1].trim());
-                }
+            if (card.querySelector('.count-badge')?.textContent.includes('1 单')) {
+                const match = card.querySelector('.pur-body').textContent.match(/相关订单：\s*([\w\d]+)/);
+                if (match && match[1]) singleOids.push(match[1].trim());
             }
         });
         if (singleOids.length === 0) return showToast("没有找到单件订单");
         window.copyText(singleOids.join(','), `共 ${singleOids.length} 个单件订单号`);
     }
 
-    // 全新升级的全局复制函数 (带防抖与交互动画)
-    window.copyText = function(text, typeName = '内容', btnElement = null) {
-        navigator.clipboard.writeText(text).then(() => {
-            showToast(`✅ ${typeName}复制成功`);
-            if(btnElement) {
-                const originalHTML = btnElement.innerHTML;
-                btnElement.classList.add('copied');
-                btnElement.innerHTML = '✔ 复制成功';
-                setTimeout(() => {
-                    btnElement.classList.remove('copied');
-                    btnElement.innerHTML = originalHTML;
-                }, 1500);
-            }
-        }).catch(err => {
-            showToast('❌ 复制失败，请重试');
-        });
-    };
-
     function renderProfitTable() {
-        const tbody = document.getElementById('profitBody');
-        tbody.innerHTML = '';
+        const tbody = document.getElementById('profitBody'); tbody.innerHTML = '';
         let totalInc = 0, totalCost = 0;
         dataStore.profitList.forEach((item, idx) => {
-            const profit = item.inc - item.cost;
-            totalInc += item.inc;
-            totalCost += item.cost;
-            const row = document.createElement('tr');
-            row.innerHTML = `
+            const profit = item.inc - item.cost; totalInc += item.inc; totalCost += item.cost;
+            tbody.innerHTML += `<tr>
                 <td>${item.dw}</td>
-                <td><input type="text" value="${item.pdd || ''}" style="width:100%; padding:8px 12px; border:2px solid var(--border); border-radius:10px; font-size:0.95rem;" onchange="updateProfitRow(${idx}, 'pdd', this.value)"></td>
-                <td><input type="number" value="${item.inc.toFixed(2)}" style="width:100px; padding:8px 12px; border:2px solid var(--border); border-radius:10px; font-size:0.95rem;" onchange="updateProfitRow(${idx}, 'inc', this.value)"></td>
-                <td><input type="number" value="${item.cost.toFixed(2)}" style="width:100px; padding:8px 12px; border:2px solid var(--border); border-radius:10px; font-size:0.95rem;" onchange="updateProfitRow(${idx}, 'cost', this.value)"></td>
+                <td><input type="text" value="${item.pdd || ''}" style="width:100%; padding:8px 12px; border:2px solid var(--border); border-radius:10px;" onchange="updateProfitRow(${idx}, 'pdd', this.value)"></td>
+                <td><input type="number" value="${item.inc.toFixed(2)}" style="width:100px; padding:8px 12px; border:2px solid var(--border); border-radius:10px;" onchange="updateProfitRow(${idx}, 'inc', this.value)"></td>
+                <td><input type="number" value="${item.cost.toFixed(2)}" style="width:100px; padding:8px 12px; border:2px solid var(--border); border-radius:10px;" onchange="updateProfitRow(${idx}, 'cost', this.value)"></td>
                 <td style="font-weight:bold; color:${profit < 0 ? 'red' : 'green'}">¥${profit.toFixed(2)}</td>
                 <td>${item.inc ? ((profit / item.inc) * 100).toFixed(2) + '%' : '0%'}</td>
-            `;
-            tbody.appendChild(row);
+            </tr>`;
         });
-        document.getElementById('stat-inc').innerText = '¥' + totalInc.toFixed(2);
-        document.getElementById('stat-cost').innerText = '¥' + totalCost.toFixed(2);
-        document.getElementById('stat-profit').innerText = '¥' + (totalInc - totalCost).toFixed(2);
-        document.getElementById('stat-count').innerText = dataStore.profitList.length;
+        document.getElementById('stat-inc').innerText = '¥' + totalInc.toFixed(2); document.getElementById('stat-cost').innerText = '¥' + totalCost.toFixed(2);
+        document.getElementById('stat-profit').innerText = '¥' + (totalInc - totalCost).toFixed(2); document.getElementById('stat-count').innerText = dataStore.profitList.length;
         document.getElementById('profitTableArea').style.display = 'block';
     }
 
@@ -746,199 +893,102 @@
         dataStore.afterList = [];
         lines.slice(1).forEach(cols => {
             if(!cols[iOid] || cols[iW] === "订单取消") return;
-            const money = (parseFloat(cols[iAG]) || 0) * 0.7;
-            dataStore.afterList.push({ oid: cols[iOid], h: cols[iH], w: cols[iW], aa: cols[iAA], ab: cols[iAB], money });
+            dataStore.afterList.push({ oid: cols[iOid], h: cols[iH], w: cols[iW], aa: cols[iAA], ab: cols[iAB], money: (parseFloat(cols[iAG]) || 0) * 0.7 });
         });
-        updateAfterTable();
-        document.getElementById('aftersaleTableArea').style.display = 'block';
+        updateAfterTable(); document.getElementById('aftersaleTableArea').style.display = 'block';
     }
 
     function updateAfterTable() {
-        const b = document.getElementById('aftersaleBody'); b.innerHTML = '';
-        let total = 0;
+        const b = document.getElementById('aftersaleBody'); b.innerHTML = ''; let total = 0;
         dataStore.afterList.forEach((it, idx) => {
             total += it.money;
-            const isWarn = (it.aa === '是' || it.ab === '是');
-            b.innerHTML += `<tr class="${isWarn ? 'warn-row' : ''}">
+            b.innerHTML += `<tr class="${(it.aa === '是' || it.ab === '是') ? 'warn-row' : ''}">
                 <td>${it.oid}</td><td>${it.h}</td><td>${it.w}</td><td>${it.aa||'-'}</td><td>${it.ab||'-'}</td>
                 <td><input type="number" class="btn-outline" style="width:100px; color:#000; font-weight:bold;" value="${it.money.toFixed(2)}" onchange="dataStore.afterList[${idx}].money=parseFloat(this.value)||0;updateAfterTable()"></td></tr>`;
         });
-        document.getElementById('stat-af-refund').innerText = '¥' + total.toFixed(2);
-        document.getElementById('stat-af-count').innerText = dataStore.afterList.length;
+        document.getElementById('stat-af-refund').innerText = '¥' + total.toFixed(2); document.getElementById('stat-af-count').innerText = dataStore.afterList.length;
     }
 
     function confirmClearLogs() {
         const btn = document.getElementById('clearLogsBtn');
         if(clearConfirmStage === 0) {
-            clearConfirmStage = 1;
-            btn.innerText = "⚠️ 再次点击确认清空！";
-            btn.style.background = "#F59E0B";
+            clearConfirmStage = 1; btn.innerText = "⚠️ 再次点击确认清空！"; btn.style.background = "#F59E0B";
             setTimeout(() => { clearConfirmStage = 0; btn.innerText = "🗑️ 清空总库历史 (点两次)"; btn.style.background = ""; }, 3000);
         } else {
-            localStorage.removeItem(LOG_KEY);
-            logs = []; renderLogs();
-            showToast("✅ 总库已清空");
-            clearConfirmStage = 0;
-            btn.innerText = "🗑️ 清空总库历史 (点两次)";
-            btn.style.background = "";
+            localStorage.removeItem(LOG_KEY); logs = []; renderLogs(); showToast("✅ 总库已清空"); clearConfirmStage = 0; btn.innerText = "🗑️ 清空总库历史 (点两次)"; btn.style.background = "";
         }
     }
 
-    // 修复弹窗录入时的体验，不再使用prompt阻断式弹窗
     function addFromMatchToPending(oid, spec) {
-        // 创建一个非阻断的悬浮录入框
         const currentOverlay = document.createElement('div');
         currentOverlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10001; display:flex; align-items:center; justify-content:center;';
-        
         currentOverlay.innerHTML = `
             <div class="manual-content" style="max-width:400px; animation:fadeIn 0.2s;">
-                <h3 style="margin-top:0; color:var(--text); margin-bottom:15px;">📥 录入到待匹配</h3>
-                <div style="margin-bottom:12px;">
-                    <label style="display:block; margin-bottom:4px; font-size:0.85rem; color:var(--text-light);">关联订单号</label>
-                    <input type="text" value="${oid}" disabled style="width:100%; padding:10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; font-size:0.9rem;">
-                </div>
-                <div style="margin-bottom:12px;">
-                    <label style="display:block; margin-bottom:4px; font-size:0.85rem; color:var(--text-light); font-weight:bold;">货号 (必填) <span style="color:red">*</span></label>
-                    <input type="text" id="quickSkuInput" placeholder="请输入货号" style="width:100%; padding:10px; border:2px solid var(--border); border-radius:8px; font-size:0.9rem;" autofocus>
-                </div>
-                <div style="margin-bottom:20px;">
-                    <label style="display:block; margin-bottom:4px; font-size:0.85rem; color:var(--text-light);">尺码/规格 (选填)</label>
-                    <input type="text" id="quickSizeInput" placeholder="例如: M, 42, 均码" style="width:100%; padding:10px; border:2px solid var(--border); border-radius:8px; font-size:0.9rem;">
-                </div>
+                <h3 style="margin-top:0; margin-bottom:15px;">📥 录入到待匹配</h3>
+                <input type="text" value="${oid}" disabled style="width:100%; padding:10px; margin-bottom:12px; background:var(--bg); border:1px solid var(--border); border-radius:8px;">
+                <input type="text" id="quickSkuInput" placeholder="货号 (必填)" style="width:100%; padding:10px; margin-bottom:12px; border:2px solid var(--border); border-radius:8px;" autofocus>
+                <input type="text" id="quickSizeInput" placeholder="尺码/规格 (选填)" style="width:100%; padding:10px; margin-bottom:20px; border:2px solid var(--border); border-radius:8px;">
                 <div style="display:flex; justify-content:flex-end; gap:10px;">
-                    <button class="btn btn-outline" id="quickCancelBtn">取消</button>
-                    <button class="btn btn-primary" id="quickConfirmBtn">确认录入</button>
+                    <button class="btn btn-outline" id="quickCancelBtn">取消</button><button class="btn btn-primary" id="quickConfirmBtn">确认</button>
                 </div>
-            </div>
-        `;
-
-        document.body.appendChild(currentOverlay);
-        
-        // 自动聚焦
-        setTimeout(() => document.getElementById('quickSkuInput').focus(), 100);
-
+            </div>`;
+        document.body.appendChild(currentOverlay); setTimeout(() => document.getElementById('quickSkuInput').focus(), 100);
         document.getElementById('quickCancelBtn').onclick = () => currentOverlay.remove();
         document.getElementById('quickConfirmBtn').onclick = () => {
             const sku = document.getElementById('quickSkuInput').value.trim();
-            const size = document.getElementById('quickSizeInput').value.trim() || "均码";
-            
-            if (!sku) {
-                showToast("❌ 货号不能为空");
-                document.getElementById('quickSkuInput').focus();
-                return;
-            }
-            
-            const newEntry = { oid, sku, spec, size, state: "已到仓" };
-            pendingList.unshift(newEntry);
-            localStorage.setItem(PENDING_KEY, JSON.stringify(pendingList));
-            if (typeof renderPending === "function") renderPending();
-            
-            showToast("✅ 已成功录入待匹配模块");
-            currentOverlay.remove();
+            if (!sku) return showToast("❌ 货号不能为空");
+            pendingList.unshift({ oid, sku, spec, size: document.getElementById('quickSizeInput').value.trim() || "均码", state: "已到仓" });
+            savePending(); renderPending(); showToast("✅ 已成功录入待匹配"); currentOverlay.remove();
         };
     }
 
     function exportData() {
-        const ws = XLSX.utils.json_to_sheet(dataStore.profitList);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "利润");
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataStore.profitList), "利润");
         XLSX.writeFile(wb, `利润报表_${new Date().toLocaleDateString()}.xlsx`);
     }
 
-    function showManualRecordModal() {
-        document.getElementById('manualModal').style.display = 'flex';
-    }
-
-    function closeManualModal() {
-        document.getElementById('manualModal').style.display = 'none';
-    }
-
+    function showManualRecordModal() { document.getElementById('manualModal').style.display = 'flex'; }
+    function closeManualModal() { document.getElementById('manualModal').style.display = 'none'; }
     function saveManualRecord() {
-        const track = document.getElementById('manualTrack').value.trim();
-        const dw = document.getElementById('manualDw').value.trim();
-        const spec = document.getElementById('manualSpec').value.trim() || '-';
+        const track = document.getElementById('manualTrack').value.trim(), dw = document.getElementById('manualDw').value.trim();
         if (!track || !dw) return showToast("❌ 快递单号和得物单号不能为空");
-        const time = new Date().toLocaleString();
-        logs.unshift({ time, track, dw, spec });
-        localStorage.setItem(LOG_KEY, JSON.stringify(logs));
-        renderLogs();
-        closeManualModal();
-        showToast(`✅ 已录入历史存档（${track} → ${dw}）`);
+        logs.unshift({ time: new Date().toLocaleString(), track, dw, spec: document.getElementById('manualSpec').value.trim() || '-' });
+        localStorage.setItem(LOG_KEY, JSON.stringify(logs)); renderLogs(); closeManualModal(); showToast(`✅ 已录入历史存档`);
     }
 
     const PENDING_KEY = "pending_orders_v2";
     let pendingList = JSON.parse(localStorage.getItem(PENDING_KEY)) || [];
-
     function savePending() { localStorage.setItem(PENDING_KEY, JSON.stringify(pendingList)); }
 
     function addPending() {
-        const oid = document.getElementById("p_oid").value.trim();
-        const sku = document.getElementById("p_sku").value.trim();
-        const spec = document.getElementById("p_spec").value.trim();
-        const size = document.getElementById("p_size").value;
-        const state = document.getElementById("p_state").value;
-        if (!oid || !sku) { showToast("❌ 订单和货号不能为空"); return; }
-        pendingList.unshift({ oid, sku, spec, size, state });
-        savePending();
-        renderPending();
-        document.getElementById("p_oid").value = "";
-        document.getElementById("p_sku").value = "";
-        document.getElementById("p_spec").value = "";
+        const oid = document.getElementById("p_oid").value.trim(), sku = document.getElementById("p_sku").value.trim();
+        if (!oid || !sku) return showToast("❌ 订单和货号不能为空");
+        pendingList.unshift({ oid, sku, spec: document.getElementById("p_spec").value.trim(), size: document.getElementById("p_size").value, state: document.getElementById("p_state").value });
+        savePending(); renderPending(); document.getElementById("p_oid").value = ""; document.getElementById("p_sku").value = ""; document.getElementById("p_spec").value = "";
     }
 
-    function deletePending(i) {
-        pendingList.splice(i, 1);
-        savePending();
-        renderPending();
-    }
-
-    // 这里由于清空操作属于极高危操作，我保留了原生的 confirm 来避免误触清空所有数据
-    function clearPending() {
-        if (!confirm("确认清空全部待匹配记录吗？")) return;
-        pendingList = [];
-        savePending();
-        renderPending();
-        showToast("✅ 数据已全部清空");
-    }
+    function deletePending(i) { pendingList.splice(i, 1); savePending(); renderPending(); }
+    function clearPending() { if (confirm("确认清空全部待匹配记录吗？")) { pendingList = []; savePending(); renderPending(); showToast("✅ 数据已全部清空"); } }
 
     function renderPending() {
-        const area = document.getElementById("pendingArea");
-        if (!area) return;
-        area.innerHTML = "";
-        area.style.overflowX = "auto";
+        const area = document.getElementById("pendingArea"); if (!area) return; area.innerHTML = "";
         let groups = new Map();
-        pendingList.forEach((it, i) => {
-            if (!groups.has(it.sku)) groups.set(it.sku, []);
-            groups.get(it.sku).push({ ...it, index: i });
-        });
+        pendingList.forEach((it, i) => { if (!groups.has(it.sku)) groups.set(it.sku, []); groups.get(it.sku).push({ ...it, index: i }); });
         groups.forEach((list, sku) => {
-            area.innerHTML += `
-<div class="card">
-<h2>📦 ${sku} <span style="font-size:0.8rem;color:#64748B">(${list.length}单)</span></h2>
-<table>
-<thead><tr><th>订单</th><th>货号</th><th>规格</th><th>号型</th><th>状态</th><th>操作</th></tr></thead>
-<tbody>
-${list.map(it => {
-    let cls = "";
-    if (it.state === "已到仓") cls = "state-arrived";
-    if (it.state === "在途") cls = "state-transit";
-    if (it.state === "已退货") cls = "state-return";
-    if (it.state === "已匹配") cls = "state-matched";
-    return `<tr><td>${it.oid}</td><td>${it.sku}</td><td>${it.spec||'-'}</td><td>${it.size}</td><td class="${cls}">${it.state}</td><td><button class="btn-outline" onclick="deletePending(${it.index})">删除</button></td></tr>`;
-}).join("")}
-</tbody>
-</table>
-</div>`;
+            area.innerHTML += `<div class="card"><h2>📦 ${sku} <span>(${list.length}单)</span></h2><table>
+                <thead><tr><th>订单</th><th>货号</th><th>规格</th><th>号型</th><th>状态</th><th>操作</th></tr></thead><tbody>
+                ${list.map(it => {
+                    let cls = {"已到仓":"state-arrived", "在途":"state-transit", "已退货":"state-return", "已匹配":"state-matched"}[it.state] || "";
+                    return `<tr><td>${it.oid}</td><td>${it.sku}</td><td>${it.spec||'-'}</td><td>${it.size}</td><td class="${cls}">${it.state}</td><td><button class="btn-outline" onclick="deletePending(${it.index})">删除</button></td></tr>`;
+                }).join("")}</tbody></table></div>`;
         });
     }
 
     function exportPending() {
-        if (pendingList.length === 0) { showToast("❌ 没有数据可导出"); return; }
+        if (pendingList.length === 0) return showToast("❌ 没有数据可导出");
         let exportData = [["订单","货号","规格","号型","状态"]];
         pendingList.forEach(it => exportData.push([it.oid, it.sku, it.spec || "-", it.size, it.state]));
-        const ws = XLSX.utils.aoa_to_sheet(exportData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "待匹配订单");
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(exportData), "待匹配订单");
         XLSX.writeFile(wb, "待匹配订单_" + new Date().toLocaleDateString() + ".xlsx");
     }
 
