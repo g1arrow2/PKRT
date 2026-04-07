@@ -489,14 +489,16 @@
         const head = lines[0];
         if(!head) return;
         
-        if(type === 'pdd') {
-            // ✨ 修复：强制将物流单号指定为 Y列 (索引 24)
+    if(type === 'pdd') {
+            // ✨ 强制将物流单号指定为 Y列 (索引 24)
             const iT = 24; 
             const iO = head.indexOf('订单号') > -1 ? head.indexOf('订单号') : 0;
             const iI = head.indexOf('商品主图') > -1 ? head.indexOf('商品主图') : 0;
             const iP = head.indexOf('订单金额') > -1 ? head.indexOf('订单金额') : 0;
             const iQ = head.indexOf('数量') > -1 ? head.indexOf('数量') : 0;
-            const iS = 11;
+            
+            // ✨ 修复：规格由 L列(11) 改为 M列(12)
+            const iS = 12; 
             
             lines.slice(1).forEach(cols => {
                 const track = String(cols[iT] || '').trim();
