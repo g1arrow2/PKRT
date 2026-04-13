@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>得物账单 vs 交易成功 vs 已发货 对比筛选工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .group-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+</head>
+<body class="bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8">
+            <h1 class="text-4xl font-semibold text-gray-900 text-center mb-2">得物账单 vs 交易成功 vs 已发货 对比筛选工具</h1>
+            <p class="text-center text-gray-500 mb-8">输入三个列表 → 自动生成 7 大分类 → 筛选后每30条用【=====】隔开</p>
+
+            <!-- 输入区 -->
+            <div class="grid grid-cols-3 gap-6 mb-8">
+                <!-- 得物账单 -->
+                <div>
+                    <label class="block text-lg font-medium text-emerald-600 mb-2 flex items-center gap-2">
+                        <span class="text-2xl">📌</span> 得物账单
+                    </label>
+                    <textarea id="setA" rows="14" class="w-full px-5 py-4 border-2 border-emerald-200 focus:border-emerald-500 rounded-2xl font-mono text-sm resize-y" placeholder="每行一项..."></textarea>
+                </div>
+                <!-- 交易成功 -->
+                <div>
+                    <label class="block text-lg font-medium text-amber-600 mb-2 flex items-center gap-2">
+                        <span class="text-2xl">📌</span> 交易成功
+                    </label>
+                    <textarea id="setB" rows="14" class="w-full px-5 py-4 border-2 border-amber-200 focus:border-amber-500 rounded-2xl font-mono text-sm resize-y" placeholder="每行一项..."></textarea>
+                </div>
+                <!-- 已发货 -->
+                <div>
+                    <label class="block text-lg font-medium text-violet-600 mb-2 flex items-center gap-2">
+                        <span class="text-2xl">📌</span> 已发货
+                    </label>
+                    <textarea id="setC" rows="14" class="w-full px-5 py-4 border-2 border-violet-200 focus:border-violet-500 rounded-2xl font-mono text-sm resize-y" placeholder="每行一项..."></textarea>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-center gap-4 mb-8">
+                <button onclick="compareSets()" 
+                    class="px-10 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-2xl text-lg hover:shadow-xl flex items-center gap-3">
+                    🚀 开始对比 & 筛选
+                </button>
+                <button onclick="clearAll()" class="px-8 py-4 border-2 border-gray-300 hover:border-red-300 text-gray-700 rounded-2xl">清空全部</button>
+            </div>
+
+            <!-- 结果区 -->
+            <div id="results" class="hidden">
+                <!-- 筛选控制栏 -->
+                <div class="flex flex-wrap items-center justify-between bg-gray-50 rounded-2xl p-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <span class="font-medium text-gray-700">筛选条件：</span>
+                        <select id="filterMode" onchange="applyFilter()" class="px-4 py-2 rounded-xl border border-gray-300">
+                            <option value="all">显示全部 7 类</option>
+                            <option value="all3">仅显示三者共有</option>
+                            <option value="exactly2">仅显示任意两者共有</option>
+                            <option value="exactly1">仅显示单个数据集独有</option>
+                            <option value="atLeast2">至少在 2 个数据集中出现</option>
+                        </select>
+                        
+                        <input id="searchInput" type="text" placeholder="搜索关键词..." 
+                            onkeyup="if(event.key==='Enter') applyFilter()"
+                            class="px-5 py-2 rounded-xl border border-gray-300 focus:border-indigo-500 w-72">
+                    </div>
+                    
+                    <div class="flex items-center gap-4 text-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 bg-emerald-500 rounded"></div>
+                            <span id="totalA" class="font-mono"></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 bg-amber-500 rounded"></div>
+                            <span id="totalB" class="font-mono"></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 bg-violet-500 rounded"></div>
+                            <span id="totalC" class="font-mono"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7 大分类 -->
+                <div id="groupsContainer" class="grid grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+                <!-- 全局操作 -->
+                <div class="mt-8 flex gap-4">
+                    <button onclick="copyAllResults()" 
+                        class="flex-1 py-5 bg-gray-900 text-white rounded-2xl font-medium text-lg">📋 一键复制全部结果</button>
+                    <button onclick="downloadReport()" 
+                        class="flex-1 py-5 border-2 border-gray-800 text-gray-800 hover:bg-gray-900 hover:text-white rounded-2xl font-medium text-lg">📥 下载完整对比报告</button>
+                    <button onclick="hideResults()" 
+                        class="px-8 py-5 border-2 border-red-300 text-red-600 hover:bg-red-50 rounded-2xl">关闭结果</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = null;
+
+        function formatList(items, isHTML = true) {
+            let result = [];
+            for (let i = 0; i < items.length; i++) {
+                if (isHTML) {
+                    result.push(`<div class="py-1">${escapeHtml(items[i])}</div>`);
+                } else {
+                    result.push(items[i]);
+                }
+                if ((i + 1) % 30 === 0 && i < items.length - 1) {
+                    if (isHTML) {
+                        result.push(`<div class="py-3 text-center text-amber-500 font-bold text-lg">【=====】</div>`);
+                    } else {
+                        result.push('【=====】');
+                    }
+                }
+            }
+            return isHTML ? result.join('') : result.join('\n');
+        }
+
+        function compareSets() {
+            const rawA = document.getElementById('setA').value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            const rawB = document.getElementById('setB').value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            const rawC = document.getElementById('setC').value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+            const setA = new Set(rawA);
+            const setB = new Set(rawB);
+            const setC = new Set(rawC);
+
+            const groups = {
+                all3: { name: "三者共有 (得物账单 ∩ 交易成功 ∩ 已发货)", color: "emerald", icon: "🔗", items: rawA.filter(x => setB.has(x) && setC.has(x)) },
+                a_b: { name: "仅 得物账单 和 交易成功 共有", color: "amber", icon: "🔗", items: rawA.filter(x => setB.has(x) && !setC.has(x)) },
+                a_c: { name: "仅 得物账单 和 已发货 共有", color: "violet", icon: "🔗", items: rawA.filter(x => setC.has(x) && !setB.has(x)) },
+                b_c: { name: "仅 交易成功 和 已发货 共有", color: "rose", icon: "🔗", items: rawB.filter(x => setC.has(x) && !setA.has(x)) },
+                onlyA: { name: "仅在 得物账单 中", color: "emerald", icon: "📍", items: rawA.filter(x => !setB.has(x) && !setC.has(x)) },
+                onlyB: { name: "仅在 交易成功 中", color: "amber", icon: "📍", items: rawB.filter(x => !setA.has(x) && !setC.has(x)) },
+                onlyC: { name: "仅在 已发货 中", color: "violet", icon: "📍", items: rawC.filter(x => !setA.has(x) && !setB.has(x)) }
+            };
+
+            currentData = { groups, rawA, rawB, rawC, setA, setB, setC };
+
+            renderGroups(groups);
+            document.getElementById('results').classList.remove('hidden');
+            
+            document.getElementById('totalA').innerHTML = `得物账单: <span class="font-semibold">${setA.size}</span>`;
+            document.getElementById('totalB').innerHTML = `交易成功: <span class="font-semibold">${setB.size}</span>`;
+            document.getElementById('totalC').innerHTML = `已发货: <span class="font-semibold">${setC.size}</span>`;
+        }
+
+        function renderGroups(groups) {
+            const container = document.getElementById('groupsContainer');
+            container.innerHTML = '';
+
+            Object.keys(groups).forEach(key => {
+                const g = groups[key];
+                if (g.items.length === 0) return;
+
+                const listHTML = formatList(g.items, true);
+
+                const cardHTML = `
+                <div class="group-card bg-white border-2 border-${g.color}-200 rounded-3xl p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl">${g.icon}</span>
+                            <div>
+                                <h3 class="font-semibold text-lg">${g.name}</h3>
+                                <span class="text-${g.color}-600 font-mono text-xl">${g.items.length} 项</span>
+                            </div>
+                        </div>
+                        <button onclick="copyGroup('${key}')" 
+                            class="px-5 py-2 text-sm bg-${g.color}-600 text-white rounded-2xl hover:bg-${g.color}-700">复制</button>
+                    </div>
+                    <div class="max-h-64 overflow-auto font-mono text-sm bg-gray-50 rounded-2xl p-4 border border-gray-100 whitespace-pre-wrap" id="list-${key}">
+                        ${listHTML}
+                    </div>
+                </div>`;
+                container.innerHTML += cardHTML;
+            });
+
+            if (container.innerHTML === '') {
+                container.innerHTML = `<div class="col-span-3 text-center py-12 text-gray-400">三个数据集完全没有交集或数据为空</div>`;
+            }
+        }
+
+        function applyFilter() {
+            if (!currentData) return;
+            const mode = document.getElementById('filterMode').value;
+            const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            let filteredGroups = {};
+
+            Object.keys(currentData.groups).forEach(key => {
+                let g = currentData.groups[key];
+                let items = g.items.filter(item => 
+                    !keyword || item.toLowerCase().includes(keyword)
+                );
+
+                if (mode === 'all' || 
+                    (mode === 'all3' && key === 'all3') ||
+                    (mode === 'exactly2' && ['a_b','a_c','b_c'].includes(key)) ||
+                    (mode === 'exactly1' && ['onlyA','onlyB','onlyC'].includes(key)) ||
+                    (mode === 'atLeast2' && ['all3','a_b','a_c','b_c'].includes(key))) {
+                    filteredGroups[key] = {...g, items};
+                }
+            });
+
+            renderGroups(filteredGroups);
+        }
+
+        function copyGroup(key) {
+            const listEl = document.getElementById(`list-${key}`);
+            if (!listEl) return;
+            const lines = Array.from(listEl.children).map(el => el.textContent.trim());
+            const text = lines.join('\n');
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ 当前分组已复制（含【=====】分隔符）');
+            });
+        }
+
+        function copyAllResults() {
+            if (!currentData) return;
+            let report = '=== 得物三方对比结果 ===\n\n';
+            Object.keys(currentData.groups).forEach(key => {
+                const g = currentData.groups[key];
+                if (g.items.length > 0) {
+                    report += `${g.name} (${g.items.length}项)\n`;
+                    report += formatList(g.items, false) + '\n\n';
+                }
+            });
+            navigator.clipboard.writeText(report).then(() => alert('✅ 全部结果已复制（每30条已插入【=====】）'));
+        }
+
+        function downloadReport() {
+            if (!currentData) return;
+            let report = `得物账单 vs 交易成功 vs 已发货 对比报告\n生成时间: ${new Date().toLocaleString('zh-CN')}\n\n`;
+            Object.keys(currentData.groups).forEach(key => {
+                const g = currentData.groups[key];
+                if (g.items.length > 0) {
+                    report += `【${g.name}】 ${g.items.length} 项\n`;
+                    report += formatList(g.items, false) + '\n\n';
+                }
+            });
+            const blob = new Blob([report], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `得物三方对比报告_${new Date().toISOString().slice(0,10)}.txt`;
+            a.click();
+            alert('📥 报告已下载（每30条已插入【=====】）');
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function hideResults() {
+            document.getElementById('results').classList.add('hidden');
+        }
+
+        function clearAll() {
+            if (confirm('确定清空三个数据集吗？')) {
+                document.getElementById('setA').value = '';
+                document.getElementById('setB').value = '';
+                document.getElementById('setC').value = '';
+                document.getElementById('results').classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
