@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PKRT 销售利润与提成对账系统 - 全渠道成本版</title>
+    <title>PKRT 销售对账系统 - 全渠道总账版</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -33,12 +33,13 @@
         .card { background: var(--card); border-radius: 16px; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 24px; }
         h2 { margin: 0 0 20px 0; font-size: 1.25rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary-light); padding-bottom: 16px; }
       
-        .stat-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-bottom: 20px; }
-        .stat-item { background: var(--card); padding: 16px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
+        /* 看板改为了6等分 */
+        .stat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 20px; }
+        .stat-item { background: var(--card); padding: 16px; border-radius: 12px; border: 1px solid var(--border); text-align: center; display: flex; flex-direction: column; justify-content: center;}
         .stat-value { font-size: 1.4rem; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
-        .stat-label { font-size: 0.85rem; color: var(--text-light); font-weight: 600; }
+        .stat-label { font-size: 0.85rem; color: var(--text-light); font-weight: 600; line-height: 1.4; }
 
-        /* 多上传框布局 - 改为三列 */
+        /* 多上传框布局 - 三列 */
         .upload-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
         .file-box { border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; background: #fafafa; position: relative; transition: 0.3s; }
         .file-box:hover { border-color: var(--primary); background: var(--primary-light); }
@@ -84,16 +85,33 @@
 
 <div class="container">
     <div class="card">
-        <h2>📊 PKRT 销售利润与提成对账看板 (全渠道成本版)</h2>
+        <h2>📊 PKRT 销售对账看板 (总账版)</h2>
         <div class="stat-grid">
-            <div class="stat-item"><div id="stat-income" class="stat-value" style="color: #3B82F6;">¥0.00</div><div class="stat-label">总收入</div></div>
-            <div class="stat-item"><div id="stat-cost" class="stat-value" style="color:var(--danger);">¥0.00</div><div class="stat-label">总成本</div></div>
-            <div class="stat-item"><div id="stat-profit" class="stat-value" style="color:var(--success);">¥0.00</div><div class="stat-label">总利润</div></div>
-            <div class="stat-item"><div id="stat-commission" class="stat-value" style="color: #F59E0B;">¥0.00</div><div class="stat-label">总提成 (20%)</div></div>
+            <div class="stat-item">
+                <div id="stat-income" class="stat-value" style="color: #3B82F6;">¥0.00</div>
+                <div class="stat-label">总收入</div>
+            </div>
+            <div class="stat-item">
+                <div id="stat-cost" class="stat-value" style="color:var(--danger);">¥0.00</div>
+                <div class="stat-label">总成本</div>
+            </div>
+            <div class="stat-item">
+                <div id="stat-profit" class="stat-value" style="color:var(--success);">¥0.00</div>
+                <div class="stat-label">总毛利润<br><span style="font-size:0.75rem; font-weight:normal; color:#94a3b8;">(未扣其他项)</span></div>
+            </div>
             
-            <div class="stat-item" style="border-left: 3px solid var(--border);"><div id="stat-qty" class="stat-value">0</div><div class="stat-label">总件数</div></div>
-            <div class="stat-item"><div id="stat-success-count" class="stat-value" style="color: var(--success);">0</div><div class="stat-label">交易成功</div></div>
-            <div class="stat-item"><div id="stat-return-count" class="stat-value" style="color: var(--danger);">0</div><div class="stat-label">退货订单</div></div>
+            <div class="stat-item" style="border-left: 3px solid var(--border);">
+                <div id="stat-qty" class="stat-value" style="color: var(--text);">0</div>
+                <div class="stat-label">总件数</div>
+            </div>
+            <div class="stat-item">
+                <div id="stat-success-count" class="stat-value" style="color: var(--success);">0</div>
+                <div class="stat-label">交易成功</div>
+            </div>
+            <div class="stat-item">
+                <div id="stat-return-count" class="stat-value" style="color: var(--danger);">0</div>
+                <div class="stat-label">退货订单</div>
+            </div>
         </div>
         
         <div class="upload-grid">
@@ -158,7 +176,7 @@
                         <th style="width: 120px;">退货成本 <button class="btn-batch" onclick="batchEdit('returnCost')">批量</button></th>
                         <th style="width: 100px;">退货扣减</th>
                         <th style="width: 60px;">数量</th>
-                        <th style="width: 100px;">利润 (¥)</th>
+                        <th style="width: 100px;">毛利润 (¥)</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -171,7 +189,7 @@
     let salesData = [];
     let returnDataMap = new Map();
     let purchaseDataMap = new Map();
-    let distCostMap = new Map(); // 新增：分销成本字典
+    let distCostMap = new Map(); 
     let groupCounter = 1;
 
     // ===== 核心工具：严谨四舍五入保留2位小数 =====
@@ -182,7 +200,7 @@
         return Math.round(n * 100 + Number.EPSILON) / 100;
     }
 
-    // 格式化输出到界面，强制显示两位 (如 10 -> 10.00)
+    // 格式化输出到界面，强制显示两位
     function format2(num) {
         if (num === '?') return '?';
         const n = parseFloat(num);
@@ -213,7 +231,7 @@
                     const retLines = XLSX.utils.sheet_to_json(wb.Sheets[returnSheetName], { header: 1, defval: "" });
                     retLines.slice(1).forEach(row => {
                         const oid = String(row[0] || '').trim();
-                        if(oid) returnDataMap.set(oid, round2(row[78])); // 缓存时即四舍五入
+                        if(oid) returnDataMap.set(oid, round2(row[78]));
                     });
                 }
 
@@ -240,7 +258,7 @@
             let isRet = '否', retCost = 0, retDed = 0;
             let finalCost = 0, pddOid = '', pddAcc = '';
 
-            // 1. 优先尝试提取聚水潭采购表数据
+            // 1. 尝试提取聚水潭采购表数据
             if (purchaseDataMap.has(oid)) {
                 const pur = purchaseDataMap.get(oid);
                 pddOid = pur.pddOid;
@@ -248,12 +266,12 @@
                 finalCost = pur.cost;
             }
 
-            // 2. 如果存在分销成本，分销成本优先级更高，覆盖基础采购成本
+            // 2. 分销成本覆盖
             if (distCostMap.has(oid)) {
                 finalCost = distCostMap.get(oid);
             }
 
-            // 3. 自动化退货匹配 (如果退货，成本被强行冲正为0)
+            // 3. 自动化退货匹配
             if (returnDataMap.has(oid)) {
                 isRet = '是'; 
                 retCost = 5.05; 
@@ -270,9 +288,9 @@
                 isReturn: isRet,
                 income: round2(row[83]),
                 cost: round2(finalCost),
-                otherCost: 1.50,
+                otherCost: 3.00,
                 returnCost: round2(retCost),
-                returnDeduction: retDed, // 可能是 '?'，不做 format 转换
+                returnDeduction: retDed,
                 qty: 1,
                 selected: false,
                 groupId: null
@@ -282,7 +300,7 @@
     }
 
     // ==========================================
-    // 2. 处理聚水潭采购匹配上传
+    // 2. 处理聚水潭采购上传
     // ==========================================
     function handlePurchaseExcel(input) {
         const file = input.files[0];
@@ -320,7 +338,6 @@
                             item.pddOid = pur.pddOid;
                             item.pddAccount = pur.account;
                             
-                            // 仅在未配置分销成本 且 不是退货的情况下填入
                             if (item.isReturn !== '是' && !distCostMap.has(item.oid)) {
                                 item.cost = pur.cost;
                             }
@@ -340,7 +357,7 @@
     }
 
     // ==========================================
-    // 3. 处理分销成本上传 (✨新功能)
+    // 3. 处理分销成本上传
     // ==========================================
     function handleDistCostExcel(input) {
         const file = input.files[0];
@@ -365,11 +382,9 @@
                     }
                 });
 
-                // 如果销售表已存在，触发自动覆盖写入
                 if (salesData.length > 0) {
                     salesData.forEach(item => {
                         if (distCostMap.has(item.oid)) {
-                            // 只要不是退货，分销成本强制覆盖当前的成本
                             if (item.isReturn !== '是') {
                                 item.cost = distCostMap.get(item.oid);
                             }
@@ -409,15 +424,15 @@
                 if (item.isReturn === '是' || Number(item.cost) !== 0) return;
             }
 
-            // 四舍五入底层计算逻辑
             const rawDeduction = item.returnDeduction === '?' ? 0 : Number(item.returnDeduction);
             const actualDeduction = Math.abs(rawDeduction);
             
-            const rowCost = round2(Number(item.cost) + Number(item.otherCost) + Number(item.returnCost) + actualDeduction);
+            // ✨ 核心修正：毛利润计算不扣除"其他成本"
+            const rowCost = round2(Number(item.cost) + Number(item.returnCost) + actualDeduction);
             const rowProfit = round2(Number(item.income) - rowCost);
 
             sInc += Number(item.income);
-            sCost += rowCost;
+            sCost += rowCost; // 这里的总成本也同步不包含“其他成本”
             sProf += rowProfit;
             sQty += Number(item.qty);
             if(item.isReturn === '是') returnCount++; else successCount++;
@@ -428,7 +443,6 @@
             const dedStyle = item.returnDeduction === '?' ? 'color:var(--danger);font-weight:bold;background:#FEE2E2;' : '';
             const gBadge = item.groupId ? `<span class="group-badge">组${item.groupId}</span>` : '';
 
-            // 所有的金额字段采用 format2 强制保留两位小数显示
             tr.innerHTML = `
                 <td style="text-align:center"><input type="checkbox" ${item.selected?'checked':''} onchange="toggleRow(${item._id}, this.checked)"></td>
                 <td style="font-size:0.8rem; color:#475569;">${item.oid}${gBadge}</td>
@@ -463,7 +477,6 @@
         document.getElementById('stat-cost').innerText = '¥' + format2(sCost);
         document.getElementById('stat-profit').innerText = '¥' + format2(sProf);
         document.getElementById('stat-qty').innerText = sQty;
-        document.getElementById('stat-commission').innerText = '¥' + format2(sProf > 0 ? sProf * 0.2 : 0);
         document.getElementById('stat-success-count').innerText = successCount;
         document.getElementById('stat-return-count').innerText = returnCount;
     }
@@ -494,10 +507,10 @@
             }
         } 
         else if (field === 'pddOid' || field === 'pddAccount' || field === 'returnDeduction') {
-            item[field] = val; // 这些字段允许文本或者问号录入
+            item[field] = val; 
         }
         else {
-            item[field] = round2(val); // 其他所有金额严格转2位小数
+            item[field] = round2(val); 
         }
         renderTable();
     }
@@ -567,40 +580,3 @@
 
     function copyOids() {
         const selected = salesData.filter(d => d.selected).map(d => d.oid);
-        const oidsToCopy = selected.length > 0 ? selected : Array.from(document.querySelectorAll('#tableBody tr td:nth-child(2)')).map(td => td.innerText.split('📦')[0].trim());
-        
-        if(oidsToCopy.length === 0) return showToast("无可复制单号");
-        navigator.clipboard.writeText(oidsToCopy.join(','));
-        showToast(`📋 已复制 ${oidsToCopy.length} 个单号`);
-    }
-
-    function exportData() {
-        if(salesData.length === 0) return;
-        const arr = salesData.map(d => {
-            const actDed = Math.abs(d.returnDeduction === '?' ? 0 : Number(d.returnDeduction));
-            const rowCost = round2(Number(d.cost) + Number(d.otherCost) + Number(d.returnCost) + actDed);
-            const rowProfit = round2(Number(d.income) - rowCost);
-            
-            return {
-                "共用批次": d.groupId ? `组${d.groupId}` : "-",
-                "得物单号": d.oid, 
-                "拼多多单号": d.pddOid || "-",
-                "采购账号": d.pddAccount || "-",
-                "货号": d.sku, 
-                "是否退货": d.isReturn,
-                "收入": format2(d.income), 
-                "成本": format2(d.cost), 
-                "其他成本": format2(d.otherCost), 
-                "退货费": format2(d.returnCost),
-                "退货扣减": format2(d.returnDeduction), 
-                "数量": d.qty, 
-                "单笔利润": format2(rowProfit)
-            };
-        });
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(arr), "提成对账报表");
-        XLSX.writeFile(wb, `PKRT对账明细_${new Date().toLocaleDateString()}.xlsx`);
-    }
-</script>
-</body>
-</html>
