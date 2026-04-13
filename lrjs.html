@@ -580,3 +580,40 @@
 
     function copyOids() {
         const selected = salesData.filter(d => d.selected).map(d => d.oid);
+        const oidsToCopy = selected.length > 0 ? selected : Array.from(document.querySelectorAll('#tableBody tr td:nth-child(2)')).map(td => td.innerText.split('📦')[0].trim());
+        
+        if(oidsToCopy.length === 0) return showToast("无可复制单号");
+        navigator.clipboard.writeText(oidsToCopy.join(','));
+        showToast(`📋 已复制 ${oidsToCopy.length} 个单号`);
+    }
+
+    function exportData() {
+        if(salesData.length === 0) return;
+        const arr = salesData.map(d => {
+            const actDed = Math.abs(d.returnDeduction === '?' ? 0 : Number(d.returnDeduction));
+            const rowCost = round2(Number(d.cost) + Number(d.returnCost) + actDed);
+            const rowProfit = round2(Number(d.income) - rowCost);
+            
+            return {
+                "共用批次": d.groupId ? `组${d.groupId}` : "-",
+                "得物单号": d.oid, 
+                "拼多多单号": d.pddOid || "-",
+                "采购账号": d.pddAccount || "-",
+                "货号": d.sku, 
+                "是否退货": d.isReturn,
+                "收入": format2(d.income), 
+                "成本": format2(d.cost), 
+                "其他成本": format2(d.otherCost), 
+                "退货费": format2(d.returnCost),
+                "退货扣减": format2(d.returnDeduction), 
+                "数量": d.qty, 
+                "单笔毛利": format2(rowProfit)
+            };
+        });
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(arr), "总账明细报表");
+        XLSX.writeFile(wb, `PKRT总账明细_${new Date().toLocaleDateString()}.xlsx`);
+    }
+</script>
+</body>
+</html>
