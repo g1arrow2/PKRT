@@ -110,7 +110,7 @@
             </div>
             <div class="stat-item">
                 <div id="stat-return-count" class="stat-value" style="color: var(--danger);">0</div>
-                <div class="stat-label">退货订单</div>
+                <div class="stat-label">退货订单 <div id="dist-upload-status" style="font-size:0.8rem; color:var(--text-light); margin-top:8px;">分销订单需手动扣除退款成本</div></div>
             </div>
         </div>
         
@@ -274,7 +274,7 @@
             // 3. 自动化退货匹配
             if (returnDataMap.has(oid)) {
                 isRet = '是'; 
-                retCost = 5.05; 
+                retCost = 0.0; 
                 retDed = returnDataMap.get(oid);
                 finalCost = 0; 
             }
@@ -288,7 +288,7 @@
                 isReturn: isRet,
                 income: round2(row[83]),
                 cost: round2(finalCost),
-                otherCost: 2.00,
+                otherCost: 0.00,
                 returnCost: round2(retCost),
                 returnDeduction: retDed,
                 qty: 1,
