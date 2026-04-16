@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PKRT得物运营-本地缓存 (库存比对+提成对账终极版)</title>
+    <title>PKRT得物运营-本地缓存</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -490,14 +490,11 @@
         if(!head) return;
         
     if(type === 'pdd') {
-            // ✨ 强制将物流单号指定为 Y列 (索引 24)
             const iT = 24; 
             const iO = head.indexOf('订单号') > -1 ? head.indexOf('订单号') : 0;
             const iI = head.indexOf('商品主图') > -1 ? head.indexOf('商品主图') : 0;
             const iP = head.indexOf('订单金额') > -1 ? head.indexOf('订单金额') : 0;
             const iQ = head.indexOf('数量') > -1 ? head.indexOf('数量') : 0;
-            
-            // ✨ 修复：规格由 L列(11) 改为 M列(12)
             const iS = 12; 
             
             lines.slice(1).forEach(cols => {
@@ -533,10 +530,13 @@
         } else if(type === 'pending_match') {
             dataStore.pendingMatchSkus.clear();
             lines.slice(1).forEach(cols => {
-                const sku = String(cols[1] || '').trim();
-                if(sku) dataStore.pendingMatchSkus.set(sku, (dataStore.pendingMatchSkus.get(sku) || 0) + 1);
+                // === 修改点：原 B 列 → 现在同时验证 C 列和 D 列 ===
+                const skuC = String(cols[2] || '').trim();
+                const skuD = String(cols[3] || '').trim();
+                if (skuC) dataStore.pendingMatchSkus.set(skuC, (dataStore.pendingMatchSkus.get(skuC) || 0) + 1);
+                if (skuD) dataStore.pendingMatchSkus.set(skuD, (dataStore.pendingMatchSkus.get(skuD) || 0) + 1);
             });
-            highlightPendingSkus(); showToast(`✅ 待匹配库解析完成，发现 ${dataStore.pendingMatchSkus.size} 款货号库存`);
+            highlightPendingSkus(); showToast(`✅ 待匹配库解析完成，发现 ${dataStore.pendingMatchSkus.size} 款货号库存（C列 + D列）`);
         }
     }
 
@@ -551,7 +551,6 @@
             try {
                 const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
                 
-                // 1. 读取退货退款订单缓存
                 returnDataMap.clear();
                 const returnSheetName = wb.SheetNames.find(name => name.includes('退货') || name.includes('退款'));
                 if (returnSheetName) {
@@ -565,7 +564,6 @@
                     showToast("⚠️ 未找到包含“退货/退款”的工作表，自动扣减将失效");
                 }
 
-                // 2. 读取销售订单表
                 const salesLines = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: "" });
                 processCommissionData(salesLines);
                 
@@ -608,7 +606,7 @@
 
             const isRet = item.isReturn === '是';
             const rawDeduction = item.returnDeduction === '?' ? 0 : Number(item.returnDeduction);
-            const actualDeduction = Math.abs(rawDeduction); // 绝对值防错
+            const actualDeduction = Math.abs(rawDeduction);
             
             const rowCost = Number(item.cost) + Number(item.otherCost) + Number(item.returnCost) + actualDeduction;
             const rowProfit = Number(item.income) - rowCost;
@@ -651,7 +649,6 @@
         const item = commissionData.find(d => d._id === id);
         if(!item) return;
 
-        // 自动平摊计算
         if (field === 'cost' && item.groupId) {
             const totalGroupCost = value === '' ? 0 : parseFloat(value) || 0;
             const groupItems = commissionData.filter(d => d.groupId === item.groupId);
