@@ -396,7 +396,7 @@
 
             if (returnDataMap.has(item.oid)) {
                 isRet = '是'; 
-                retCost = 5.05; // 默认运费
+                retCost = 0; // 默认运费
                 retDed = returnDataMap.get(item.oid);
                 finalCost = 0; 
             }
@@ -419,7 +419,7 @@
                     _id: 'c_' + cIdx++, 
                     oid: key, 
                     isReturn: '是', income: 0, qty: 1, 
-                    otherCost: 0.00, returnCost: 5.05, returnDeduction: rawVal,
+                    otherCost: 0.00, returnCost: 0, returnDeduction: rawVal,
                     selected: false, groupId: null
                 });
             }
@@ -439,11 +439,11 @@
             try {
                 const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
                 const lines = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: "" });
-                const head = lines[0] || [];
-                let idxOid = head.indexOf('线上订单号') > -1 ? head.indexOf('线上订单号') : 0;
-                let idxPdd = head.indexOf('订单号') > -1 ? head.indexOf('订单号') : 6;
-                let idxCost = head.indexOf('金额') > -1 ? head.indexOf('金额') : 7;
-                let idxAcc = head.indexOf('账号') > -1 ? head.indexOf('账号') : 8;
+             const head = lines[0] || [];
+                let idxOid = head.indexOf('线上订单号') > -1 ? head.indexOf('线上订单号') : 0; // A列
+                let idxPdd = head.indexOf('订单号') > -1 ? head.indexOf('订单号') : 2;       // 改为 C列
+                let idxCost = head.indexOf('金额') > -1 ? head.indexOf('金额') : 3;         // 改为 D列
+                let idxAcc = head.indexOf('账号') > -1 ? head.indexOf('账号') : 5;         // 改为 F列
 
                 purchaseDataMap.clear();
                 let matchCount = 0;
@@ -666,7 +666,7 @@
         } 
         else if (field === 'isReturn' && tab === 'sales') {
             item.isReturn = val;
-            if (val === '是') { item.cost = 0; item.returnCost = 5.05; item.returnDeduction = returnDataMap.get(item.oid) || '?'; } 
+            if (val === '是') { item.cost = 0; item.returnCost = 0; item.returnDeduction = returnDataMap.get(item.oid) || '?'; } 
             else { item.returnCost = 0; item.returnDeduction = 0; }
         } 
         else if (['pddOid', 'pddOid2', 'pddAccount', 'returnDeduction'].includes(field)) {
