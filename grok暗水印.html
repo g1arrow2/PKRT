@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>暗水印工具 - 得物平台版</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-200 py-8">
+<div class="max-w-5xl mx-auto px-4">
+    <h1 class="text-3xl font-bold text-center mb-2">暗水印工具（得物平台专用）</h1>
+    <p class="text-center text-slate-400 mb-6">支持自定义文字、位置、字体大小 · 差值模式验证</p>
+
+    <!-- 上传区 -->
+    <div id="upload-area" class="border-2 border-dashed border-slate-600 hover:border-blue-500 rounded-2xl p-10 text-center cursor-pointer mb-6">
+        <p class="text-xl mb-2">点击或拖拽图片上传</p>
+        <input type="file" id="file-input" accept="image/*" class="hidden">
+    </div>
+
+    <div id="preview-section" class="hidden">
+        <div class="bg-slate-800 p-4 rounded-2xl mb-6">
+            <canvas id="canvas" class="max-w-full mx-auto rounded-xl"></canvas>
+        </div>
+
+        <div class="bg-slate-800 rounded-2xl p-6 space-y-6">
+
+            <!-- 水印文字 -->
+            <div>
+                <label class="font-medium mb-2 block">水印文字内容</label>
+                <textarea id="watermark-text" rows="4" class="w-full bg-slate-700 border border-slate-600 rounded-xl p-3 text-sm">得物平台
+PKRT品牌原创图片
+严禁盗图-盗图必究</textarea>
+                <p class="text-xs text-slate-400 mt-1">最下方会自动添加生成时间戳</p>
+            </div>
+
+            <!-- 调节控件 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <span>字体大小</span>
+                        <span id="font-size-value" class="font-mono text-blue-400">25</span>
+                    </div>
+                    <input type="range" id="font-size-slider" min="16" max="70" step="1" value="25" class="w-full accent-blue-500">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <span>透明度</span>
+                        <span id="opacity-value" class="font-mono text-blue-400">0.5</span>
+                    </div>
+                    <input type="range" id="opacity-slider" min="0.03" max="0.5" step="0.01" value="0.5" class="w-full accent-blue-500">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <span>水平位置 (X)</span>
+                        <span id="pos-x-value" class="font-mono text-blue-400">50%</span>
+                    </div>
+                    <input type="range" id="pos-x-slider" min="10" max="90" step="1" value="50" class="w-full accent-blue-500">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <span>垂直位置 (Y)</span>
+                        <span id="pos-y-value" class="font-mono text-blue-400">75%</span>
+                    </div>
+                    <input type="range" id="pos-y-slider" min="10" max="90" step="1" value="75" class="w-full accent-blue-500">
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="applyWatermark()" class="flex-1 bg-blue-600 hover:bg-blue-700 py-3 rounded-xl">应用设置</button>
+                <button onclick="previewVisible()" class="flex-1 bg-amber-600 hover:bg-amber-700 py-3 rounded-xl">预览显形</button>
+                <button onclick="restoreHidden()" class="flex-1 bg-slate-600 hover:bg-slate-700 py-3 rounded-xl">恢复隐形</button>
+            </div>
+
+            <button onclick="downloadImage()" class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-xl font-medium">下载带水印图片</button>
+        </div>
+
+        <!-- 验证说明 -->
+        <div class="mt-6 bg-slate-800 rounded-2xl p-6">
+            <h3 class="font-bold text-lg mb-3 text-emerald-400">推荐验证方式：PS差值混合模式</h3>
+            <div class="text-sm space-y-1.5 text-slate-300">
+                <p>1. 保留好这张<strong>未加水印的原图</strong></p>
+                <p>2. 把盗图图片放在上层，原图放在下层</p>
+                <p>3. 上层图层混合模式改为 <strong>差值 (Difference)</strong></p>
+                <p>4. 水印会以亮色形式出现在黑色背景上</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentImage = null;
+let canvas, ctx;
+
+function init() {
+    canvas = document.getElementById('canvas');
+    ctx = canvas.getContext('2d', { alpha: true });
+
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('file-input');
+
+    uploadArea.onclick = () => fileInput.click();
+    fileInput.onchange = e => e.target.files[0] && handleImage(e.target.files[0]);
+
+    ['opacity-slider', 'font-size-slider', 'pos-x-slider', 'pos-y-slider'].forEach(id => {
+        document.getElementById(id).oninput = () => {
+            updateValueDisplays();
+            if (currentImage) applyWatermark();
+        };
+    });
+}
+
+function updateValueDisplays() {
+    document.getElementById('opacity-value').textContent = parseFloat(document.getElementById('opacity-slider').value).toFixed(2);
+    document.getElementById('font-size-value').textContent = document.getElementById('font-size-slider').value;
+    document.getElementById('pos-x-value').textContent = document.getElementById('pos-x-slider').value + '%';
+    document.getElementById('pos-y-value').textContent = document.getElementById('pos-y-slider').value + '%';
+}
+
+function handleImage(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+            currentImage = img;
+            canvas.width = img.width;
+            canvas.height = img.height;
+            document.getElementById('preview-section').classList.remove('hidden');
+            document.getElementById('upload-area').classList.add('hidden');
+            applyWatermark();
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function applyWatermark(opacityOverride = null) {
+    if (!currentImage) return;
+
+    const opacity = opacityOverride !== null ? opacityOverride : parseFloat(document.getElementById('opacity-slider').value);
+    const fontSize = parseInt(document.getElementById('font-size-slider').value);
+    const posX = parseInt(document.getElementById('pos-x-slider').value) / 100;
+    const posY = parseInt(document.getElementById('pos-y-slider').value) / 100;
+
+    const textArea = document.getElementById('watermark-text');
+    let lines = textArea.value.trim().split('\n').filter(l => l.trim() !== '');
+
+    // 自动添加时间戳
+    const now = new Date();
+    const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    lines.push(`生成时间：${timeStr}`);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(currentImage, 0, 0);
+
+    ctx.save();
+    ctx.globalAlpha = opacity;
+    ctx.fillStyle = '#E0E0E0';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `bold ${fontSize}px "Microsoft YaHei", sans-serif`;
+
+    const centerX = canvas.width * posX;
+    const centerY = canvas.height * posY;
+    const lineHeight = fontSize * 1.55;
+
+    const totalHeight = (lines.length - 1) * lineHeight;
+    let startY = centerY - totalHeight / 2;
+
+    lines.forEach((line, i) => {
+        ctx.fillText(line, centerX, startY + i * lineHeight);
+    });
+
+    ctx.restore();
+}
+
+function previewVisible() {
+    applyWatermark(0.88);
+}
+
+function restoreHidden() {
+    applyWatermark();
+}
+
+function downloadImage() {
+    const link = document.createElement('a');
+    link.download = `水印_${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+}
+
+window.onload = init;
+</script>
+</body>
+</html>
