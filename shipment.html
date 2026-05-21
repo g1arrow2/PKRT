@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日快递发货记录器 - 左侧悬浮版</title>
+    <title>每日快递发货记录器</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -35,7 +35,6 @@
             min-height: 100vh;
         }
         
-        /* 保持原大框架主容器宽度不动 */
         .container { max-width: 1140px; margin: 0 auto; position: relative; }
         
         .nav-tabs {
@@ -92,30 +91,16 @@
         }
         
         th { background: var(--bg); font-weight: 600; color: var(--text-light); }
-        
         tr:hover td { background: var(--primary-light); }
-        
         tr.duplicate { background-color: var(--warning-light) !important; }
         .ignored { color: #64748B !important; text-decoration: line-through; }
         .dup-text { color: #f59e0b; font-weight: 700; }
-        
-        /* 快递品牌微型标签 */
-        .express-tag {
-            display: inline-block; padding: 3px 6px; border-radius: 4px;
-            font-size: 0.75rem; font-weight: bold; background: #F1F5F9; color: #475569;
-        }
-        .company-yt { background: #E0E7FF; color: #4338CA; }
-        .company-jd { background: #FEE2E2; color: #991B1B; }
-        .company-jt { background: #FEF3C7; color: #92400E; }
-        .company-sf { background: #E2E8F0; color: #1E293B; }
-        .company-st { background: #D1FAE5; color: #065F46; }
-        .company-zt { background: #CFFAFE; color: #0369A1; }
 
-        /* ⭐ 核心修改：利用固定定位悬浮在屏幕最左侧完全空白的背景区 */
+        /* ⭐ 左侧独立挂载悬浮框样式 */
         .fixed-left-sidebar {
             position: fixed;
-            top: 25px;
-            left: 5px;
+            top: 25px;         /* 按照要求修改为 25px */
+            left: 24px;
             width: 240px;
             background: var(--card);
             border-radius: 16px;
@@ -123,7 +108,7 @@
             box-shadow: var(--shadow-lg);
             border: 1px solid var(--border);
             z-index: 999;
-            display: none; /* 默认隐藏，由下方媒体查询在大屏时打开 */
+            display: none; 
         }
         .sidebar-title {
             font-weight: 700; font-size: 0.95rem; color: var(--text);
@@ -134,13 +119,17 @@
             padding: 10px 12px; background: var(--bg); border-radius: 8px;
             margin-bottom: 6px; font-weight: 600; font-size: 0.85rem;
         }
+        .sidebar-label {
+            display: inline-block; padding: 3px 6px; border-radius: 4px;
+            font-size: 0.75rem; font-weight: bold; background: #E2E8F0; color: #475569;
+        }
 
-        /* 当屏幕足够宽（大键盘/显示器）左边有巨大空白时，才激活悬浮组件 */
+        /* ⭐ 媒体查询定位修改 */
         @media (min-width: 1660px) {
-            .fixed-left-sidebar { display: block; left: calc(50% - 810px); } /* 精准根据中央主容器位置对齐悬浮 */
+            .fixed-left-sidebar { display: block; left: calc(50% - 815px); } 
         }
         @media (min-width: 1400px) and (max-width: 1659px) {
-            .fixed-left-sidebar { display: block; left: 20px; }
+            .fixed-left-sidebar { display: block; left: 10px; }
         }
 
         .summary-box {
@@ -177,7 +166,6 @@
             font-size: 2rem; font-weight: 700; color: var(--primary);
         }
         
-        /* 居中全透明提示框 */
         .toast {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(0,0,0,0.8); color: white; padding: 12px 24px;
@@ -220,13 +208,13 @@
 
 <div class="fixed-left-sidebar" id="leftExpressSidebar">
     <div class="sidebar-title">📊 当日快递公司汇总</div>
-    <div class="sidebar-row"><span class="express-tag company-yt">圆通速递 (YT)</span><span id="stat-yt" style="color:var(--primary);">0 单</span></div>
-     <div class="sidebar-row"><span class="express-tag company-sf">顺丰速运 (SF)</span><span id="stat-sf" style="color:var(--primary);">0 单</span></div>
-    <div class="sidebar-row"><span class="express-tag company-jd">京东快递 (JD)</span><span id="stat-jd" style="color:var(--primary);">0 单</span></div>
-    <div class="sidebar-row"><span class="express-tag company-jt">极兔速递 (JT)</span><span id="stat-jt" style="color:var(--primary);">0 单</span></div>
-    <div class="sidebar-row"><span class="express-tag company-st">申通快递 (77)</span><span id="stat-st" style="color:var(--primary);">0 单</span></div>
-    <div class="sidebar-row"><span class="express-tag company-zt">中通快递 (78)</span><span id="stat-zt" style="color:var(--primary);">0 单</span></div>
-    <div class="sidebar-row" style="background:#F8FAFC;"><span class="express-tag">其他公司</span><span id="stat-other" style="color:var(--text-light);">0 单</span></div>
+    <div class="sidebar-row"><span class="sidebar-label" style="background:#E0E7FF; color:#4338CA;">圆通速递 (YT)</span><span id="stat-yt" style="color:var(--primary);">0 单</span></div>
+    <div class="sidebar-row"><span class="sidebar-label" style="background:#FEE2E2; color:#991B1B;">京东快递 (JD)</span><span id="stat-jd" style="color:var(--primary);">0 单</span></div>
+    <div class="sidebar-row"><span class="sidebar-label" style="background:#FEF3C7; color:#92400E;">极兔速递 (JT)</span><span id="stat-jt" style="color:var(--primary);">0 单</span></div>
+    <div class="sidebar-row"><span class="sidebar-label" style="background:#E2E8F0; color:#1E293B;">顺丰速运 (SF)</span><span id="stat-sf" style="color:var(--primary);">0 单</span></div>
+    <div class="sidebar-row"><span class="sidebar-label" style="background:#D1FAE5; color:#065F46;">申通快递 (77)</span><span id="stat-st" style="color:var(--primary);">0 单</span></div>
+    <div class="sidebar-row"><span class="sidebar-label" style="background:#CFFAFE; color:#0369A1;">中通快递 (78)</span><span id="stat-zt" style="color:var(--primary);">0 单</span></div>
+    <div class="sidebar-row" style="background:#F8FAFC;"><span class="sidebar-label">其他快递</span><span id="stat-other" style="color:var(--text-light);">0 单</span></div>
 </div>
 
 <div id="modal" class="modal">
@@ -237,7 +225,7 @@
         </div>
         <div id="modalBody" class="modal-body"></div>
         <div class="modal-footer">
-            <button class="btn btn-success" onclick="copyModalContent()">📋 复制汇总文本</button>
+            <button class="btn btn-success" onclick="copyModalContent()">📋 复制有效单号汇总</button>
         </div>
     </div>
 </div>
@@ -277,12 +265,11 @@
                 <table>
                     <thead>
                         <tr>
-                            <th style="width:60px;">序号</th>
+                            <th style="width:70px;">序号</th>
                             <th>快递单号</th>
-                            <th style="width:120px;">识别品牌</th>
-                            <th style="width:110px;">录入时间</th>
-                            <th style="width:120px;">状态</th>
-                            <th style="width:80px;">操作</th>
+                            <th>录入时间</th>
+                            <th style="width:140px;">状态</th>
+                            <th style="width:90px;">操作</th>
                         </tr>
                     </thead>
                     <tbody id="recordList"></tbody>
@@ -342,28 +329,16 @@
         return dateStr || new Date().toISOString().slice(0,10);
     }
 
-    // 快递前缀特征库高精度判断
+    // 后台静默执行物流特征比对
     function identifyExpress(num) {
         const str = String(num).trim().toUpperCase();
-        if (str.startsWith('SF') || /^\d{12}$/.test(str) || /^\d{15}$/.test(str)) {
-            return { code: 'sf', name: '顺丰', class: 'company-sf' };
-        }
-        if (str.startsWith('YT') || /^1[35789]\d{11}$/.test(str)) {
-            return { code: 'yt', name: '圆通', class: 'company-yt' };
-        }
-        if (str.startsWith('JT') || /^5[0123456]\d{11}$/.test(str)) {
-            return { code: 'jt', name: '极兔', class: 'company-jt' };
-        }
-        if (str.startsWith('JD')) {
-            return { code: 'jd', name: '京东', class: 'company-jd' };
-        }
-        if (str.startsWith('77')) {
-            return { code: 'st', name: '申通', class: 'company-st' };
-        }
-        if (str.startsWith('78')) {
-            return { code: 'zt', name: '中通', class: 'company-zt' };
-        }
-        return { code: 'other', name: '其他', class: '' };
+        if (str.startsWith('SF') || /^\d{12}$/.test(str) || /^\d{15}$/.test(str)) return 'sf';
+        if (str.startsWith('YT') || /^1[35789]\d{11}$/.test(str)) return 'yt';
+        if (str.startsWith('JT') || /^5[0123456]\d{11}$/.test(str)) return 'jt';
+        if (str.startsWith('JD')) return 'jd';
+        if (str.startsWith('77')) return 'st';
+        if (str.startsWith('78')) return 'zt';
+        return 'other';
     }
 
     function loadSelectedDate() {
@@ -380,7 +355,7 @@
         renderRecordList();
         renderSummary();
         updateCount();
-        calculateCompanyStats(); // 刷新左侧悬浮窗数据
+        calculateCompanyStats();
     }
 
     function saveCurrentDate() {
@@ -396,12 +371,12 @@
         document.getElementById('countDisplay').textContent = getNormalList().length;
     }
 
-    // ⭐ 独立函数：计算左边悬浮窗的数据状态
+    // 计算左侧静止定位小卡片的数量
     function calculateCompanyStats() {
         const stats = { yt: 0, jd: 0, jt: 0, sf: 0, st: 0, zt: 0, other: 0 };
         getNormalList().forEach(item => {
-            const result = identifyExpress(item.number);
-            stats[result.code]++;
+            const code = identifyExpress(item.number);
+            stats[code]++;
         });
         document.getElementById('stat-yt').textContent = stats.yt + ' 单';
         document.getElementById('stat-jd').textContent = stats.jd + ' 单';
@@ -425,7 +400,6 @@
             const isIgnored = item.status !== 'normal';
             const isPending = pendingDeleteIndex === i;
             const btnStyle = isPending ? 'background:#f59e0b !important;color:white;' : '';
-            const comp = identifyExpress(item.number);
 
             const rowHTML = `
                 <tr class="${isDup ? 'duplicate' : ''}">
@@ -433,7 +407,6 @@
                     <td class="${isIgnored ? 'ignored' : ''} ${isDup ? 'dup-text' : ''}" style="font-family:monospace;font-weight:600;">
                         ${item.number}
                     </td>
-                    <td><span class="express-tag ${comp.class}">${comp.name}</span></td>
                     <td>${item.time}</td>
                     <td>
                         <select onchange="changeStatus(${i}, this.value)" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg);">
@@ -537,11 +510,8 @@
     function exportCurrentExcel() {
         const normal = getNormalList();
         if (normal.length === 0) return showToast('没有有效数据可导出');
-        const data = [['序号', '快递单号', '识别公司', '录入时间', '状态']];
-        normal.forEach((item, i) => {
-            const comp = identifyExpress(item.number);
-            data.push([i+1, item.number, comp.name, item.time, '正常']);
-        });
+        const data = [['序号', '快递单号', '录入时间', '状态']];
+        normal.forEach((item, i) => data.push([i+1, item.number, item.time, '正常']));
         const ws = XLSX.utils.aoa_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, '发货记录');
@@ -549,7 +519,6 @@
         showToast('✅ Excel 已导出');
     }
 
-    // 核心：无感居中弹出提示
     function showToast(msg) {
         const toast = document.getElementById('toast');
         toast.textContent = msg;
@@ -565,7 +534,6 @@
         });
         document.getElementById(id).classList.add('active');
         
-        // 仅在发货记录Tab下显示左侧挂件组件
         const sidebar = document.getElementById('leftExpressSidebar');
         if(id === 'record-mod') {
             calculateCompanyStats();
@@ -614,18 +582,15 @@
 
         let html = `<table style="width:100%;border-collapse:collapse;"><thead><tr>
             <th style="background:#f1f5f9;padding:10px;">快递单号</th>
-            <th style="background:#f1f5f9;padding:10px;">识别公司</th>
             <th style="background:#f1f5f9;padding:10px;">录入时间</th>
             <th style="background:#f1f5f9;padding:10px;">状态</th>
         </tr></thead><tbody>`;
 
         list.forEach(item => {
-            const comp = identifyExpress(item.number);
             const statusText = item.status === 'normal' ? '正常' : (item.status === 'canceled' ? '已取消' : '已拦截');
             const style = item.status !== 'normal' ? 'color:#64748b;text-decoration:line-through;' : '';
             html += `<tr style="${style}">
                 <td style="padding:10px;font-family:monospace;">${item.number}</td>
-                <td style="padding:10px;"><span class="express-tag ${comp.class}">${comp.name}</span></td>
                 <td style="padding:10px;">${item.time}</td>
                 <td style="padding:10px;">${statusText}</td>
             </tr>`;
@@ -644,13 +609,12 @@
         let numbers = [];
         rows.forEach(row => {
             const cells = row.cells;
-            if (cells[3].textContent === '正常') { numbers.push(cells[0].textContent); }
+            if (cells[2].textContent === '正常') { numbers.push(cells[0].textContent); }
         });
         const text = numbers.join(',');
         navigator.clipboard.writeText(text).then(() => showToast('✅ 已复制有效单号汇总'));
     }
 
-    // 监听回车扫码
     document.getElementById('scanIn').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             const val = this.value.trim();
