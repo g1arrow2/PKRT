@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日快递发货记录器</title>
+    <title>每日快递发货记录器 - 智能核算版</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -95,12 +95,23 @@
         tr.duplicate { background-color: var(--warning-light) !important; }
         .ignored { color: #64748B !important; text-decoration: line-through; }
         .dup-text { color: #f59e0b; font-weight: 700; }
+        
+        /* 快递公司分类小卡片基础标签 */
+        .express-tag {
+            display: inline-block; padding: 3px 6px; border-radius: 4px;
+            font-size: 0.75rem; font-weight: bold; background: #F1F5F9; color: #475569;
+        }
+        .company-yt { background: #E0E7FF; color: #4338CA; }
+        .company-sf { background: #E2E8F0; color: #1E293B; }
+        .company-jd { background: #FEE2E2; color: #991B1B; }
+        .company-jt { background: #FEF3C7; color: #92400E; }
+        .company-st { background: #D1FAE5; color: #065F46; }
+        .company-zt { background: #CFFAFE; color: #0369A1; }
 
-        /* ⭐ 左侧独立挂载悬浮框样式 */
+        /* 左侧独立背景悬浮统计看板 */
         .fixed-left-sidebar {
             position: fixed;
-            top: 25px;         /* 按照要求修改为 25px */
-            left: 24px;
+            top: 25px;
             width: 240px;
             background: var(--card);
             border-radius: 16px;
@@ -124,7 +135,7 @@
             font-size: 0.75rem; font-weight: bold; background: #E2E8F0; color: #475569;
         }
 
-        /* ⭐ 媒体查询定位修改 */
+        /* 悬浮位置参数对齐控制 */
         @media (min-width: 1660px) {
             .fixed-left-sidebar { display: block; left: calc(50% - 815px); } 
         }
@@ -166,6 +177,7 @@
             font-size: 2rem; font-weight: 700; color: var(--primary);
         }
         
+        /* 居中弹出式 Toast 提示 */
         .toast {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(0,0,0,0.8); color: white; padding: 12px 24px;
@@ -298,18 +310,36 @@
 
     <div id="history-mod" class="module-content">
         <div class="card">
-            <h2>🕒 历史发货记录</h2>
-            <div style="margin-bottom:16px; display:flex; gap:8px; flex-wrap:wrap;">
-                <input type="date" id="historyDate" style="padding:10px 14px;border:2px solid var(--border);border-radius:8px;">
-                <input type="text" id="historySearch" placeholder="🔍 输入快递单号搜索" style="flex:1; min-width:220px; padding:10px 14px;border:2px solid var(--border);border-radius:8px;">
-                <button class="btn btn-primary" onclick="loadHistory()">查询</button>
+            <h2>🕒 历史范围统计数据汇总</h2>
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <div id="historyRangeTotal" class="stat-value" style="color:var(--primary);">0</div>
+                    <div style="color:var(--text-light);font-weight:600;">当前范围·扫描总数</div>
+                </div>
+                <div class="stat-item">
+                    <div id="historyRangeValid" class="stat-value" style="color:var(--success);">0</div>
+                    <div style="color:var(--text-light);font-weight:600;">当前范围·有效总数</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔍 跨时间发货记录查询与数据导出</h2>
+            <div style="margin-bottom:20px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                <span style="font-weight:600; font-size:0.9rem;">选择范围：</span>
+                <input type="date" id="historyStartDate" style="padding:10px 14px; border:2px solid var(--border); border-radius:8px;">
+                <span style="color:var(--text-light);">至</span>
+                <input type="date" id="historyEndDate" style="padding:10px 14px; border:2px solid var(--border); border-radius:8px;">
+                <input type="text" id="historySearch" placeholder="🔍 输入特定单号精确查找" style="flex:1; min-width:200px; padding:10px 14px; border:2px solid var(--border); border-radius:8px;">
+                <button class="btn btn-primary" onclick="loadHistory()">📊 点击查询</button>
+                <button class="btn btn-success" onclick="exportRangeExcel()">📥 导出当前段记录明细</button>
             </div>
             <table>
                 <thead>
                     <tr>
-                        <th>日期</th>
-                        <th>全部 / 有效</th>
-                        <th>操作</th>
+                        <th>核算日期</th>
+                        <th>记录明细统计 (全部 / 有效)</th>
+                        <th>日常操作</th>
                     </tr>
                 </thead>
                 <tbody id="historyBody"></tbody>
@@ -329,7 +359,7 @@
         return dateStr || new Date().toISOString().slice(0,10);
     }
 
-    // 后台静默执行物流特征比对
+    // 后台规则自动比对
     function identifyExpress(num) {
         const str = String(num).trim().toUpperCase();
         if (str.startsWith('SF') || /^\d{12}$/.test(str) || /^\d{15}$/.test(str)) return 'sf';
@@ -371,7 +401,6 @@
         document.getElementById('countDisplay').textContent = getNormalList().length;
     }
 
-    // 计算左侧静止定位小卡片的数量
     function calculateCompanyStats() {
         const stats = { yt: 0, jd: 0, jt: 0, sf: 0, st: 0, zt: 0, other: 0 };
         getNormalList().forEach(item => {
@@ -379,9 +408,9 @@
             stats[code]++;
         });
         document.getElementById('stat-yt').textContent = stats.yt + ' 单';
+        document.getElementById('stat-sf').textContent = stats.sf + ' 单';
         document.getElementById('stat-jd').textContent = stats.jd + ' 单';
         document.getElementById('stat-jt').textContent = stats.jt + ' 单';
-        document.getElementById('stat-sf').textContent = stats.sf + ' 单';
         document.getElementById('stat-st').textContent = stats.st + ' 单';
         document.getElementById('stat-zt').textContent = stats.zt + ' 单';
         document.getElementById('stat-other').textContent = stats.other + ' 单';
@@ -534,31 +563,65 @@
         });
         document.getElementById(id).classList.add('active');
         
-        const sidebar = document.getElementById('leftExpressSidebar');
-        if(id === 'record-mod') {
-            calculateCompanyStats();
-        }
-        
+        if(id === 'record-mod') calculateCompanyStats();
         if (id === 'summary-mod') renderSummary();
         if (id === 'history-mod') loadHistory();
     }
 
-    // 历史
+    // ====================== 3. 历史记录范围数据流处理 ======================
+    function getFilteredHistoryData() {
+        const startVal = document.getElementById('historyStartDate').value;
+        const endVal = document.getElementById('historyEndDate').value;
+        const searchTerm = document.getElementById('historySearch').value.trim().toLowerCase();
+
+        let filteredDates = Object.keys(allHistory).sort().reverse();
+
+        // 时间区间筛选过滤器
+        if (startVal) {
+            filteredDates = filteredDates.filter(date => date >= startVal);
+        }
+        if (endVal) {
+            filteredDates = filteredDates.filter(date => date <= endVal);
+        }
+
+        let totalRecordsCount = 0;
+        let validRecordsCount = 0;
+        let finalMap = {};
+
+        filteredDates.forEach(date => {
+            const records = allHistory[date] || [];
+            
+            // 模糊过滤匹配
+            let matchedRecords = records;
+            if (searchTerm) {
+                matchedRecords = records.filter(r => (r.number || '').toLowerCase().includes(searchTerm));
+            }
+
+            if (matchedRecords.length > 0 || !searchTerm) {
+                finalMap[date] = matchedRecords;
+                totalRecordsCount += matchedRecords.length;
+                validRecordsCount += matchedRecords.filter(r => (r.status || 'normal') === 'normal').length;
+            }
+        });
+
+        return { finalMap, totalRecordsCount, validRecordsCount };
+    }
+
     function renderHistory() {
         const tbody = document.getElementById('historyBody');
         tbody.innerHTML = '';
-        const searchTerm = (document.getElementById('historySearch') || {value: ''}).value.trim().toLowerCase();
+        
+        // 抓取并执行过滤汇总
+        const { finalMap, totalRecordsCount, validRecordsCount } = getFilteredHistoryData();
 
-        Object.keys(allHistory).sort().reverse().forEach(date => {
-            const records = allHistory[date] || [];
+        // 推动核心统计看板面板更新
+        document.getElementById('historyRangeTotal').textContent = totalRecordsCount;
+        document.getElementById('historyRangeValid').textContent = validRecordsCount;
+
+        Object.keys(finalMap).forEach(date => {
+            const records = finalMap[date];
             const total = records.length;
             const valid = records.filter(r => (r.status || 'normal') === 'normal').length;
-
-            let match = !searchTerm;
-            if (searchTerm) {
-                match = records.some(r => (r.number || '').toLowerCase().includes(searchTerm));
-            }
-            if (!match) return;
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -567,14 +630,42 @@
                     全部: <strong>${total}</strong> / 有效: <strong>${valid}</strong>
                 </td>
                 <td>
-                    <button class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;" onclick="viewHistory('${date}')">查看</button>
+                    <button class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;" onclick="viewHistory('${date}')">查看明细</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    function loadHistory() { renderHistory(); }
+    function loadHistory() { 
+        renderHistory(); 
+    }
+
+    // ⭐ 新增功能：将目前在历史界面筛选出的所有订单记录批量提取并导出到 Excel 表中
+    function exportRangeExcel() {
+        const { finalMap } = getFilteredHistoryData();
+        const dates = Object.keys(finalMap);
+        if (dates.length === 0) return showToast('当前所选范围内无可导出的有效记录');
+
+        const data = [['发货日期', '序号', '快递单号', '录入时间', '状态说明']];
+        let numId = 1;
+
+        dates.sort().forEach(date => {
+            finalMap[date].forEach(item => {
+                const statusText = item.status === 'normal' ? '正常' : (item.status === 'canceled' ? '已取消' : '已拦截');
+                data.push([date, numId++, item.number, item.time, statusText]);
+            });
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, '历史范围发货明细');
+        
+        const startVal = document.getElementById('historyStartDate').value || '起点';
+        const endVal = document.getElementById('historyEndDate').value || '终点';
+        XLSX.writeFile(wb, `发货历史对账单_${startVal}_到_${endVal}.xlsx`);
+        showToast('✅ 范围历史对账表已导出');
+    }
 
     function viewHistory(date) {
         const list = allHistory[date] || [];
