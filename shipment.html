@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日快递发货记录器 - 智能核算版</title>
+    <title>每日快递发货记录器 - 稳定修正版</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -96,17 +96,10 @@
         .ignored { color: #64748B !important; text-decoration: line-through; }
         .dup-text { color: #f59e0b; font-weight: 700; }
         
-        /* 快递公司分类小卡片基础标签 */
         .express-tag {
             display: inline-block; padding: 3px 6px; border-radius: 4px;
             font-size: 0.75rem; font-weight: bold; background: #F1F5F9; color: #475569;
         }
-        .company-yt { background: #E0E7FF; color: #4338CA; }
-        .company-sf { background: #E2E8F0; color: #1E293B; }
-        .company-jd { background: #FEE2E2; color: #991B1B; }
-        .company-jt { background: #FEF3C7; color: #92400E; }
-        .company-st { background: #D1FAE5; color: #065F46; }
-        .company-zt { background: #CFFAFE; color: #0369A1; }
 
         /* 左侧独立背景悬浮统计看板 */
         .fixed-left-sidebar {
@@ -135,7 +128,6 @@
             font-size: 0.75rem; font-weight: bold; background: #E2E8F0; color: #475569;
         }
 
-        /* 悬浮位置参数对齐控制 */
         @media (min-width: 1660px) {
             .fixed-left-sidebar { display: block; left: calc(50% - 815px); } 
         }
@@ -177,7 +169,6 @@
             font-size: 2rem; font-weight: 700; color: var(--primary);
         }
         
-        /* 居中弹出式 Toast 提示 */
         .toast {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(0,0,0,0.8); color: white; padding: 12px 24px;
@@ -359,7 +350,6 @@
         return dateStr || new Date().toISOString().slice(0,10);
     }
 
-    // 后台规则自动比对
     function identifyExpress(num) {
         const str = String(num).trim().toUpperCase();
         if (str.startsWith('SF') || /^\d{12}$/.test(str) || /^\d{15}$/.test(str)) return 'sf';
@@ -407,13 +397,15 @@
             const code = identifyExpress(item.number);
             stats[code]++;
         });
-        document.getElementById('stat-yt').textContent = stats.yt + ' 单';
-        document.getElementById('stat-sf').textContent = stats.sf + ' 单';
-        document.getElementById('stat-jd').textContent = stats.jd + ' 单';
-        document.getElementById('stat-jt').textContent = stats.jt + ' 单';
-        document.getElementById('stat-st').textContent = stats.st + ' 单';
-        document.getElementById('stat-zt').textContent = stats.zt + ' 单';
-        document.getElementById('stat-other').textContent = stats.other + ' 单';
+        
+        // 安全保护，防止元素未渲染完成时报错中断
+        if(document.getElementById('stat-yt')) document.getElementById('stat-yt').textContent = stats.yt + ' 单';
+        if(document.getElementById('stat-sf')) document.getElementById('stat-sf').textContent = stats.sf + ' 单';
+        if(document.getElementById('stat-jd')) document.getElementById('stat-jd').textContent = stats.jd + ' 单';
+        if(document.getElementById('stat-jt')) document.getElementById('stat-jt').textContent = stats.jt + ' 单';
+        if(document.getElementById('stat-st')) document.getElementById('stat-st').textContent = stats.st + ' 单';
+        if(document.getElementById('stat-zt')) document.getElementById('stat-zt').textContent = stats.zt + ' 单';
+        if(document.getElementById('stat-other')) document.getElementById('stat-other').textContent = stats.other + ' 单';
     }
 
     function renderRecordList() {
@@ -454,6 +446,7 @@
 
     function renderSummary() {
         const box = document.getElementById('summaryText');
+        if(!box) return;
         const normal = getNormalList();
         if (normal.length === 0) {
             box.textContent = '暂无有效记录';
@@ -563,26 +556,28 @@
         });
         document.getElementById(id).classList.add('active');
         
-        if(id === 'record-mod') calculateCompanyStats();
+        const sidebar = document.getElementById('leftExpressSidebar');
+        if(id === 'record-mod') {
+            if(sidebar) sidebar.style.display = '';
+            calculateCompanyStats();
+        } else {
+            if(sidebar) sidebar.style.display = 'none'; // 非记录Tab下静默隐藏挂件
+        }
+        
         if (id === 'summary-mod') renderSummary();
         if (id === 'history-mod') loadHistory();
     }
 
-    // ====================== 3. 历史记录范围数据流处理 ======================
+    // ====================== 历史数据清洗过滤层 ======================
     function getFilteredHistoryData() {
-        const startVal = document.getElementById('historyStartDate').value;
-        const endVal = document.getElementById('historyEndDate').value;
-        const searchTerm = document.getElementById('historySearch').value.trim().toLowerCase();
+        const startVal = document.getElementById('historyStartDate') ? document.getElementById('historyStartDate').value : '';
+        const endVal = document.getElementById('historyEndDate') ? document.getElementById('historyEndDate').value : '';
+        const searchTerm = document.getElementById('historySearch') ? document.getElementById('historySearch').value.trim().toLowerCase() : '';
 
         let filteredDates = Object.keys(allHistory).sort().reverse();
 
-        // 时间区间筛选过滤器
-        if (startVal) {
-            filteredDates = filteredDates.filter(date => date >= startVal);
-        }
-        if (endVal) {
-            filteredDates = filteredDates.filter(date => date <= endVal);
-        }
+        if (startVal) filteredDates = filteredDates.filter(date => date >= startVal);
+        if (endVal) filteredDates = filteredDates.filter(date => date <= endVal);
 
         let totalRecordsCount = 0;
         let validRecordsCount = 0;
@@ -590,8 +585,6 @@
 
         filteredDates.forEach(date => {
             const records = allHistory[date] || [];
-            
-            // 模糊过滤匹配
             let matchedRecords = records;
             if (searchTerm) {
                 matchedRecords = records.filter(r => (r.number || '').toLowerCase().includes(searchTerm));
@@ -609,14 +602,14 @@
 
     function renderHistory() {
         const tbody = document.getElementById('historyBody');
-        tbody.innerHTML = '';
+        if(!tbody) return; // 安全容错保护
         
-        // 抓取并执行过滤汇总
+        tbody.innerHTML = '';
         const { finalMap, totalRecordsCount, validRecordsCount } = getFilteredHistoryData();
 
-        // 推动核心统计看板面板更新
-        document.getElementById('historyRangeTotal').textContent = totalRecordsCount;
-        document.getElementById('historyRangeValid').textContent = validRecordsCount;
+        // 只有在元素存在的情况下进行数值更新，防止阻塞
+        if(document.getElementById('historyRangeTotal')) document.getElementById('historyRangeTotal').textContent = totalRecordsCount;
+        if(document.getElementById('historyRangeValid')) document.getElementById('historyRangeValid').textContent = validRecordsCount;
 
         Object.keys(finalMap).forEach(date => {
             const records = finalMap[date];
@@ -641,7 +634,6 @@
         renderHistory(); 
     }
 
-    // ⭐ 新增功能：将目前在历史界面筛选出的所有订单记录批量提取并导出到 Excel 表中
     function exportRangeExcel() {
         const { finalMap } = getFilteredHistoryData();
         const dates = Object.keys(finalMap);
@@ -723,7 +715,7 @@
         currentDateKey = today;
         document.getElementById('selectedDateDisplay').textContent = today;
         loadSelectedDate();
-        renderHistory();
+        renderHistory(); // 确保开机初始化正常运行
         setTimeout(() => document.getElementById('scanIn').focus(), 300);
     };
 </script>
