@@ -114,8 +114,8 @@
         /* ⭐ 核心修改：利用固定定位悬浮在屏幕最左侧完全空白的背景区 */
         .fixed-left-sidebar {
             position: fixed;
-            top: 100px;
-            left: 24px;
+            top: 25px;
+            left: 5px;
             width: 240px;
             background: var(--card);
             border-radius: 16px;
@@ -137,7 +137,7 @@
 
         /* 当屏幕足够宽（大键盘/显示器）左边有巨大空白时，才激活悬浮组件 */
         @media (min-width: 1660px) {
-            .fixed-left-sidebar { display: block; left: calc(50% - 790px); } /* 精准根据中央主容器位置对齐悬浮 */
+            .fixed-left-sidebar { display: block; left: calc(50% - 810px); } /* 精准根据中央主容器位置对齐悬浮 */
         }
         @media (min-width: 1400px) and (max-width: 1659px) {
             .fixed-left-sidebar { display: block; left: 20px; }
@@ -221,9 +221,9 @@
 <div class="fixed-left-sidebar" id="leftExpressSidebar">
     <div class="sidebar-title">📊 当日快递公司汇总</div>
     <div class="sidebar-row"><span class="express-tag company-yt">圆通速递 (YT)</span><span id="stat-yt" style="color:var(--primary);">0 单</span></div>
+     <div class="sidebar-row"><span class="express-tag company-sf">顺丰速运 (SF)</span><span id="stat-sf" style="color:var(--primary);">0 单</span></div>
     <div class="sidebar-row"><span class="express-tag company-jd">京东快递 (JD)</span><span id="stat-jd" style="color:var(--primary);">0 单</span></div>
     <div class="sidebar-row"><span class="express-tag company-jt">极兔速递 (JT)</span><span id="stat-jt" style="color:var(--primary);">0 单</span></div>
-    <div class="sidebar-row"><span class="express-tag company-sf">顺丰速运 (SF)</span><span id="stat-sf" style="color:var(--primary);">0 单</span></div>
     <div class="sidebar-row"><span class="express-tag company-st">申通快递 (77)</span><span id="stat-st" style="color:var(--primary);">0 单</span></div>
     <div class="sidebar-row"><span class="express-tag company-zt">中通快递 (78)</span><span id="stat-zt" style="color:var(--primary);">0 单</span></div>
     <div class="sidebar-row" style="background:#F8FAFC;"><span class="express-tag">其他公司</span><span id="stat-other" style="color:var(--text-light);">0 单</span></div>
