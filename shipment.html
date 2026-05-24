@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日快递发货记录器 - 稳定修正版</title>
+    <title>每日快递发货记录器 - 顺丰强提醒版</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -100,6 +100,12 @@
             display: inline-block; padding: 3px 6px; border-radius: 4px;
             font-size: 0.75rem; font-weight: bold; background: #F1F5F9; color: #475569;
         }
+        .company-yt { background: #E0E7FF; color: #4338CA; }
+        .company-sf { background: #E2E8F0; color: #1E293B; }
+        .company-jd { background: #FEE2E2; color: #991B1B; }
+        .company-jt { background: #FEF3C7; color: #92400E; }
+        .company-st { background: #D1FAE5; color: #065F46; }
+        .company-zt { background: #CFFAFE; color: #0369A1; }
 
         /* 左侧独立背景悬浮统计看板 */
         .fixed-left-sidebar {
@@ -169,13 +175,31 @@
             font-size: 2rem; font-weight: 700; color: var(--primary);
         }
         
+        /* 居中弹出式 Toast 提示 */
         .toast {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.8); color: white; padding: 12px 24px;
-            border-radius: 8px; z-index: 19999; opacity: 0; transition: all 0.3s;
-            pointer-events: none; text-align: center; font-weight: 500;
+            background: rgba(0,0,0,0.85); color: white; padding: 14px 28px;
+            border-radius: 10px; z-index: 19999; opacity: 0; transition: all 0.25s ease;
+            pointer-events: none; text-align: center; font-weight: 600; font-size: 1.05rem;
+            box-shadow: var(--shadow-lg);
         }
         .toast.show { opacity: 1; }
+        
+        /* ⭐ 新增：顺丰专属强光警告弹窗样式 */
+        .toast.sf-warning {
+            background: #FFFBEB;
+            color: #D97706;
+            border: 3px solid #F59E0B;
+            font-size: 1.3rem;
+            padding: 24px 40px;
+            border-radius: 16px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.03); box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.4); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
         
         .modal {
             display: none; position: fixed; top: 0; left: 0;
@@ -398,7 +422,6 @@
             stats[code]++;
         });
         
-        // 安全保护，防止元素未渲染完成时报错中断
         if(document.getElementById('stat-yt')) document.getElementById('stat-yt').textContent = stats.yt + ' 单';
         if(document.getElementById('stat-sf')) document.getElementById('stat-sf').textContent = stats.sf + ' 单';
         if(document.getElementById('stat-jd')) document.getElementById('stat-jd').textContent = stats.jd + ' 单';
@@ -469,6 +492,14 @@
         renderSummary();
         updateCount();
         calculateCompanyStats();
+
+        // ⭐ 核心功能修改：检查是否是顺丰快递，并弹出专门的强光警示框
+        const code = identifyExpress(number);
+        if (code === 'sf') {
+            showToast('⚠️ 顺丰包裹：请先放置顺丰取件区！', true);
+        } else {
+            showToast('✅ 录入成功');
+        }
     }
 
     function changeStatus(index, newStatus) {
@@ -541,11 +572,21 @@
         showToast('✅ Excel 已导出');
     }
 
-    function showToast(msg) {
+    // ⭐ 增强版：支持普通样式与顺丰强警示样式的切换提示函数
+    function showToast(msg, isSfWarning = false) {
         const toast = document.getElementById('toast');
+        if(!toast) return;
+
         toast.textContent = msg;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 1600);
+        
+        if (isSfWarning) {
+            toast.className = 'toast show sf-warning'; // 加载特殊的放大脉冲警告样式
+            // 顺丰这类强提醒建议停留久一点（这里设为 3.5 秒），方便工人看清并反应
+            setTimeout(() => toast.className = 'toast', 3500); 
+        } else {
+            toast.className = 'toast show'; // 正常普通提示
+            setTimeout(() => toast.className = 'toast', 1600);
+        }
     }
 
     function switchTab(id) {
@@ -561,14 +602,14 @@
             if(sidebar) sidebar.style.display = '';
             calculateCompanyStats();
         } else {
-            if(sidebar) sidebar.style.display = 'none'; // 非记录Tab下静默隐藏挂件
+            if(sidebar) sidebar.style.display = 'none';
         }
         
         if (id === 'summary-mod') renderSummary();
         if (id === 'history-mod') loadHistory();
     }
 
-    // ====================== 历史数据清洗过滤层 ======================
+    // ====================== 历史数据 ======================
     function getFilteredHistoryData() {
         const startVal = document.getElementById('historyStartDate') ? document.getElementById('historyStartDate').value : '';
         const endVal = document.getElementById('historyEndDate') ? document.getElementById('historyEndDate').value : '';
@@ -602,12 +643,11 @@
 
     function renderHistory() {
         const tbody = document.getElementById('historyBody');
-        if(!tbody) return; // 安全容错保护
+        if(!tbody) return;
         
         tbody.innerHTML = '';
         const { finalMap, totalRecordsCount, validRecordsCount } = getFilteredHistoryData();
 
-        // 只有在元素存在的情况下进行数值更新，防止阻塞
         if(document.getElementById('historyRangeTotal')) document.getElementById('historyRangeTotal').textContent = totalRecordsCount;
         if(document.getElementById('historyRangeValid')) document.getElementById('historyRangeValid').textContent = validRecordsCount;
 
@@ -630,9 +670,7 @@
         });
     }
 
-    function loadHistory() { 
-        renderHistory(); 
-    }
+    function loadHistory() { renderHistory(); }
 
     function exportRangeExcel() {
         const { finalMap } = getFilteredHistoryData();
@@ -715,7 +753,7 @@
         currentDateKey = today;
         document.getElementById('selectedDateDisplay').textContent = today;
         loadSelectedDate();
-        renderHistory(); // 确保开机初始化正常运行
+        renderHistory();
         setTimeout(() => document.getElementById('scanIn').focus(), 300);
     };
 </script>
