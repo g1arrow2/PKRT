@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品链接分类数据处理系统</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #16a34a;
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --border-color: #cbd5e1;
+            --text-color: #0f172a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); padding: 20px; line-height: 1.5; }
+
+        /* 4. 提示说明区 */
+        .notice-bar { background: #eff6ff; border-left: 4px solid var(--primary-color); padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .notice-bar strong { color: #1d4ed8; margin-right: 15px; }
+
+        /* 5. 模块切换 Tab */
+        .module-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+        .tab-btn { padding: 10px 24px; border: 1px solid var(--border-color); background: #e2e8f0; cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 15px; transition: all 0.2s; color: #475569; }
+        .tab-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); box-shadow: 0 2px 4px rgba(37,99,235,0.2); }
+
+        .module-content { display: none; }
+        .module-content.active { display: block; }
+
+        /* 面板容器 */
+        .panel { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        /* 看板区统一大标题排版 */
+        .panel-title-bar { margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; }
+        .panel-title-bar h3 { border-bottom: none; margin-bottom: 0; padding-bottom: 0; font-size: 16px; color: #1e293b; }
+        
+        h3 { margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; font-size: 16px; color: #1e293b; }
+        
+        textarea { width: 100%; height: 120px; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; resize: vertical; margin-bottom: 12px; font-size: 14px; }
+        textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        
+        button.action-btn { background: var(--primary-color); color: white; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: background 0.2s; }
+        button.action-btn:hover { background: #1d4ed8; }
+        
+        /* 汇总导出按钮 */
+        button.main-export-btn { background: var(--success-color); color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; transition: background 0.2s; box-shadow: 0 2px 4px rgba(22,163,74,0.15); display: flex; align-items: center; gap: 6px; }
+        button.main-export-btn:hover { background: #15803d; }
+
+        /* 每9个一组的卡片样式 */
+        .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 16px; margin-top: 15px; }
+        .group-card { border: 1px solid var(--border-color); border-radius: 6px; background: #f8fafc; box-shadow: 0 1px 2px rgba(0,0,0,0.02); overflow: hidden; }
+        .group-header { background: #e2e8f0; padding: 10px 14px; font-weight: bold; font-size: 14px; border-bottom: 1px solid var(--border-color); color: #334155; }
+        .group-body { padding: 14px; }
+        
+        .item-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; }
+        .item-row:last-child { margin-bottom: 0; }
+        .item-index { color: #94a3b8; font-size: 11px; width: 20px; text-align: center; font-weight: bold; }
+        .item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace; background: #fff; padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 4px; }
+        select { padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 4px; width: 160px; font-size: 13px; background-color: white; cursor: pointer; }
+        select:focus { outline: none; border-color: var(--primary-color); }
+        .remark-input { padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 4px; width: 100px; display: none; font-size: 13px; }
+
+        /* 结果看板区 */
+        .result-section { margin-top: 25px; }
+        .result-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        
+        .result-box { border: 1px solid var(--border-color); border-radius: 6px; padding: 15px; background: #ffffff; }
+        .result-title-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9; }
+        .result-title { font-weight: bold; font-size: 14px; color: #334155; display: flex; align-items: center; gap: 8px; }
+        .result-count { background: #e2e8f0; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; color: #475569; }
+
+        /* 文本框输出样式 */
+        .output-box { width: 100%; min-height: 60px; max-height: 200px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; font-family: monospace; font-size: 13px; color: #334155; word-break: break-all; overflow-y: auto; white-space: pre-wrap; }
+        
+        /* 复制按钮 */
+        .copy-btn { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: all 0.2s; color: #475569; }
+        .copy-btn:hover { background: #e2e8f0; color: #0f172a; }
+    </style>
+</head>
+<body>
+
+<div class="notice-bar">
+        <strong>📌 操作规范提示：</strong>
+        <span>秋冬款：秋冬季时满足1天1条</span> | 
+        <span>夏季款：春夏季时满足7天10条</span> | 
+        <span>利润: 30元</span> | 
+        <span style="color: #dc2626; font-weight: bold;">注意使用英文,号分开</span>
+    </div>
+
+    <div class="module-tabs">
+        <button class="tab-btn active" onclick="switchModule('module-price', this)">📉 砸价功能模块</button>
+        <button class="tab-btn" onclick="switchModule('module-no-bid', this)">⏳ 未出价功能模块</button>
+    </div>
+
+    <div id="module-price" class="module-content active">
+        <div class="panel">
+            <h3>数据输入与纯英文逗号切分</h3>
+            <textarea id="input-price" placeholder="请在此处粘贴原始商品字符串。系统会强力抹除自带的各种组头标签和换行符..."></textarea>
+            <button class="action-btn" onclick="processData('price')">1. 开始解析并每9个分组</button>
+            <div id="groups-container-price" class="groups-grid"></div>
+        </div>
+
+        <div class="panel result-section">
+            <div class="panel-title-bar">
+                <h3>2. 对应工作表数据流实时预览 (非备注区每9个一组 / 备注区独立竖排)</h3>
+                <button class="main-export-btn" onclick="exportToExcel('price')">📊 统一导出单文件 (每个分组放在独立工作表)</button>
+            </div>
+            <div class="result-grid" id="zone-container-price"></div>
+        </div>
+    </div>
+
+    <div id="module-no-bid" class="module-content">
+        <div class="panel">
+            <h3>数据输入与纯英文逗号切分</h3>
+            <textarea id="input-no-bid" placeholder="请在此处粘贴原始商品字符串。系统会强力抹除自带的各种组头标签和换行符..."></textarea>
+            <button class="action-btn" onclick="processData('no-bid')">1. 开始解析并每9个分组</button>
+            <div id="groups-container-no-bid" class="groups-grid"></div>
+        </div>
+
+        <div class="panel result-section">
+            <div class="panel-title-bar">
+                <h3>2. 对应工作表数据流实时预览 (非备注区每9个一组 / 备注区独立竖排)</h3>
+                <button class="main-export-btn" onclick="exportToExcel('no-bid')">📊 统一导出单文件 (每个分组放在独立工作表)</button>
+            </div>
+            <div class="result-grid" id="zone-container-no-bid"></div>
+        </div>
+    </div>
+
+    <script>
+        const OPTIONS = [
+            { value: 'high-sale-high-profit', text: '高销量高利润链接' },
+            { value: 'high-sale-no-profit', text: '高销量无利润(下架TH)' },
+            { value: 'low-sale-high-profit', text: '低销量高利润(砸价)' },
+            { value: 'low-sale-low-profit', text: '低销量低利润(取消出价、下架）' },
+            { value: 'no-source', text: '无货源' },
+            { value: 'other', text: '其他(备注)' }
+        ];
+
+        const state = {
+            'price': { rawItems: [], selections: {} },
+            'no-bid': { rawItems: [], selections: {} }
+        };
+
+        window.onload = function() {
+            initZones('price');
+            initZones('no-bid');
+        };
+
+        function switchModule(moduleId, btnEl) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.module-content').forEach(c => c.classList.remove('active'));
+            
+            btnEl.classList.add('active');
+            document.getElementById(moduleId).classList.add('active');
+        }
+
+        function initZones(mod) {
+            const container = document.getElementById(`zone-container-${mod}`);
+            container.innerHTML = '';
+            OPTIONS.forEach(opt => {
+                const html = `
+                    <div class="result-box">
+                        <div class="result-title-bar">
+                            <div class="result-title">
+                                <span>工作表：[${opt.text}]</span> 
+                                <span class="result-count" id="count-${mod}-${opt.value}">0</span>
+                            </div>
+                            <button class="copy-btn" onclick="copyText('output-${mod}-${opt.value}')">复制数据</button>
+                        </div>
+                        <div class="output-box" id="output-${mod}-${opt.value}"></div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // 🌟【终极洗净引擎】
+        function processData(mod) {
+            let rawText = document.getElementById(`input-${mod}`).value.trim();
+            if (!rawText) return alert('请输入有效数据！');
+
+            // 动作1：优先把所有的“回车/换行”全部打碎成英文逗号，让数据在内存里平铺开来，彻底斩断换行粘连
+            rawText = rawText.replace(/[\r\n]+/g, ',');
+
+            // 动作2：把中文的大写逗号也全部换成英文小写逗号
+            rawText = rawText.replace(/，/g, ',');
+
+            // 动作3：利用高级正则匹配：凡是包含“第x组”或“第X组”以及紧跟的冒号/逗号/空格，通通连根拔起（换成空白）
+            // 该正则完美涵盖：第十一组：、第七十六组,、第1组: 等所有变体
+            rawText = rawText.replace(/第\s*[一二三四五六七八九十百\d]+\s*组[:：,，\s-]*/g, '');
+
+            // 动作4：精准切分，并洗掉任何因为替换产生的连续空白或连续逗号项
+            const items = rawText.split(',').map(item => item.trim()).filter(item => item !== '');
+            
+            state[mod].rawItems = items;
+            state[mod].selections = {};
+
+            const container = document.getElementById(`groups-container-${mod}`);
+            container.innerHTML = '';
+
+            const groupSize = 9;
+            let groupIndex = 1;
+
+            for (let i = 0; i < items.length; i += groupSize) {
+                const chunk = items.slice(i, i + groupSize);
+                renderGroupCard(mod, container, chunk, groupIndex, i);
+                groupIndex++;
+            }
+
+            updateOutputs(mod);
+        }
+
+        function renderGroupCard(mod, container, chunk, groupIndex, globalStartIdx) {
+            let itemsHtml = '';
+            chunk.forEach((item, index) => {
+                const globalIdx = globalStartIdx + index;
+                state[mod].selections[globalIdx] = { text: item, type: 'unselected', remark: '' };
+
+                let selectOptions = `<option value="unselected">-- 请选择分类 --</option>`;
+                OPTIONS.forEach(opt => {
+                    selectOptions += `<option value="${opt.value}">${opt.text}</option>`;
+                });
+
+                itemsHtml += `
+                    <div class="item-row">
+                        <span class="item-index">${index + 1}</span>
+                        <div class="item-name" title="${item}">${item}</div>
+                        <select onchange="handleSelectChange('${mod}', ${globalIdx}, this)">
+                            ${selectOptions}
+                        </select>
+                        <input type="text" class="remark-input" id="remark-${mod}-${globalIdx}" placeholder="输入备注" oninput="handleRemarkInput('${mod}', ${globalIdx}, this)">
+                    </div>
+                `;
+            });
+
+            const cardHtml = `
+                <div class="group-card">
+                    <div class="group-header">第 ${groupIndex} 组 (包含 ${chunk.length} 项)</div>
+                    <div class="group-body">${itemsHtml}</div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHtml);
+        }
+
+        function handleSelectChange(mod, globalIdx, selectEl) {
+            const val = selectEl.value;
+            const remarkInput = document.getElementById('remark-' + mod + '-' + globalIdx);
+            state[mod].selections[globalIdx].type = val;
+
+            if (val === 'other') {
+                remarkInput.style.display = 'inline-block';
+            } else {
+                remarkInput.style.display = 'none';
+                remarkInput.value = '';
+                state[mod].selections[globalIdx].remark = '';
+            }
+            updateOutputs(mod);
+        }
+
+        function handleRemarkInput(mod, globalIdx, inputEl) {
+            state[mod].selections[globalIdx].remark = inputEl.value.trim();
+            updateOutputs(mod);
+        }
+
+        function updateOutputs(mod) {
+            const classified = {};
+            OPTIONS.forEach(opt => classified[opt.value] = []);
+
+            Object.keys(state[mod].selections).forEach(idx => {
+                const record = state[mod].selections[idx];
+                if (classified[record.type]) {
+                    classified[record.type].push(record);
+                }
+            });
+
+            OPTIONS.forEach(opt => {
+                const targetBox = document.getElementById(`output-${mod}-${opt.value}`);
+                const targetCount = document.getElementById(`count-${mod}-${opt.value}`);
+                const dataArray = classified[opt.value];
+
+                if(targetCount) targetCount.innerText = dataArray.length;
+
+                if (dataArray.length === 0) {
+                    if(targetBox) targetBox.innerText = '暂无数据';
+                    return;
+                }
+
+                if (opt.value !== 'other') {
+                    let formattedText = '';
+                    const groupSize = 9;
+                    let groupNum = 1;
+
+                    for (let i = 0; i < dataArray.length; i += groupSize) {
+                        const chunk = dataArray.slice(i, i + groupSize);
+                        const chunkText = chunk.map(d => d.text).join(',');
+                        formattedText += `第${groupNum}组：${chunkText}\n`;
+                        groupNum++;
+                    }
+                    if(targetBox) targetBox.innerText = formattedText.trim();
+                } else {
+                    let verticalText = '';
+                    dataArray.forEach(d => {
+                        const remarkContent = d.remark ? d.remark : '无备注';
+                        verticalText += `${d.text},${remarkContent}\n`;
+                    });
+                    if(targetBox) targetBox.innerText = verticalText.trim();
+                }
+            });
+        }
+
+        function exportToExcel(mod) {
+            const selections = state[mod].selections;
+            const hasData = Object.keys(selections).some(k => selections[k].type !== 'unselected');
+            
+            if (!hasData) {
+                return alert('当前没有任何已分类的数据，无法导出！');
+            }
+
+            const classified = {};
+            OPTIONS.forEach(opt => classified[opt.value] = []);
+
+            Object.keys(selections).forEach(idx => {
+                const record = selections[idx];
+                if (classified[record.type]) {
+                    classified[record.type].push(record);
+                }
+            });
+
+            let excelTemplate = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head><meta charset="UTF-8"></head><body>`;
+
+            OPTIONS.forEach(opt => {
+                const dataArray = classified[opt.value];
+                excelTemplate += `<table border="1" style="margin-bottom:20px;">`;
+                excelTemplate += `<tr style="background-color:#4F81BD;color:#fff;font-weight:bold;"><td>数据排序</td><td>商品数据流流转结果</td></tr>`;
+
+                if (dataArray.length > 0) {
+                    if (opt.value !== 'other') {
+                        const groupSize = 9;
+                        let groupNum = 1;
+                        for (let i = 0; i < dataArray.length; i += groupSize) {
+                            const chunk = dataArray.slice(i, i + groupSize);
+                            const chunkText = chunk.map(d => d.text).join(',');
+                            excelTemplate += `<tr><td>第${groupNum}组</td><td style="mso-number-format:'\\@';">${chunkText}</td></tr>`;
+                            groupNum++;
+                        }
+                    } else {
+                        dataArray.forEach((d, index) => {
+                            const remarkContent = d.remark ? d.remark : '无备注';
+                            const cellValue = `${d.text},${remarkContent}`;
+                            excelTemplate += `<tr><td>序号 ${index + 1}</td><td style="mso-number-format:'\\@';">${cellValue}</td></tr>`;
+                        });
+                    }
+                } else {
+                    excelTemplate += `<tr><td>暂无数据</td><td></td></tr>`;
+                }
+                excelTemplate += `</table>`;
+            });
+
+            excelTemplate += `</body></html>`;
+
+            const blob = new Blob([excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            const link = document.createElement("a");
+            const moduleName = mod === 'price' ? '砸价功能模块' : '未出价功能模块';
+            const timestamp = new Date().toISOString().slice(0,10);
+            
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", `${moduleName}_多标签页汇总表_${timestamp}.xls`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function copyText(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            if (text === '暂无数据' || !text) return alert('没有可复制的数据！');
+            
+            navigator.clipboard.writeText(text).then(() => {
+                alert('复制成功！');
+            }).catch(err => {
+                alert('复制失败，请手动选定复制');
+            });
+        }
+    </script>
+</body>
+</html>
