@@ -58,7 +58,7 @@
         .item-row:last-child { margin-bottom: 0; }
         .item-index { color: #94a3b8; font-size: 11px; width: 20px; text-align: center; font-weight: bold; }
         .item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace; background: #fff; padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 4px; }
-        select { padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 4px; width: 160px; font-size: 13px; background-color: white; cursor: pointer; }
+        select { padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 4px; width: 210px; font-size: 13px; background-color: white; cursor: pointer; }
         select:focus { outline: none; border-color: var(--primary-color); }
         .remark-input { padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 4px; width: 100px; display: none; font-size: 13px; }
 
@@ -80,7 +80,6 @@
     </style>
 </head>
 <body>
-
 <div class="notice-bar">
         <strong>📌 操作规范提示：</strong>
         <span>秋冬款：秋冬季时满足1天1条</span> | 
@@ -97,7 +96,7 @@
     <div id="module-price" class="module-content active">
         <div class="panel">
             <h3>数据输入与纯英文逗号切分</h3>
-            <textarea id="input-price" placeholder="请在此处粘贴原始商品字符串。系统会强力抹除自带的各种组头标签和换行符..."></textarea>
+            <textarea id="input-price" placeholder="请在此处粘贴原始商品字符串。系统会自动抹除自带的各种组头标签和换行符..."></textarea>
             <button class="action-btn" onclick="processData('price')">1. 开始解析并每9个分组</button>
             <div id="groups-container-price" class="groups-grid"></div>
         </div>
@@ -114,7 +113,7 @@
     <div id="module-no-bid" class="module-content">
         <div class="panel">
             <h3>数据输入与纯英文逗号切分</h3>
-            <textarea id="input-no-bid" placeholder="请在此处粘贴原始商品字符串。系统会强力抹除自带的各种组头标签和换行符..."></textarea>
+            <textarea id="input-no-bid" placeholder="请在此处粘贴原始商品字符串。系统会自动抹除自带的各种组头标签和换行符..."></textarea>
             <button class="action-btn" onclick="processData('no-bid')">1. 开始解析并每9个分组</button>
             <div id="groups-container-no-bid" class="groups-grid"></div>
         </div>
@@ -129,13 +128,26 @@
     </div>
 
     <script>
-        const OPTIONS = [
-            { value: 'high-sale-high-profit', text: '高销量高利润链接' },
-            { value: 'high-sale-no-profit', text: '高销量无利润(下架TH)' },
-            { value: 'low-sale-high-profit', text: '低销量高利润(砸价)' },
-            { value: 'low-sale-low-profit', text: '低销量低利润(取消出价、下架）' },
-            { value: 'no-source', text: '无货源' },
-            { value: 'other', text: '其他(备注)' }
+        // 🌟 核心修改点：将 OPTIONS 拆分为两套完全独立的系统
+        // 1. 砸价模块专用定制 OPTIONS (共7个选项，且包含两个相同 value 的独立文本描述项)
+        const OPTIONS_PRICE = [
+            { id: 'p1', value: 'high-sale-high-profit-need', text: '需砸价：高销量高利润' },
+            { id: 'p2', value: 'high-sale-high-profit-lowest', text: '已是最低出价：高销量高利润' },
+            { id: 'p3', value: 'high-sale-no-profit', text: '需下架同行：高销量无利润' },
+            { id: 'p4', value: 'low-sale-high-profit', text: '需砸价：低销量高利润' },
+            { id: 'p5', value: 'low-sale-low-profit', text: '需下架：低销量低利润(取消出价、下架）' },
+            { id: 'p6', value: 'no-source', text: '需下架：无货源' },
+            { id: 'p7', value: 'other', text: '其他(备注)' }
+        ];
+
+        // 2. 未出价模块保持原版不变的 OPTIONS (共6个选项)
+        const OPTIONS_NO_BID = [
+            { id: 'n1', value: 'high-sale-high-profit', text: '高销量高利润链接' },
+            { id: 'n2', value: 'high-sale-no-profit', text: '高销量无利润(下架TH)' },
+            { id: 'n3', value: 'low-sale-high-profit', text: '低销量高利润(砸价)' },
+            { id: 'n4', value: 'low-sale-low-profit', text: '低销量低利润(取消出价、下架）' },
+            { id: 'n5', value: 'no-source', text: '无货源' },
+            { id: 'n6', value: 'other', text: '其他(备注)' }
         ];
 
         const state = {
@@ -148,6 +160,11 @@
             initZones('no-bid');
         };
 
+        // 获取对应模块的专属 OPTIONS 配置
+        function getModuleOptions(mod) {
+            return mod === 'price' ? OPTIONS_PRICE : OPTIONS_NO_BID;
+        }
+
         function switchModule(moduleId, btnEl) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.module-content').forEach(c => c.classList.remove('active'));
@@ -156,42 +173,44 @@
             document.getElementById(moduleId).classList.add('active');
         }
 
+        // 动态初始化下方区域数据预览大看板
         function initZones(mod) {
             const container = document.getElementById(`zone-container-${mod}`);
             container.innerHTML = '';
-            OPTIONS.forEach(opt => {
+            const opts = getModuleOptions(mod);
+            
+            opts.forEach(opt => {
                 const html = `
                     <div class="result-box">
                         <div class="result-title-bar">
                             <div class="result-title">
-                                <span>工作表：[${opt.text}]</span> 
-                                <span class="result-count" id="count-${mod}-${opt.value}">0</span>
+                                <span>工作表标签页：[${opt.text}]</span> 
+                                <span class="result-count" id="count-${mod}-${opt.id}">0</span>
                             </div>
-                            <button class="copy-btn" onclick="copyText('output-${mod}-${opt.value}')">复制数据</button>
+                            <button class="copy-btn" onclick="copyText('output-${mod}-${opt.id}')">复制数据</button>
                         </div>
-                        <div class="output-box" id="output-${mod}-${opt.value}"></div>
+                        <div class="output-box" id="output-${mod}-${opt.id}"></div>
                     </div>
                 `;
                 container.insertAdjacentHTML('beforeend', html);
             });
         }
 
-        // 🌟【终极洗净引擎】
+        // 终极数据强效洗净清洗引擎（无缝处理自带组头换行粘连）
         function processData(mod) {
             let rawText = document.getElementById(`input-${mod}`).value.trim();
             if (!rawText) return alert('请输入有效数据！');
 
-            // 动作1：优先把所有的“回车/换行”全部打碎成英文逗号，让数据在内存里平铺开来，彻底斩断换行粘连
+            // 1. 优先把所有的“回车/换行”全部平铺打碎成英文逗号，彻底切断物理断行粘连
             rawText = rawText.replace(/[\r\n]+/g, ',');
 
-            // 动作2：把中文的大写逗号也全部换成英文小写逗号
+            // 2. 把中文的大写逗号也全部强制换成英文小写逗号
             rawText = rawText.replace(/，/g, ',');
 
-            // 动作3：利用高级正则匹配：凡是包含“第x组”或“第X组”以及紧跟的冒号/逗号/空格，通通连根拔起（换成空白）
-            // 该正则完美涵盖：第十一组：、第七十六组,、第1组: 等所有变体
+            // 3. 强效正则抹除：凡是包含“第x组”或“第X组”以及紧跟的冒号/逗号/空格，通通连根拔起抹去
             rawText = rawText.replace(/第\s*[一二三四五六七八九十百\d]+\s*组[:：,，\s-]*/g, '');
 
-            // 动作4：精准切分，并洗掉任何因为替换产生的连续空白或连续逗号项
+            // 4. 精准切分，并用 .filter 彻底洗掉任何因为多重替换产生的连续多余空项
             const items = rawText.split(',').map(item => item.trim()).filter(item => item !== '');
             
             state[mod].rawItems = items;
@@ -212,15 +231,19 @@
             updateOutputs(mod);
         }
 
+        // 渲染左侧每 9 个一组的分类选择卡片
         function renderGroupCard(mod, container, chunk, groupIndex, globalStartIdx) {
             let itemsHtml = '';
+            const opts = getModuleOptions(mod);
+
             chunk.forEach((item, index) => {
                 const globalIdx = globalStartIdx + index;
-                state[mod].selections[globalIdx] = { text: item, type: 'unselected', remark: '' };
+                // 用选中的 opt.id 作为核心归类标识，解决相同 value 的碰撞问题
+                state[mod].selections[globalIdx] = { text: item, typeId: 'unselected', value: 'unselected', remark: '' };
 
                 let selectOptions = `<option value="unselected">-- 请选择分类 --</option>`;
-                OPTIONS.forEach(opt => {
-                    selectOptions += `<option value="${opt.value}">${opt.text}</option>`;
+                opts.forEach(opt => {
+                    selectOptions += `<option value="${opt.id}">${opt.text}</option>`;
                 });
 
                 itemsHtml += `
@@ -244,14 +267,28 @@
             container.insertAdjacentHTML('beforeend', cardHtml);
         }
 
+        // 下拉菜单变动事件
         function handleSelectChange(mod, globalIdx, selectEl) {
-            const val = selectEl.value;
+            const optId = selectEl.value; // 获取到的是专属配置的 id
             const remarkInput = document.getElementById('remark-' + mod + '-' + globalIdx);
-            state[mod].selections[globalIdx].type = val;
+            const opts = getModuleOptions(mod);
+            const selectedOpt = opts.find(o => o.id === optId);
 
-            if (val === 'other') {
-                remarkInput.style.display = 'inline-block';
+            if (selectedOpt) {
+                state[mod].selections[globalIdx].typeId = optId;
+                state[mod].selections[globalIdx].value = selectedOpt.value;
+                
+                // 只有选择到“其他(备注)”时（即 value 为 other）开启输入框
+                if (selectedOpt.value === 'other') {
+                    remarkInput.style.display = 'inline-block';
+                } else {
+                    remarkInput.style.display = 'none';
+                    remarkInput.value = '';
+                    state[mod].selections[globalIdx].remark = '';
+                }
             } else {
+                state[mod].selections[globalIdx].typeId = 'unselected';
+                state[mod].selections[globalIdx].value = 'unselected';
                 remarkInput.style.display = 'none';
                 remarkInput.value = '';
                 state[mod].selections[globalIdx].remark = '';
@@ -259,26 +296,29 @@
             updateOutputs(mod);
         }
 
+        // 备注输入框输入事件
         function handleRemarkInput(mod, globalIdx, inputEl) {
             state[mod].selections[globalIdx].remark = inputEl.value.trim();
             updateOutputs(mod);
         }
 
+        // 动态流转、分流并更新下方的文本预览框排版
         function updateOutputs(mod) {
+            const opts = getModuleOptions(mod);
             const classified = {};
-            OPTIONS.forEach(opt => classified[opt.value] = []);
+            opts.forEach(opt => classified[opt.id] = []);
 
             Object.keys(state[mod].selections).forEach(idx => {
                 const record = state[mod].selections[idx];
-                if (classified[record.type]) {
-                    classified[record.type].push(record);
+                if (classified[record.typeId]) {
+                    classified[record.typeId].push(record);
                 }
             });
 
-            OPTIONS.forEach(opt => {
-                const targetBox = document.getElementById(`output-${mod}-${opt.value}`);
-                const targetCount = document.getElementById(`count-${mod}-${opt.value}`);
-                const dataArray = classified[opt.value];
+            opts.forEach(opt => {
+                const targetBox = document.getElementById(`output-${mod}-${opt.id}`);
+                const targetCount = document.getElementById(`count-${mod}-${opt.id}`);
+                const dataArray = classified[opt.id];
 
                 if(targetCount) targetCount.innerText = dataArray.length;
 
@@ -287,6 +327,7 @@
                     return;
                 }
 
+                // 非备注区域：每9个自动合并为一行，使用英文逗号(,)分隔，标注组号
                 if (opt.value !== 'other') {
                     let formattedText = '';
                     const groupSize = 9;
@@ -300,6 +341,7 @@
                     }
                     if(targetBox) targetBox.innerText = formattedText.trim();
                 } else {
+                    // 其他(备注)区域：强制竖排每行一条，输出格式严格规范为 “款号,备注文字”
                     let verticalText = '';
                     dataArray.forEach(d => {
                         const remarkContent = d.remark ? d.remark : '无备注';
@@ -310,29 +352,32 @@
             });
         }
 
+        // 🚀 高兼容跨工作表（多 Sheet 页）统一表格导出引擎
         function exportToExcel(mod) {
             const selections = state[mod].selections;
-            const hasData = Object.keys(selections).some(k => selections[k].type !== 'unselected');
+            const hasData = Object.keys(selections).some(k => selections[k].typeId !== 'unselected');
             
             if (!hasData) {
                 return alert('当前没有任何已分类的数据，无法导出！');
             }
 
+            const opts = getModuleOptions(mod);
             const classified = {};
-            OPTIONS.forEach(opt => classified[opt.value] = []);
+            opts.forEach(opt => classified[opt.id] = []);
 
             Object.keys(selections).forEach(idx => {
                 const record = selections[idx];
-                if (classified[record.type]) {
-                    classified[record.type].push(record);
+                if (classified[record.typeId]) {
+                    classified[record.typeId].push(record);
                 }
             });
 
+            // 构造具备原生跨 Sheet 属性的单文件 HTML 电子表格流
             let excelTemplate = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
             <head><meta charset="UTF-8"></head><body>`;
 
-            OPTIONS.forEach(opt => {
-                const dataArray = classified[opt.value];
+            opts.forEach(opt => {
+                const dataArray = classified[opt.id];
                 excelTemplate += `<table border="1" style="margin-bottom:20px;">`;
                 excelTemplate += `<tr style="background-color:#4F81BD;color:#fff;font-weight:bold;"><td>数据排序</td><td>商品数据流流转结果</td></tr>`;
 
