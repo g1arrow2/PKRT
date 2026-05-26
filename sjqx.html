@@ -47,10 +47,13 @@
         button.main-export-btn { background: var(--success-color); color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; transition: background 0.2s; box-shadow: 0 2px 4px rgba(22,163,74,0.15); display: flex; align-items: center; gap: 6px; }
         button.main-export-btn:hover { background: #15803d; }
 
-        /* 每9个一组的卡片样式 */
+        /* 每9个一组的卡片网格样式 */
         .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 16px; margin-top: 15px; }
         .group-card { border: 1px solid var(--border-color); border-radius: 6px; background: #f8fafc; box-shadow: 0 1px 2px rgba(0,0,0,0.02); overflow: hidden; }
-        .group-header { background: #e2e8f0; padding: 10px 14px; font-weight: bold; font-size: 14px; border-bottom: 1px solid var(--border-color); color: #334155; }
+        
+        /* 组头改动：支持组名与复制按钮两端对齐排版 */
+        .group-header { background: #e2e8f0; padding: 8px 14px; font-weight: bold; font-size: 14px; border-bottom: 1px solid var(--border-color); color: #334155; display: flex; align-items: center; justify-content: space-between; }
+        
         .group-body { padding: 14px; }
         
         .item-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; }
@@ -61,7 +64,7 @@
         select:focus { outline: none; border-color: var(--primary-color); }
         .remark-input { padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 4px; width: 100px; display: none; font-size: 13px; }
 
-        /* 看板预览区样式 */
+        /* 结果看板预览区样式 */
         .result-section { margin-top: 25px; }
         .result-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
         
@@ -75,10 +78,15 @@
         .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 768px) { .compare-grid { grid-template-columns: 1fr; } }
         
+        /* 各类按钮样式 */
         .copy-btn { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: all 0.2s; color: #475569; }
         .copy-btn:hover { background: #e2e8f0; color: #0f172a; }
         .copy-btn.success-btn { background: #eff6ff; border-color: var(--primary-color); color: var(--primary-color); font-weight: bold; }
         .copy-btn.success-btn:hover { background: var(--primary-color); color: #fff; }
+        
+        /* 组名旁边单独定制的精致复制按钮 */
+        .group-copy-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 4px; font-size: 11px; color: var(--primary-color); cursor: pointer; transition: all 0.15s; font-weight: normal; }
+        .group-copy-btn:hover { background: var(--primary-color); border-color: var(--primary-color); color: #ffffff; }
     </style>
 </head>
 <body>
@@ -100,7 +108,7 @@
     <div id="module-price" class="module-content active">
         <div class="panel">
             <h3>数据输入与纯英文逗号切分</h3>
-            <textarea id="input-price" placeholder="请在此处粘贴原始商品字符串。系统会自动抹除自带的各种组头标签和换行符..."></textarea>
+            <textarea id="input-price" placeholder="请在此处粘贴原始商品字符串。系统会自动强力抹除自带的各种组头标签和换行符..."></textarea>
             <button class="action-btn" onclick="processData('price')">1. 开始解析并每9个分组</button>
             <div id="groups-container-price" class="groups-grid"></div>
         </div>
@@ -156,7 +164,6 @@
                     </div>
                     <div class="output-box" id="output-comp-safe" style="min-height: 80px;"></div>
                 </div>
-
                 <div class="result-box" style="border-left: 5px solid var(--warning-color);">
                     <div class="result-title-bar">
                         <div class="result-title" style="color: var(--warning-color);">🟨 异常拦截：被重复排除掉的旧数据货号（两边同时存在的货号）</div>
@@ -165,10 +172,9 @@
                     </div>
                     <div class="output-box" id="output-comp-dup"></div>
                 </div>
-
                 <div class="result-box" style="border-left: 5px solid #64748b;">
                     <div class="result-title-bar">
-                        <div class="result-title" style="color: #64748b;">🟦 历史留底：本次新数据未包含的历史旧数据货号</div>
+                        <div class="result-title" style="color: #64748b);">🟦 历史留底：本次新数据未包含的历史旧数据货号</div>
                         <span class="result-count" id="count-comp-oldonly" style="background-color:#f1f5f9; color:#64748b;">0</span>
                         <button class="copy-btn" onclick="copyText('output-comp-oldonly')">复制</button>
                     </div>
@@ -179,7 +185,6 @@
     </div>
 
     <script>
-        // 两套模块独立的下拉菜单及工作表配置
         const OPTIONS_PRICE = [
             { id: 'p1', value: 'high-sale-high-profit-need', text: '需砸价：高销量高利润' },
             { id: 'p2', value: 'high-sale-high-profit-lowest', text: '已是最低出价：高销量高利润' },
@@ -199,6 +204,7 @@
             { id: 'n6', value: 'other', text: '其他(备注)' }
         ];
 
+        // 内存存储临时状态
         const state = {
             'price': { rawItems: [], selections: {} },
             'no-bid': { rawItems: [], selections: {} }
@@ -243,13 +249,13 @@
             });
         }
 
-        // 强效纯洗净文本提炼函数
+        // 强效文本洗净提炼函数
         function cleanAndExtractItems(rawText) {
             if (!rawText) return [];
             let txt = rawText.trim();
-            txt = txt.replace(/[\r\n]+/g, ','); // 换行拍平转为逗号
+            txt = txt.replace(/[\r\n]+/g, ','); // 换行转逗号
             txt = txt.replace(/，/g, ',');       // 中文逗号转英文逗号
-            txt = txt.replace(/第\s*[一二三四五六七八九十百\d]+\s*组[:：,，\s-]*/g, ''); // 连根清除各种组头前缀
+            txt = txt.replace(/第\s*[一二三四五六七八九十百\d]+\s*组[:：,，\s-]*/g, ''); // 连根消除各种组头前缀
             return txt.split(',').map(item => item.trim()).filter(item => item !== '');
         }
 
@@ -275,9 +281,13 @@
             updateOutputs(mod);
         }
 
+        // 🌟 核心升级点：在动态组头旁边渲染一个独立的精细化复制按钮，并绑定当前切片 chunk 数据
         function renderGroupCard(mod, container, chunk, groupIndex, globalStartIdx) {
             let itemsHtml = '';
             const opts = getModuleOptions(mod);
+
+            // 将当前组的 9 个纯净货号提取成纯英文字符串组，准备赋给复制按钮
+            const pureGroupCsv = chunk.join(',');
 
             chunk.forEach((item, index) => {
                 const globalIdx = globalStartIdx + index;
@@ -300,9 +310,13 @@
                 `;
             });
 
+            // 在 group-header 中添加针对本组的独立复制功能按钮
             const cardHtml = `
                 <div class="group-card">
-                    <div class="group-header">第 ${groupIndex} 组 (包含 ${chunk.length} 项)</div>
+                    <div class="group-header">
+                        <span>第 ${groupIndex} 组 (包含 ${chunk.length} 项)</span>
+                        <button class="group-copy-btn" onclick="copyDirectString('${pureGroupCsv}')">📋 复制组数据</button>
+                    </div>
                     <div class="group-body">${itemsHtml}</div>
                 </div>
             `;
@@ -386,26 +400,23 @@
             });
         }
 
-        // 📊 🌟全新功能逻辑实现：新旧单体字符串提取及排重比对引擎
+        // 排重排查比对引擎
         function executeDataComparison() {
             const newRaw = document.getElementById('compare-new-input').value;
             const oldRaw = document.getElementById('compare-old-input').value;
 
             if (!newRaw) return alert('请输入【框A：新货号数据】再进行对比！');
 
-            // 精准洗净剥离并转化成干净的独立单体字符串数组
             const newItems = cleanAndExtractItems(newRaw);
             const oldItems = cleanAndExtractItems(oldRaw);
 
-            // 使用 Set 结构实现微秒级的高速货号对齐排重排除
             const oldSet = new Set(oldItems);
             const newSet = new Set(newItems);
 
-            const safeNewItems = []; // 纯净可使用新货号
-            const duplicateItems = []; // 重复被拦截的货号
-            const oldOnlyItems = []; // 仅存在于老数据的货号
+            const safeNewItems = [];
+            const duplicateItems = [];
+            const oldOnlyItems = [];
 
-            // 1. 过滤排查新货号
             newItems.forEach(item => {
                 if (oldSet.has(item)) {
                     if (!duplicateItems.includes(item)) duplicateItems.push(item);
@@ -414,19 +425,16 @@
                 }
             });
 
-            // 2. 统计未包含在内的历史底单
             oldItems.forEach(item => {
                 if (!newSet.has(item) && !oldOnlyItems.includes(item)) {
                     oldOnlyItems.push(item);
                 }
             });
 
-            // 3. 规范输出格式并实时渲染看板
             document.getElementById('count-comp-safe').innerText = safeNewItems.length;
             document.getElementById('count-comp-dup').innerText = duplicateItems.length;
             document.getElementById('count-comp-oldonly').innerText = oldOnlyItems.length;
 
-            // 过滤清洗后干净的数据，自动用标准的纯英文逗号(,)完美连接，供直接粘贴使用
             document.getElementById('output-comp-safe').innerText = safeNewItems.length > 0 ? safeNewItems.join(',') : '无干净新货号（全被排除）';
             document.getElementById('output-comp-dup').innerText = duplicateItems.length > 0 ? duplicateItems.join(',') : '无重复货号';
             document.getElementById('output-comp-oldonly').innerText = oldOnlyItems.length > 0 ? oldOnlyItems.join(',') : '无历史遗留数据';
@@ -438,7 +446,7 @@
             }
         }
 
-        // 多工作表（Tabs）电子表格汇总导出引擎
+        // 统一多标签工作表导出
         function exportToExcel(mod) {
             const selections = state[mod].selections;
             const hasData = Object.keys(selections).some(k => selections[k].typeId !== 'unselected');
@@ -502,11 +510,13 @@
             document.body.removeChild(link);
         }
 
-        function escapeXml(unsafe) {
-            return unsafe.replace(/[<>&'"]/g, function (c) {
-                switch (c) {
-                    case '<': return '&lt;'; case '>': return '&gt;'; case '&': return '&amp;'; case '\'': return '&apos;'; case '"': return '&quot;';
-                }
+        // 核心支持：快速将传入的特定纯净款号字符串写入系统剪切板
+        function copyDirectString(strValue) {
+            if (!strValue) return alert('当前组无有效数据！');
+            navigator.clipboard.writeText(strValue).then(() => {
+                alert('该组的纯净字符串已成功复制（已自动用英文逗号分割），可直接去任意处粘贴！');
+            }).catch(err => {
+                alert('复制失败，请手动选定复制');
             });
         }
 
@@ -515,7 +525,7 @@
             if (text === '暂无数据' || !text || text.indexOf('无干净新货号') === 0 || text.indexOf('请在此粘贴') === 0) return alert('没有可复制的有效数据！');
             
             navigator.clipboard.writeText(text).then(() => {
-                alert('复制成功！可以粘贴到[砸价]或[未出价]模块进行解析分组了。');
+                alert('复制成功！');
             }).catch(err => {
                 alert('复制失败，请手动选定复制');
             });
