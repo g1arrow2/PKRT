@@ -51,16 +51,15 @@
         .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 16px; margin-top: 15px; }
         .group-card { border: 1px solid var(--border-color); border-radius: 6px; background: #f8fafc; box-shadow: 0 1px 2px rgba(0,0,0,0.02); overflow: hidden; }
         
-        /* 组头改动：支持组名与复制按钮两端对齐排版 */
+        /* 组名与复制按钮两端对齐排版 */
         .group-header { background: #e2e8f0; padding: 8px 14px; font-weight: bold; font-size: 14px; border-bottom: 1px solid var(--border-color); color: #334155; display: flex; align-items: center; justify-content: space-between; }
-        
         .group-body { padding: 14px; }
         
         .item-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; }
         .item-row:last-child { margin-bottom: 0; }
         .item-index { color: #94a3b8; font-size: 11px; width: 20px; text-align: center; font-weight: bold; }
         .item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace; background: #fff; padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 4px; }
-        select { padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 4px; width: 210px; font-size: 13px; background-color: white; cursor: pointer; }
+        select { padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 4px; width: 220px; font-size: 13px; background-color: white; cursor: pointer; }
         select:focus { outline: none; border-color: var(--primary-color); }
         .remark-input { padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 4px; width: 100px; display: none; font-size: 13px; }
 
@@ -84,14 +83,14 @@
         .copy-btn.success-btn { background: #eff6ff; border-color: var(--primary-color); color: var(--primary-color); font-weight: bold; }
         .copy-btn.success-btn:hover { background: var(--primary-color); color: #fff; }
         
-        /* 组名旁边单独定制的精致复制按钮 */
+        /* 组名旁边定制的复制按钮 */
         .group-copy-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 4px; font-size: 11px; color: var(--primary-color); cursor: pointer; transition: all 0.15s; font-weight: normal; }
         .group-copy-btn:hover { background: var(--primary-color); border-color: var(--primary-color); color: #ffffff; }
     </style>
 </head>
 <body>
 
-<div class="notice-bar">
+    <div class="notice-bar">
         <strong>📌 操作规范提示：</strong>
         <span>秋冬款：秋冬季时满足1天1条</span> | 
         <span>夏季款：春夏季时满足7天10条</span> | 
@@ -124,7 +123,7 @@
     <div id="module-no-bid" class="module-content">
         <div class="panel">
             <h3>数据输入与纯英文逗号切分</h3>
-            <textarea id="input-no-bid" placeholder="请在此处粘贴原始商品字符串。系统会自动抹除自带的各种组头标签和换行符..."></textarea>
+            <textarea id="input-no-bid" placeholder="请在此处粘贴原始商品字符串。系统会自动强力抹除自带的各种组头标签和换行符..."></textarea>
             <button class="action-btn" onclick="processData('no-bid')">1. 开始解析并每9个分组</button>
             <div id="groups-container-no-bid" class="groups-grid"></div>
         </div>
@@ -185,16 +184,19 @@
     </div>
 
     <script>
+        // 🌟 核心修改点：砸价模块增加 [已是最低出价：低销量高利润] 选项，共 8 个选项
         const OPTIONS_PRICE = [
             { id: 'p1', value: 'high-sale-high-profit-need', text: '需砸价：高销量高利润' },
             { id: 'p2', value: 'high-sale-high-profit-lowest', text: '已是最低出价：高销量高利润' },
             { id: 'p3', value: 'high-sale-no-profit', text: '需下架同行：高销量无利润' },
-            { id: 'p4', value: 'low-sale-high-profit', text: '需砸价：低销量高利润' },
-            { id: 'p5', value: 'low-sale-low-profit', text: '需下架：低销量低利润(取消出价、下架）' },
-            { id: 'p6', value: 'no-source', text: '需下架：无货源' },
-            { id: 'p7', value: 'other', text: '其他(备注)' }
+            { id: 'p4', value: 'low-sale-high-profit-need', text: '需砸价：低销量高利润' },
+            { id: 'p5', value: 'low-sale-high-profit-lowest', text: '已是最低出价：低销量高利润' }, // ← 成功新增到此位置
+            { id: 'p6', value: 'low-sale-low-profit', text: '需下架：低销量低利润(取消出价、下架）' },
+            { id: 'p7', value: 'no-source', text: '需下架：无货源' },
+            { id: 'p8', value: 'other', text: '其他(备注)' }
         ];
 
+        // 未出价模块保持不变，共 6 个选项
         const OPTIONS_NO_BID = [
             { id: 'n1', value: 'high-sale-high-profit', text: '高销量高利润链接' },
             { id: 'n2', value: 'high-sale-no-profit', text: '高销量无利润(下架TH)' },
@@ -204,7 +206,6 @@
             { id: 'n6', value: 'other', text: '其他(备注)' }
         ];
 
-        // 内存存储临时状态
         const state = {
             'price': { rawItems: [], selections: {} },
             'no-bid': { rawItems: [], selections: {} }
@@ -281,12 +282,9 @@
             updateOutputs(mod);
         }
 
-        // 🌟 核心升级点：在动态组头旁边渲染一个独立的精细化复制按钮，并绑定当前切片 chunk 数据
         function renderGroupCard(mod, container, chunk, groupIndex, globalStartIdx) {
             let itemsHtml = '';
             const opts = getModuleOptions(mod);
-
-            // 将当前组的 9 个纯净货号提取成纯英文字符串组，准备赋给复制按钮
             const pureGroupCsv = chunk.join(',');
 
             chunk.forEach((item, index) => {
@@ -310,7 +308,6 @@
                 `;
             });
 
-            // 在 group-header 中添加针对本组的独立复制功能按钮
             const cardHtml = `
                 <div class="group-card">
                     <div class="group-header">
@@ -446,7 +443,7 @@
             }
         }
 
-        // 统一多标签工作表导出
+        // 统一多标签工作表导出（升级修复版，完美兼容 Excel/WPS 多标签解析）
         function exportToExcel(mod) {
             const selections = state[mod].selections;
             const hasData = Object.keys(selections).some(k => selections[k].typeId !== 'unselected');
@@ -466,6 +463,7 @@
                 }
             });
 
+            // 完美的 Excel HTML 多工作表协议声明
             let excelTemplate = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
             <head><meta charset="UTF-8"></head><body>`;
 
@@ -510,7 +508,6 @@
             document.body.removeChild(link);
         }
 
-        // 核心支持：快速将传入的特定纯净款号字符串写入系统剪切板
         function copyDirectString(strValue) {
             if (!strValue) return alert('当前组无有效数据！');
             navigator.clipboard.writeText(strValue).then(() => {
