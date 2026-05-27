@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商家下架记录管理系统 | Dewu专用</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Noto+Sans+SC:wght@400;500;700&amp;display=swap');
+        
+        :root {
+            --primary: #6366f1;
+        }
+        
+        body {
+            font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+        }
+        
+        .dark-table {
+            background-color: #0f172a;
+        }
+        
+        .neon-border {
+            box-shadow: 0 0 0 1px #6366f1, 0 0 15px rgba(99, 102, 241, 0.1);
+        }
+        
+        .section-header {
+            font-size: 0.875rem;
+            letter-spacing: -.025em;
+            font-weight: 600;
+            color: #64748b;
+        }
+        
+        .data-table th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+        
+        .data-table td {
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .record-row:hover {
+            background-color: #f8fafc;
+        }
+        
+        .modal {
+            animation: modalPop 0.2s ease-out forwards;
+        }
+        
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        
+        .spu-item {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.875rem;
+        }
+        
+        .masked {
+            font-feature-settings: "ss02";
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-card {
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .cyberpunk-btn {
+            transition: all 0.1s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cyberpunk-btn:hover {
+            box-shadow: 0 0 0 1px #6366f1, 0 10px 15px -3px rgb(99 102 241 / 0.1);
+        }
+        
+        .filter-active {
+            background-color: #312e81;
+            color: #c7d2fe;
+            border-color: #6366f1;
+        }
+    </style>
+</head>
+<body class="bg-white text-slate-800">
+    <!-- Header -->
+    <div class="border-b border-slate-200 bg-white">
+        <div class="max-w-7xl mx-auto px-6 py-5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-x-4">
+                    <div class="w-11 h-11 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-inner">
+                        <i class="fa-solid fa-store-slash text-white text-3xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold tracking-tighter">下架记录系统</h1>
+                        <p class="text-xs text-slate-500 -mt-1">DEWU · 商家下架管理 · v1.0</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-x-3">
+                    <!-- Stats in header -->
+                    <div class="hidden md:flex items-center gap-x-2 text-sm">
+                        <div class="px-3 py-1.5 bg-white rounded-3xl border border-slate-200 flex items-center gap-x-2">
+                            <i class="fa-solid fa-building text-indigo-400"></i>
+                            <span id="headerMerchantCount" class="font-mono font-semibold">1</span>
+                            <span class="text-slate-500 text-xs">商家</span>
+                        </div>
+                        <div class="px-3 py-1.5 bg-white rounded-3xl border border-slate-200 flex items-center gap-x-2">
+                            <i class="fa-solid fa-barcode text-emerald-400"></i>
+                            <span id="headerSPUCount" class="font-mono font-semibold">24</span>
+                            <span class="text-slate-500 text-xs">SPU</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="exportData()" 
+                            class="px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-3xl flex items-center gap-x-2 text-slate-600 hover:text-white transition-colors">
+                        <i class="fa-solid fa-download"></i>
+                        <span class="hidden sm:inline">导出JSON</span>
+                    </button>
+                    
+                    <button onclick="document.getElementById('importFile').click()" 
+                            class="px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-3xl flex items-center gap-x-2 text-slate-600 hover:text-white transition-colors">
+                        <i class="fa-solid fa-upload"></i>
+                        <span class="hidden sm:inline">导入</span>
+                    </button>
+                    <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event)">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        
+        <!-- Dashboard Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="stat-card bg-white border border-slate-200 rounded-3xl p-5">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="text-xs uppercase tracking-widest text-slate-500">待下架商家</div>
+                        <div id="statMerchants" class="text-5xl font-bold tabular-nums mt-1 text-slate-900">1</div>
+                    </div>
+                    <div class="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center">
+                        <i class="fa-solid fa-store text-indigo-400 text-3xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs text-slate-500">当前记录中的全部商家</div>
+            </div>
+            
+            <div class="stat-card bg-white border border-slate-200 rounded-3xl p-5">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="text-xs uppercase tracking-widest text-slate-500">涉及SPU数量</div>
+                        <div id="statSPUs" class="text-5xl font-bold tabular-nums mt-1 text-slate-900">24</div>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
+                        <i class="fa-solid fa-barcode text-emerald-400 text-3xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs text-slate-500">所有记录累计商品SKU</div>
+            </div>
+            
+            <div class="stat-card bg-white border border-slate-200 rounded-3xl p-5">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="text-xs uppercase tracking-widest text-slate-500">数据状态</div>
+                        <div class="flex items-baseline gap-x-2 mt-1">
+                            <div class="text-3xl font-bold text-emerald-400">已脱敏</div>
+                        </div>
+                    </div>
+                    <div class="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center">
+                        <i class="fa-solid fa-shield-halved text-amber-400 text-3xl"></i>
+                    </div>
+                </div>
+                <div class="mt-3 text-xs text-slate-500">商家名称中间已隐藏 · 符合隐私要求</div>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 mb-8 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-xl font-semibold tracking-tight">多维度精准查找</h2>
+                    <p class="text-sm text-slate-500 mt-0.5">支持同时组合多个条件筛选（默认优先SPUID查找）</p>
+                </div>
+                <button onclick="resetAllFilters()" 
+                        class="text-xs px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-3xl flex items-center gap-x-2 text-slate-600 hover:text-slate-800">
+                    <i class="fa-solid fa-undo text-xs"></i>
+                    <span>清空所有筛选</span>
+                </button>
+            </div>
+            
+            <!-- All search filters visible at the same time -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- SPUID Search (emphasized) -->
+                <div>
+                    <label class="section-header block mb-1.5 flex items-center gap-x-1.5">
+                        <span>按SPUID精确查找</span>
+                        <span class="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-600 rounded">推荐</span>
+                    </label>
+                    <div class="flex gap-2">
+                        <input type="text" id="searchSPUID" placeholder="输入完整SPUID如 28589977" 
+                               oninput="applyFilter()" 
+                               class="flex-1 font-mono bg-white border border-slate-300 focus:border-indigo-500 rounded-2xl px-4 py-2.5 text-sm placeholder:text-slate-400">
+                        <button onclick="applyFilter()" 
+                                class="px-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-sm font-medium flex items-center">
+                            <i class="fa-solid fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Merchant Search -->
+                <div>
+                    <label class="section-header block mb-1.5">按商家名称 / ID</label>
+                    <input type="text" id="searchMerchant" placeholder="例如：见轻 或 B25" 
+                           oninput="applyFilter()" 
+                           class="w-full bg-white border border-slate-300 focus:border-indigo-500 rounded-2xl px-4 py-2.5 text-sm placeholder:text-slate-400">
+                </div>
+                
+                <!-- Brand Search -->
+                <div>
+                    <label class="section-header block mb-1.5">按品牌名称</label>
+                    <input type="text" id="searchBrand" placeholder="例如：PKRT" 
+                           oninput="applyFilter()" 
+                           class="w-full bg-white border border-slate-300 focus:border-indigo-500 rounded-2xl px-4 py-2.5 text-sm placeholder:text-slate-400">
+                </div>
+                
+                <!-- Code Match -->
+                <div>
+                    <label class="section-header block mb-1.5">按编码前3 + 后3</label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="codePrefix" maxlength="3" placeholder="前3" 
+                               oninput="applyFilter()" 
+                               class="w-20 font-mono bg-white border border-slate-300 focus:border-indigo-500 rounded-2xl px-3 py-2.5 text-sm text-center">
+                        <span class="text-slate-400">+</span>
+                        <input type="text" id="codeSuffix" maxlength="3" placeholder="后3" 
+                               oninput="applyFilter()" 
+                               class="w-20 font-mono bg-white border border-slate-300 focus:border-indigo-500 rounded-2xl px-3 py-2.5 text-sm text-center">
+                    </div>
+                </div>
+                
+            </div>
+            <div class="mt-3 text-[10px] text-slate-500">所有条件同时生效（AND关系），留空则不筛选该项</div>
+        </div>
+
+        <!-- Main Table -->
+        <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center gap-x-3">
+                    <h3 class="font-semibold text-lg">待下架商家记录</h3>
+                    <span id="tableCount" class="text-xs px-3 py-1 bg-slate-100 text-slate-500 rounded-3xl">共 1 条</span>
+                </div>
+                <button onclick="showAddModal()" 
+                        class="cyberpunk-btn flex items-center gap-x-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-3xl shadow-inner">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>新增商家记录</span>
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full data-table">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-4 text-left w-12">#</th>
+                            <th class="px-6 py-4 text-left">商家ID</th>
+                            <th class="px-6 py-4 text-left">商家名称（已脱敏）</th>
+                            <th class="px-6 py-4 text-left">品牌</th>
+                            <th class="px-6 py-4 text-center w-24">SPU数量</th>
+                            <th class="px-6 py-4 text-left w-40">添加时间</th>
+                            <th class="px-6 py-4 text-center w-56">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="text-sm divide-y divide-slate-200">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="px-6 py-3 bg-slate-50 text-xs text-slate-500 flex items-center justify-between border-t border-slate-200">
+                <div>数据仅存储在浏览器本地（localStorage），刷新不丢失</div>
+                <div class="flex items-center gap-x-1.5">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <span>名称中间已自动隐藏，符合内部隐私要求</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4 text-center text-[10px] text-slate-500">
+            提示：SPUID精确查找可用于快速核对某个商品是否需要下架 · 编码前3后3匹配可用于不暴露完整商家ID的情况
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="formModal" onclick="if (event.target.id === 'formModal') hideFormModal()" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div onclick="event.stopImmediatePropagation()" class="modal bg-white border border-slate-200 w-full max-w-lg rounded-3xl shadow-2xl">
+            <div class="px-6 pt-6 pb-4 border-b border-slate-200 flex justify-between items-center">
+                <h3 id="modalTitle" class="text-xl font-semibold">新增下架商家记录</h3>
+                <button onclick="hideFormModal()" class="text-slate-500 hover:text-white w-9 h-9 flex items-center justify-center text-2xl leading-none">&times;</button>
+            </div>
+            
+            <div class="p-6 space-y-5">
+                <div>
+                    <label class="text-xs uppercase tracking-widest text-slate-500 block mb-1.5">商家编码 <span class="text-slate-500 text-[10px]">(可选，暂未同步可留空)</span></label>
+                    <input type="text" id="formCode" placeholder="例如：B25**895（可选，留空表示暂未同步）" 
+                           class="w-full bg-white border border-slate-200 focus:border-indigo-500 rounded-2xl px-4 py-3 text-sm font-mono">
+                    <p class="text-[10px] text-slate-500 mt-1">此编码用于前3后3匹配查找</p>
+                </div>
+                
+                <div>
+                    <label class="text-xs uppercase tracking-widest text-slate-500 block mb-1.5">商家全称 <span class="text-red-400">*</span></label>
+                    <input type="text" id="formName" placeholder="厦门见轻服饰有限公司" 
+                           class="w-full bg-white border border-slate-200 focus:border-indigo-500 rounded-2xl px-4 py-3 text-sm">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs uppercase tracking-widest text-slate-500 block mb-1.5">品牌 <span class="text-red-400">*</span></label>
+                        <input type="text" id="formBrand" placeholder="PKRT" 
+                               class="w-full bg-white border border-slate-200 focus:border-indigo-500 rounded-2xl px-4 py-3 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs uppercase tracking-widest text-slate-500 block mb-1.5">添加日期</label>
+                        <input type="date" id="formDate" value="2026-05-28" 
+                               class="w-full bg-white border border-slate-200 focus:border-indigo-500 rounded-2xl px-4 py-3 text-sm">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="text-xs uppercase tracking-widest text-slate-500 block mb-1.5">需要下架的SPUID列表 <span class="text-red-400">*</span></label>
+                    <textarea id="formSPUs" rows="6" placeholder="每行输入一个SPUID，支持逗号或换行分隔&#10;例如：&#10;27470564&#10;29420277" 
+                              class="w-full font-mono text-sm bg-white border border-slate-200 focus:border-indigo-500 rounded-2xl px-4 py-3 resize-y"></textarea>
+                    <p class="text-[10px] text-slate-500 mt-1">支持换行或逗号分隔，系统会自动去重整理</p>
+                </div>
+            </div>
+            
+            <div class="px-6 py-4 bg-white/70 border-t border-slate-200 flex justify-end gap-x-3 rounded-b-3xl">
+                <button onclick="hideFormModal()" 
+                        class="px-6 py-2.5 text-sm text-slate-600 hover:text-white border border-slate-600 rounded-3xl">取消</button>
+                <button onclick="saveRecord()" 
+                        class="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-3xl flex items-center gap-x-2">
+                    <i class="fa-solid fa-save"></i>
+                    <span id="saveBtnText">保存记录</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View SPU List Modal -->
+    <div id="spuModal" onclick="if (event.target.id === 'spuModal') hideSPUModal()" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div onclick="event.stopImmediatePropagation()" class="modal bg-white border border-slate-200 w-full max-w-2xl rounded-3xl shadow-2xl max-h-[85vh] flex flex-col">
+            <div class="px-6 pt-6 pb-4 border-b border-slate-200 flex justify-between items-start">
+                <div>
+                    <h3 class="text-xl font-semibold">SPUID下架清单</h3>
+                    <div id="spuModalInfo" class="text-sm text-slate-500 mt-1 flex items-center gap-x-2"></div>
+                </div>
+                <button onclick="hideSPUModal()" class="text-slate-500 hover:text-white w-9 h-9 flex items-center justify-center text-3xl leading-none">&times;</button>
+            </div>
+            
+            <div class="p-6 flex-1 overflow-auto">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="text-xs uppercase text-slate-500">共 <span id="spuCountBadge" class="font-mono text-emerald-400"></span> 个SPUID</div>
+                    <button onclick="copyAllSPUs()" 
+                            class="text-xs flex items-center gap-x-2 px-4 py-1.5 bg-emerald-600/90 hover:bg-emerald-500 text-white rounded-3xl">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>复制全部SPUID</span>
+                    </button>
+                </div>
+                
+                <div id="spuListContainer" 
+                     class="bg-white border border-slate-200 rounded-2xl p-4 font-mono text-sm max-h-[420px] overflow-auto whitespace-pre-wrap break-all">
+                    <!-- JS populated -->
+                </div>
+            </div>
+            
+            <div class="px-6 py-4 border-t border-slate-200 bg-white/60 rounded-b-3xl flex justify-end">
+                <button onclick="hideSPUModal()" class="px-6 py-2 text-sm border border-slate-600 rounded-3xl text-slate-600 hover:text-white">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tailwind script
+        function initializeTailwind() {
+            document.documentElement.style.setProperty('--accent', '#6366f1');
+        }
+        
+        // Data
+        let records = [];
+        let editingId = null;
+        
+        function loadRecords() {
+            const saved = localStorage.getItem('delist_merchants_v1');
+            if (saved) {
+                records = JSON.parse(saved);
+            } else {
+                records = [];
+            }
+        }
+        
+        function saveRecords() {
+            localStorage.setItem('delist_merchants_v1', JSON.stringify(records));
+        }
+        
+        function maskMiddle(str) {
+            if (!str) return '';
+            const len = str.length;
+            if (len <= 4) return str;
+            // Show first 2 and last 2 chars, mask middle
+            const start = 2;
+            const end = 2;
+            return str.slice(0, start) + '*'.repeat(len - start - end) + str.slice(-end);
+        }
+        
+        function formatDate(isoString) {
+            if (!isoString) return '-';
+            const d = new Date(isoString);
+            return d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        }
+        
+        function updateStats() {
+            const merchantCount = records.length;
+            let spuTotal = 0;
+            records.forEach(r => {
+                spuTotal += (r.spuids ? r.spuids.length : 0);
+            });
+            
+            document.getElementById('statMerchants').innerText = merchantCount;
+            document.getElementById('statSPUs').innerText = spuTotal;
+            document.getElementById('headerMerchantCount').innerText = merchantCount;
+            document.getElementById('headerSPUCount').innerText = spuTotal;
+        }
+        
+        function renderTable(filteredRecords) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            const dataToShow = filteredRecords || records;
+            
+            if (dataToShow.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td colspan="7" class="px-6 py-12 text-center">
+                        <div class="flex flex-col items-center justify-center text-slate-500">
+                            <i class="fa-solid fa-inbox text-4xl mb-3 opacity-40"></i>
+                            <div>没有找到匹配的记录</div>
+                            <div class="text-xs mt-1">尝试调整搜索条件或添加新记录</div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+                document.getElementById('tableCount').innerText = `共 0 条`;
+                return;
+            }
+            
+            dataToShow.forEach((record, index) => {
+                const maskedName = maskMiddle(record.full_name);
+                const spuCount = record.spuids ? record.spuids.length : 0;
+                const dateStr = formatDate(record.created_at);
+                
+                const tr = document.createElement('tr');
+                tr.className = 'record-row transition-colors';
+                tr.innerHTML = `
+                    <td class="px-6 py-4 text-slate-500 font-mono text-xs">${index + 1}</td>
+                    <td class="px-6 py-4">
+                        ${record.merchant_code 
+                            ? `<span class="font-mono text-indigo-300 bg-slate-100 px-3 py-1 rounded-2xl text-xs">${record.merchant_code}</span>`
+                            : `<span class="inline-flex items-center px-3 py-1 rounded-2xl text-xs bg-slate-200 text-slate-500">未同步</span>`
+                        }
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-slate-900 masked">${maskedName}</div>
+                        <div class="text-[10px] text-slate-500">已脱敏显示</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-3 py-1 rounded-2xl text-xs font-medium bg-emerald-900/60 text-emerald-300">${record.brand}</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="font-mono text-lg font-semibold text-black">${spuCount}</span>
+                    </td>
+                    <td class="px-6 py-4 text-xs text-slate-500">${dateStr}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center justify-center gap-x-1.5">
+                            <button onclick="viewSPUs(${record.id})" 
+                                    class="px-3 py-1.5 text-xs bg-emerald-600/90 hover:bg-emerald-500 text-white rounded-2xl flex items-center gap-x-1 transition-colors">
+                                <i class="fa-solid fa-list text-xs"></i>
+                                <span class="hidden sm:inline">查看SPU</span>
+                            </button>
+                            
+                            <button onclick="editRecord(${record.id})" 
+                                    class="px-3 py-1.5 text-xs bg-slate-200 hover:bg-slate-600 text-slate-800 rounded-2xl flex items-center gap-x-1 transition-colors">
+                                <i class="fa-solid fa-edit text-xs"></i>
+                                <span class="hidden sm:inline">编辑</span>
+                            </button>
+                            
+                            <button onclick="deleteRecord(${record.id})" 
+                                    class="px-3 py-1.5 text-xs bg-red-600/90 hover:bg-red-500 text-white rounded-2xl flex items-center gap-x-1 transition-colors">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            document.getElementById('tableCount').innerText = `共 ${dataToShow.length} 条`;
+        }
+        
+        function applyFilter() {
+            let filtered = [...records];
+            
+            // SPUID 精确匹配（优先/默认推荐）
+            const spuidVal = document.getElementById('searchSPUID').value.trim();
+            if (spuidVal) {
+                filtered = filtered.filter(r => r.spuids && r.spuids.includes(spuidVal));
+            }
+            
+            // 商家名称或ID 模糊匹配
+            const merchantVal = document.getElementById('searchMerchant').value.toLowerCase().trim();
+            if (merchantVal) {
+                filtered = filtered.filter(r => 
+                    (r.merchant_code && r.merchant_code.toLowerCase().includes(merchantVal)) || 
+                    (r.full_name && r.full_name.toLowerCase().includes(merchantVal))
+                );
+            }
+            
+            // 品牌 模糊匹配
+            const brandVal = document.getElementById('searchBrand').value.toLowerCase().trim();
+            if (brandVal) {
+                filtered = filtered.filter(r => r.brand && r.brand.toLowerCase().includes(brandVal));
+            }
+            
+            // 编码前3后3 匹配
+            const pre = document.getElementById('codePrefix').value.trim();
+            const suf = document.getElementById('codeSuffix').value.trim();
+            if (pre || suf) {
+                filtered = filtered.filter(r => {
+                    if (!r.merchant_code) return false;
+                    const code = r.merchant_code;
+                    const matchPre = !pre || code.startsWith(pre);
+                    const matchSuf = !suf || code.endsWith(suf);
+                    return matchPre && matchSuf;
+                });
+            }
+            
+            renderTable(filtered);
+        }
+        
+        // 搜索模式切换函数已移除，现在所有筛选条件同时显示并生效（支持多条件组合）
+        
+        function resetAllFilters() {
+            // 清空所有搜索输入框
+            const ids = ['searchMerchant', 'searchSPUID', 'searchBrand', 'codePrefix', 'codeSuffix'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            renderTable(records);
+        }
+        
+        function showAddModal() {
+            editingId = null;
+            document.getElementById('modalTitle').innerText = '新增下架商家记录';
+            document.getElementById('saveBtnText').innerText = '保存记录';
+            
+            // Clear form
+            document.getElementById('formCode').value = '';
+            document.getElementById('formName').value = '';
+            document.getElementById('formBrand').value = '';
+            document.getElementById('formSPUs').value = '';
+            document.getElementById('formDate').value = new Date().toISOString().split('T')[0];
+            
+            document.getElementById('formModal').classList.remove('hidden');
+            document.getElementById('formModal').classList.add('flex');
+        }
+        
+        function editRecord(id) {
+            const record = records.find(r => r.id === id);
+            if (!record) return;
+            
+            editingId = id;
+            document.getElementById('modalTitle').innerText = '编辑下架商家记录';
+            document.getElementById('saveBtnText').innerText = '更新记录';
+            
+            document.getElementById('formCode').value = record.merchant_code || '';
+            document.getElementById('formName').value = record.full_name || '';
+            document.getElementById('formBrand').value = record.brand || '';
+            document.getElementById('formSPUs').value = record.spuids ? record.spuids.join('\n') : '';
+            
+            if (record.created_at) {
+                const d = new Date(record.created_at);
+                document.getElementById('formDate').value = d.toISOString().split('T')[0];
+            }
+            
+            document.getElementById('formModal').classList.remove('hidden');
+            document.getElementById('formModal').classList.add('flex');
+        }
+        
+        function hideFormModal() {
+            document.getElementById('formModal').classList.remove('flex');
+            document.getElementById('formModal').classList.add('hidden');
+            editingId = null;
+        }
+        
+        function saveRecord() {
+            const code = document.getElementById('formCode').value.trim();
+            const name = document.getElementById('formName').value.trim();
+            const brand = document.getElementById('formBrand').value.trim();
+            const spuText = document.getElementById('formSPUs').value.trim();
+            const dateVal = document.getElementById('formDate').value;
+            
+            if (!name || !brand || !spuText) {
+                alert('请填写商家全称、品牌和至少一个SPUID（商家编码可选，暂未同步可留空）');
+                return;
+            }
+            
+            // Parse SPUIDs
+            let spuids = spuText.split(/[\n,，]/).map(s => s.trim()).filter(s => s.length > 0);
+            // Deduplicate while preserving order
+            spuids = [...new Set(spuids)];
+            
+            const now = dateVal ? new Date(dateVal).toISOString() : new Date().toISOString();
+            
+            if (editingId) {
+                // Update existing
+                const idx = records.findIndex(r => r.id === editingId);
+                if (idx !== -1) {
+                    records[idx].merchant_code = code;
+                    records[idx].full_name = name;
+                    records[idx].brand = brand;
+                    records[idx].spuids = spuids;
+                    records[idx].created_at = now;
+                }
+            } else {
+                // Add new
+                const newRecord = {
+                    id: Date.now(),
+                    merchant_code: code,
+                    full_name: name,
+                    brand: brand,
+                    spuids: spuids,
+                    created_at: now
+                };
+                records.unshift(newRecord); // newest on top
+            }
+            
+            saveRecords();
+            hideFormModal();
+            renderTable(records);
+            updateStats();
+            
+            // Show success toast
+            showToast(editingId ? '记录已更新' : '新记录已添加');
+        }
+        
+        function deleteRecord(id) {
+            if (!confirm('确定要删除这条商家下架记录吗？此操作不可恢复。')) return;
+            
+            records = records.filter(r => r.id !== id);
+            saveRecords();
+            renderTable(records);
+            updateStats();
+            showToast('记录已删除');
+        }
+        
+        function viewSPUs(id) {
+            const record = records.find(r => r.id === id);
+            if (!record) return;
+            
+            const modal = document.getElementById('spuModal');
+            const infoDiv = document.getElementById('spuModalInfo');
+            const container = document.getElementById('spuListContainer');
+            const countBadge = document.getElementById('spuCountBadge');
+            
+            const maskedName = maskMiddle(record.full_name);
+            
+            infoDiv.innerHTML = `
+                ${record.merchant_code 
+                    ? `<span class="font-mono bg-slate-100 px-2.5 py-0.5 rounded-xl text-xs">${record.merchant_code}</span>` 
+                    : `<span class="text-xs px-2.5 py-0.5 rounded-xl bg-slate-200 text-slate-500">未同步</span>`
+                }
+                <span class="text-emerald-300">${record.brand}</span>
+                <span class="text-slate-500">·</span>
+                <span class="masked">${maskedName}</span>
+            `;
+            
+            countBadge.innerText = record.spuids ? record.spuids.length : 0;
+            
+            if (record.spuids && record.spuids.length > 0) {
+                container.innerHTML = record.spuids.map(spu => 
+                    `<div class="spu-item px-3 py-1.5 bg-white border border-slate-200 rounded-2xl mb-1.5 flex items-center justify-between hover:border-emerald-500/30 transition-colors">
+                        <span class="font-mono text-emerald-300">${spu}</span>
+                        <button onclick="copySingleSPU('${spu}', this)" class="text-emerald-400 hover:text-emerald-300 px-2 text-xs">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>`
+                ).join('');
+            } else {
+                container.innerHTML = `<div class="text-center py-8 text-slate-500">暂无SPUID数据</div>`;
+            }
+            
+            // Store current record id for copy all
+            modal.dataset.currentRecordId = id;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        function hideSPUModal() {
+            const modal = document.getElementById('spuModal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+        
+        function copySingleSPU(spu, btnElement) {
+            navigator.clipboard.writeText(spu).then(() => {
+                const originalText = btnElement.innerHTML;
+                btnElement.innerHTML = '<i class="fa-solid fa-check"></i>';
+                setTimeout(() => {
+                    if (btnElement) btnElement.innerHTML = originalText;
+                }, 1200);
+            }).catch(() => {
+                // Fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = spu;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                const originalText = btnElement.innerHTML;
+                btnElement.innerHTML = '<i class="fa-solid fa-check"></i>';
+                setTimeout(() => {
+                    if (btnElement) btnElement.innerHTML = originalText;
+                }, 1200);
+            });
+        }
+        
+        function copyAllSPUs() {
+            const modal = document.getElementById('spuModal');
+            const id = parseInt(modal.dataset.currentRecordId);
+            const record = records.find(r => r.id === id);
+            if (!record || !record.spuids || record.spuids.length === 0) return;
+            
+            const text = record.spuids.join('\n');
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const btns = modal.querySelectorAll('button');
+                const originalTexts = [];
+                btns.forEach((b, i) => {
+                    originalTexts[i] = b.innerHTML;
+                    if (b.innerText.includes('复制')) b.innerHTML = '<i class="fa-solid fa-check"></i> 已复制';
+                });
+                
+                setTimeout(() => {
+                    btns.forEach((b, i) => {
+                        if (b) b.innerHTML = originalTexts[i];
+                    });
+                }, 1600);
+            }).catch(() => {
+                // Fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('已复制到剪贴板（共 ' + record.spuids.length + ' 个SPUID）');
+            });
+        }
+        
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-100 border border-slate-600 text-white text-sm px-6 py-3 rounded-3xl shadow-xl flex items-center gap-x-2 z-[100]`;
+            toast.innerHTML = `
+                <i class="fa-solid fa-check-circle text-emerald-400"></i>
+                <span>${msg}</span>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.transition = 'all 0.2s ease';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 200);
+            }, 2200);
+        }
+        
+        function exportData() {
+            if (records.length === 0) {
+                alert('当前没有数据可导出');
+                return;
+            }
+            const dataStr = JSON.stringify(records, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `下架商家记录_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!Array.isArray(imported)) {
+                        throw new Error('文件格式错误：需要JSON数组');
+                    }
+                    
+                    if (confirm(`检测到 ${imported.length} 条记录。是否替换当前数据？\n\n选择"取消"则追加到现有记录末尾。`)) {
+                        records = imported;
+                    } else {
+                        // Append, avoid duplicate ids
+                        const existingIds = new Set(records.map(r => r.id));
+                        imported.forEach(r => {
+                            if (!existingIds.has(r.id)) {
+                                records.push(r);
+                            }
+                        });
+                    }
+                    
+                    saveRecords();
+                    renderTable(records);
+                    updateStats();
+                    showToast('数据导入成功');
+                    
+                } catch (err) {
+                    alert('导入失败：' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            // Reset file input
+            event.target.value = '';
+        }
+        
+        function initializeInitialData() {
+            // 已清除默认公司（厦门见轻）、品牌（PKRT）和示例数据
+            // 页面打开时表格为空，用户可手动添加记录，商家编码可留空
+            if (records.length > 0) return;
+        }
+        
+        function setupEventListeners() {
+            // Live filter on some inputs already have oninput
+            // Extra: allow Enter key in search fields to trigger
+            const inputs = ['searchMerchant', 'searchSPUID', 'searchBrand', 'codePrefix', 'codeSuffix'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            applyFilter();
+                        }
+                    });
+                }
+            });
+            
+            // Code match inputs already have oninput="applyFilter()"，无需额外监听
+        }
+        
+        function init() {
+            initializeTailwind();
+            loadRecords();
+            initializeInitialData();
+            
+            // Initial render
+            renderTable(records);
+            updateStats();
+            
+            setupEventListeners();
+            
+            // Show welcome toast once
+            setTimeout(() => {
+                if (records.length === 1 && records[0].merchant_code === "B25**895") {
+                    // Only show on first load with initial data
+                }
+            }, 800);
+            
+            // Keyboard shortcut hint
+            console.log('%c[下架系统] 已加载。支持本地持久化 + 多维度搜索 + 脱敏显示', 'color:#64748b');
+        }
+        
+        // Boot
+        window.onload = init;
+    </script>
+</body>
+</html>
