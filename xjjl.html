@@ -595,7 +595,7 @@
             document.getElementById('formCode').value = record.merchant_code || '';
             document.getElementById('formName').value = record.full_name || '';
             document.getElementById('formBrand').value = record.brand || '';
-            document.getElementById('formSPUs').value = record.spuids ? record.spuids.join(',') : '';
+            document.getElementById('formSPUs').value = record.spuids ? record.spuids.join('\n') : '';
             
             if (record.created_at) {
                 const d = new Date(record.created_at);
@@ -751,7 +751,7 @@
             const record = records.find(r => r.id === id);
             if (!record || !record.spuids || record.spuids.length === 0) return;
             
-            const text = record.spuids.join('\n');
+            const text = record.spuids.join(',');
             
             navigator.clipboard.writeText(text).then(() => {
                 const btns = modal.querySelectorAll('button');
