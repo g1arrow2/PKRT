@@ -350,7 +350,7 @@
                             <th style="width: 130px;">成本 (¥)</th>
                             <th style="width: 90px;">其他成本</th>
                             <th style="width: 90px;">退货成本</th>
-                            <th style="width: 95px;">退货扣减</th>
+                            <th style="width: 90px;">退货扣减</th>
                             <th style="width: 60px;">数量</th>
                             <th style="width: 90px;">利润 (¥)</th>
                         </tr>
@@ -489,7 +489,7 @@
         const head = lines[0];
         if(!head) return;
         
-    if(type === 'pdd') {
+        if(type === 'pdd') {
             const iT = 24; 
             const iO = head.indexOf('订单号') > -1 ? head.indexOf('订单号') : 0;
             const iI = head.indexOf('商品主图') > -1 ? head.indexOf('商品主图') : 0;
@@ -530,7 +530,6 @@
         } else if(type === 'pending_match') {
             dataStore.pendingMatchSkus.clear();
             lines.slice(1).forEach(cols => {
-                // === 修改点：原 B 列 → 现在同时验证 C 列和 D 列 ===
                 const skuC = String(cols[2] || '').trim();
                 const skuD = String(cols[3] || '').trim();
                 if (skuC) dataStore.pendingMatchSkus.set(skuC, (dataStore.pendingMatchSkus.get(skuC) || 0) + 1);
@@ -798,21 +797,40 @@
         XLSX.writeFile(wb, `快递匹配存档_${df || '全部'}.xlsx`);
     }
 
+    // ===== 🔧 采购汇总模块更新后的解析渲染逻辑 =====
     function renderPur(lines, head) {
-        const iA = head.indexOf('货号'), iO = head.indexOf('订单号'), iM = 12;
+        const iA = head.indexOf('货号'), iO = head.indexOf('订单号'), iM = 12, iI = 8; // I列即索引为 8
         const gs = new Map();
         lines.slice(1).forEach(c => {
             if(c[iA]) {
                 const sku = String(c[iA]).trim();
                 if(!gs.has(sku)) gs.set(sku, []);
-                gs.get(sku).push({ oid: String(c[iO]).trim(), money: c[iM] });
+                // 将得物订单号与I列商品规格封装存储
+                gs.get(sku).push({ 
+                    oid: String(c[iO]).trim(), 
+                    money: c[iM],
+                    specInfo: String(c[iI] || '-').trim() 
+                });
             }
         });
         const sortedSkus = Array.from(gs.entries()).sort((a, b) => b[1].length - a[1].length);
         const area = document.getElementById('purResultArea'); area.innerHTML = '';
         
         sortedSkus.forEach(([sku, orders]) => {
-            const orderList = orders.map(o => o.oid).join(', '), count = orders.length, isPurchased = purchasedSkus.has(sku);
+            // 纯单号数组，供“一键复制所有单号”等基础功能调用，保障老逻辑稳定性
+            const orderList = orders.map(o => o.oid).join(', '); 
+            const count = orders.length, isPurchased = purchasedSkus.has(sku);
+            
+            // 构造全新带有规格小标签的订单列表布局
+            let ordersHtml = '';
+            orders.forEach(o => {
+                ordersHtml += `
+                    <div style="display:inline-block; border:1px solid #E2E8F0; background:#F8FAFC; border-radius:8px; padding:6px 10px; margin-right:8px; margin-bottom:8px; text-align:left; vertical-align:top;">
+                        <div style="font-weight:700; color:var(--text);">${o.oid}</div>
+                        <div style="font-size:0.75rem; color:var(--primary); font-weight:600; background:var(--primary-light); padding:2px 6px; border-radius:4px; margin-top:4px; display:inline-block;">${o.specInfo}</div>
+                    </div>`;
+            });
+
             area.innerHTML += `
             <div class="res-item card pur-card ${isPurchased ? 'is-purchased' : ''}" data-sku="${sku}">
                 <div class="pur-header">
@@ -820,8 +838,11 @@
                     <label class="custom-checkbox"><input type="checkbox" ${isPurchased ? 'checked' : ''} onchange="togglePurchased('${sku}', this.checked)"><div class="chk-box"></div><span class="chk-label">已完成采购</span></label>
                 </div>
                 <div class="pur-body">
-                    <div style="font-size:0.9rem; color:var(--text-light); line-height:1.5; margin-bottom:12px; word-break:break-all;"><strong style="color:var(--text);">相关订单：</strong><br>${orderList}</div>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <div style="font-size:0.9rem; color:var(--text-light); line-height:1.5; margin-bottom:12px; word-break:break-all;">
+                        <strong style="color:var(--text);">相关订单与规格：</strong><br>
+                        <div style="margin-top:8px;">${ordersHtml}</div>
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
                         <button class="btn-copy-modern" onclick="copyText('${sku}', '货号', this)">📋 复制货号</button><button class="btn-copy-modern" onclick="copyText('${orderList}', '订单号', this)">📋 复制所有单号</button>
                     </div>
                 </div>
@@ -853,8 +874,11 @@
         const singleOids = [];
         document.querySelectorAll('#purResultArea .res-item').forEach(card => {
             if (card.querySelector('.count-badge')?.textContent.includes('1 单')) {
-                const match = card.querySelector('.pur-body').textContent.match(/相关订单：\s*([\w\d]+)/);
-                if (match && match[1]) singleOids.push(match[1].trim());
+                // 更新后的提取规则：直接提取卡片中第一个加粗的单号文本
+                const firstOidEl = card.querySelector('.pur-body font-weight\\:700, .pur-body div div');
+                if (firstOidEl) {
+                    singleOids.push(firstOidEl.textContent.trim());
+                }
             }
         });
         if (singleOids.length === 0) return showToast("没有找到单件订单");
