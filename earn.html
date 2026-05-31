@@ -78,14 +78,12 @@
 <body>
 
 <div class="container">
-    <!-- 切换按钮 -->
     <div class="nav-tabs">
         <button class="nav-btn active" onclick="switchModule(0)">📝 利润估算器</button>
         <button class="nav-btn" onclick="switchModule(1)">📊 ROI测算器</button>
         <button class="nav-btn" onclick="switchModule(2)">💹 定价核算器</button>
     </div>
 
-    <!-- 模块1：利润核算器（左右布局） -->
     <div id="module-0" class="module active">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
             <div class="card">
@@ -104,6 +102,10 @@
                 <div class="form-group"><label>单笔打包成本</label><input type="number" id="packFee" value="0" oninput="calculate()"></div>
                 <div class="form-group"><label>吊牌/采购成本</label><input type="number" id="otherFee" value="0" oninput="calculate()"></div>
                 <div class="form-group"><label>退货损耗补偿费</label><input type="number" id="returnCost" value="0" oninput="calculate()"></div>
+
+                <div class="section-title">固定成本 (每日)</div>
+                <div class="form-group"><label>每日人工成本</label><input type="number" id="dailyLabor" value="220" oninput="calculate()"></div>
+                <div class="form-group"><label>每日房租水电</label><input type="number" id="dailyRent" value="70" oninput="calculate()"></div>
             </div>
 
             <div class="card">
@@ -122,7 +124,6 @@
         </div>
     </div>
 
-    <!-- 模块2：ROI核算器（左右布局） -->
     <div id="module-1" class="module">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
             <div class="card">
@@ -154,7 +155,6 @@
         </div>
     </div>
 
-    <!-- 模块3：定价测算（左右布局） -->
     <div id="module-2" class="module">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
             <div class="card">
@@ -213,94 +213,110 @@
     }
 
     function calculate() {
-        // ==================== 模块1：利润核算器 ====================
-        const sales = parseFloat(document.getElementById('sales').value) || 0;
-        const returnQty = parseFloat(document.getElementById('returnQty').value) || 0;
-        const price = parseFloat(document.getElementById('price').value) || 0;
-        const cost = parseFloat(document.getElementById('cost').value) || 0;
-        const feeRate = parseFloat(document.getElementById('feeRate').value) / 100 || 0;   // 改为百分比输入
-        const logisticsFee = parseFloat(document.getElementById('logisticsFee').value) || 0;
-        const packFee = parseFloat(document.getElementById('packFee').value) || 0;
-        const otherFee = parseFloat(document.getElementById('otherFee').value) || 0;
-        const returnCost = parseFloat(document.getElementById('returnCost').value) || 0;
+        try {
+            // ==================== 模块1：利润核算器 ====================
+            const sales = parseFloat(document.getElementById('sales').value) || 0;
+            const returnQty = parseFloat(document.getElementById('returnQty').value) || 0;
+            const price = parseFloat(document.getElementById('price').value) || 0;
+            const cost = parseFloat(document.getElementById('cost').value) || 0;
+            const feeRate = parseFloat(document.getElementById('feeRate').value) / 100 || 0;
+            const logisticsFee = parseFloat(document.getElementById('logisticsFee').value) || 0;
+            const packFee = parseFloat(document.getElementById('packFee').value) || 0;
+            const otherFee = parseFloat(document.getElementById('otherFee').value) || 0;
+            const returnCost = parseFloat(document.getElementById('returnCost').value) || 0;
+            
+            const dailyLabor = parseFloat(document.getElementById('dailyLabor').value) || 0;
+            const dailyRent = parseFloat(document.getElementById('dailyRent').value) || 0;
 
-        const returnRate = sales > 0 ? (returnQty / sales) : 0;
-        const successQty = Math.max(0, sales - returnQty);
-        const successProfit = price - cost - (price * feeRate) - packFee - otherFee - logisticsFee;
-        const returnLoss = logisticsFee + packFee + otherFee + returnCost;
-        const totalProfit = (successQty * successProfit) - (returnQty * returnLoss);
-        const totalRevenue = successQty * price;
-        const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+            const returnRate = sales > 0 ? (returnQty / sales) : 0;
+            const successQty = Math.max(0, sales - returnQty);
+            const successProfit = price - cost - (price * feeRate) - packFee - otherFee - logisticsFee;
+            const returnLoss = logisticsFee + packFee + otherFee + returnCost;
+            
+            const totalProfit = (successQty * successProfit) - (returnQty * returnLoss) - dailyLabor - dailyRent;
+            const totalRevenue = successQty * price;
+            const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
-        if (document.getElementById('outReturnRate')) {
-            document.getElementById('outReturnRate').innerText = (returnRate * 100).toFixed(2) + '%';
-            document.getElementById('outSuccessQty').innerText = successQty + ' 单';
-            document.getElementById('outSuccessProfit').innerText = '￥' + successProfit.toFixed(2);
-            document.getElementById('outReturnLoss').innerText = '￥' + returnLoss.toFixed(2);
-            document.getElementById('outTotalRevenue').innerText = '￥' + totalRevenue.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('outTotalProfit').innerText = '￥' + totalProfit.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('outProfitMargin').innerText = profitMargin.toFixed(2) + '%';
-        }
+            if (document.getElementById('outReturnRate')) {
+                document.getElementById('outReturnRate').innerText = (returnRate * 100).toFixed(2) + '%';
+                document.getElementById('outSuccessQty').innerText = successQty + ' 单';
+                document.getElementById('outSuccessProfit').innerText = '￥' + successProfit.toFixed(2);
+                document.getElementById('outReturnLoss').innerText = '￥' + returnLoss.toFixed(2);
+                document.getElementById('outTotalRevenue').innerText = '￥' + totalRevenue.toLocaleString(undefined, {minimumFractionDigits: 2});
+                document.getElementById('outTotalProfit').innerText = '￥' + totalProfit.toLocaleString(undefined, {minimumFractionDigits: 2});
+                document.getElementById('outProfitMargin').innerText = profitMargin.toFixed(2) + '%';
+                
+                const profitBox = document.getElementById('outTotalProfit').parentElement;
+                if (totalProfit < 0) {
+                    profitBox.style.background = 'var(--danger)';
+                } else {
+                    profitBox.style.background = 'var(--primary)';
+                }
+            }
+        } catch (e) { console.error("模块1计算错误:", e); }
 
-        // ==================== 模块2：ROI核算器 ====================
-        const roi_price = parseFloat(document.getElementById('roi_price').value) || 0;
-        const roi_cost = parseFloat(document.getElementById('roi_cost').value) || 0;
-        const roi_feeRate = parseFloat(document.getElementById('roi_feeRate').value) / 100 || 0;   // 改为百分比输入
-        const roi_logistics = parseFloat(document.getElementById('roi_logistics').value) || 0;
-        const roi_other = parseFloat(document.getElementById('roi_other').value) || 0;
-        const roi_returnRate = parseFloat(document.getElementById('roi_returnRate').value) / 100 || 0;   // 改为百分比输入
-        const roi_perOrderFee = parseFloat(document.getElementById('roi_perOrderFee').value) || 0;
+        try {
+            // ==================== 模块2：ROI核算器 ====================
+            const roi_price = parseFloat(document.getElementById('roi_price').value) || 0;
+            const roi_cost = parseFloat(document.getElementById('roi_cost').value) || 0;
+            const roi_feeRate = parseFloat(document.getElementById('roi_feeRate').value) / 100 || 0;
+            const roi_logistics = parseFloat(document.getElementById('roi_logistics').value) || 0;
+            const roi_other = parseFloat(document.getElementById('roi_other').value) || 0;
+            const roi_returnRate = parseFloat(document.getElementById('roi_returnRate').value) / 100 || 0;
+            const roi_perOrderFee = parseFloat(document.getElementById('roi_perOrderFee').value) || 0;
 
-        const platformFee = roi_price * roi_feeRate;
-        const grossProfit = roi_price - roi_cost;
-        const grossMargin = roi_price > 0 ? grossProfit / roi_price : 0;
-        const totalCost = roi_cost + roi_logistics + platformFee + roi_other;
-        const netProfit = roi_price - totalCost;
-        const netMargin = roi_price > 0 ? netProfit / roi_price : 0;
-        const breakEvenROI = (netProfit > 0 && (1 - roi_returnRate) > 0) ? roi_price / (netProfit * (1 - roi_returnRate)) : 0;
-        const expectedROI = roi_perOrderFee > 0 ? (netProfit / roi_perOrderFee) * 100 : 0;
+            const platformFee = roi_price * roi_feeRate;
+            const grossProfit = roi_price - roi_cost;
+            const grossMargin = roi_price > 0 ? grossProfit / roi_price : 0;
+            const totalCost = roi_cost + roi_logistics + platformFee + roi_other;
+            const netProfit = roi_price - totalCost;
+            const netMargin = roi_price > 0 ? netProfit / roi_price : 0;
+            const breakEvenROI = (netProfit > 0 && (1 - roi_returnRate) > 0) ? roi_price / (netProfit * (1 - roi_returnRate)) : 0;
+            const expectedROI = roi_perOrderFee > 0 ? (netProfit / roi_perOrderFee) * 100 : 0;
 
-        if (document.getElementById('outGrossMargin')) {
-            document.getElementById('outPlatformFee').innerText = platformFee.toFixed(2);
-            document.getElementById('outGrossProfit').innerText = grossProfit.toFixed(2);
-            document.getElementById('outGrossMargin').innerText = (grossMargin * 100).toFixed(2) + '%';
-            document.getElementById('outTotalCost').innerText = totalCost.toFixed(2);
-            document.getElementById('outNetProfit').innerText = netProfit.toFixed(2);
-            document.getElementById('outNetMargin').innerText = (netMargin * 100).toFixed(2) + '%';
-            document.getElementById('outExpectedROI').innerText = expectedROI.toFixed(2) + '%';
-            document.getElementById('outBreakEvenROI').innerText = breakEvenROI.toFixed(2) + '倍';
-        }
-        // ==================== 模块3：定价测算 ====================
-        const price_price = parseFloat(document.getElementById('price_price').value) || 0;
-        const price_feeRate = parseFloat(document.getElementById('price_feeRate').value) / 100 || 0;
-        const price_shipping = parseFloat(document.getElementById('price_shipping').value) || 0;
-        const price_tagCost = parseFloat(document.getElementById('price_tagCost').value) || 0;
-        const price_packCost = parseFloat(document.getElementById('price_packCost').value) || 0;
-        const price_otherCost = parseFloat(document.getElementById('price_otherCost').value) || 0;
-        const price_returnCost = parseFloat(document.getElementById('price_returnCost').value) || 0;
-        const price_productCost = parseFloat(document.getElementById('price_productCost').value) || 0;
-        const price_targetProfit = parseFloat(document.getElementById('price_targetProfit').value) || 0;
+            if (document.getElementById('outGrossMargin')) {
+                document.getElementById('outPlatformFee').innerText = platformFee.toFixed(2);
+                document.getElementById('outGrossProfit').innerText = grossProfit.toFixed(2);
+                document.getElementById('outGrossMargin').innerText = (grossMargin * 100).toFixed(2) + '%';
+                document.getElementById('outTotalCost').innerText = totalCost.toFixed(2);
+                document.getElementById('outNetProfit').innerText = netProfit.toFixed(2);
+                document.getElementById('outNetMargin').innerText = (netMargin * 100).toFixed(2) + '%';
+                document.getElementById('outExpectedROI').innerText = expectedROI.toFixed(2) + '%';
+                document.getElementById('outBreakEvenROI').innerText = breakEvenROI.toFixed(2) + '倍';
+            }
+        } catch (e) { console.error("模块2计算错误:", e); }
 
-        const fixedCosts = price_shipping + price_tagCost + price_packCost + price_otherCost + price_returnCost;
-        const estProfit = price_price - (price_price * price_feeRate) - fixedCosts - price_productCost;
-        const profit90 = price_price * 0.9 - (price_price * 0.9 * price_feeRate) - fixedCosts - price_productCost;
-        const profit80 = price_price * 0.8 - (price_price * 0.8 * price_feeRate) - fixedCosts - price_productCost;
-        const costNetProfit = estProfit;
-        const costNetMargin = price_productCost > 0 ? (costNetProfit / price_productCost) * 100 : 0;
-        const revenueProfit = estProfit;
-        const revenueMargin = price_price > 0 ? (revenueProfit / price_price) * 100 : 0;
-        const productCostLine = price_price - (price_price * price_feeRate) - fixedCosts - price_targetProfit;
+        try {
+            // ==================== 模块3：定价测算 ====================
+            const price_price = parseFloat(document.getElementById('price_price').value) || 0;
+            const price_feeRate = parseFloat(document.getElementById('price_feeRate').value) / 100 || 0;
+            const price_shipping = parseFloat(document.getElementById('price_shipping').value) || 0;
+            const price_tagCost = parseFloat(document.getElementById('price_tagCost').value) || 0;
+            const price_packCost = parseFloat(document.getElementById('price_packCost').value) || 0;
+            const price_otherCost = parseFloat(document.getElementById('price_otherCost').value) || 0;
+            const price_returnCost = parseFloat(document.getElementById('price_returnCost').value) || 0;
+            const price_productCost = parseFloat(document.getElementById('price_productCost').value) || 0;
+            const price_targetProfit = parseFloat(document.getElementById('price_targetProfit').value) || 0;
 
-        if (document.getElementById('outEstProfit')) {
-            document.getElementById('outEstProfit').innerText = '￥' + estProfit.toFixed(2);
-            document.getElementById('outProfit90').innerText = '￥' + profit90.toFixed(2);
-            document.getElementById('outProfit80').innerText = '￥' + profit80.toFixed(2);
-            document.getElementById('outCostNetProfit').innerText = '￥' + costNetProfit.toFixed(2);
-            document.getElementById('outCostNetMargin').innerText = costNetMargin.toFixed(2) + '%';
-            document.getElementById('outRevenueProfit').innerText = '￥' + revenueProfit.toFixed(2);
-            document.getElementById('outRevenueMargin').innerText = revenueMargin.toFixed(2) + '%';
-            document.getElementById('outProductCostLine').innerText = '￥' + productCostLine.toFixed(2);
-        }
+            const fixedCosts = price_shipping + price_tagCost + price_packCost + price_otherCost + price_returnCost;
+            const estProfit = price_price - (price_price * price_feeRate) - fixedCosts - price_productCost;
+            const profit90 = price_price * 0.9 - (price_price * 0.9 * price_feeRate) - fixedCosts - price_productCost;
+            const profit80 = price_price * 0.8 - (price_price * 0.8 * price_feeRate) - fixedCosts - price_productCost;
+            const costNetProfit = estProfit;
+            const costNetMargin = price_productCost > 0 ? (costNetProfit / price_productCost) * 100 : 0;
+            const revenueMargin = price_price > 0 ? (estProfit / price_price) * 100 : 0;
+            const productCostLine = price_price - (price_price * price_feeRate) - fixedCosts - price_targetProfit;
+
+            if (document.getElementById('outEstProfit')) {
+                document.getElementById('outEstProfit').innerText = '￥' + estProfit.toFixed(2);
+                document.getElementById('outProfit90').innerText = '￥' + profit90.toFixed(2);
+                document.getElementById('outProfit80').innerText = '￥' + profit80.toFixed(2);
+                document.getElementById('outCostNetProfit').innerText = '￥' + costNetProfit.toFixed(2);
+                document.getElementById('outCostNetMargin').innerText = costNetMargin.toFixed(2) + '%';
+                document.getElementById('outRevenueMargin').innerText = revenueMargin.toFixed(2) + '%';
+                document.getElementById('outProductCostLine').innerText = '￥' + productCostLine.toFixed(2);
+            }
+        } catch (e) { console.error("模块3计算错误:", e); }
     }
 
     window.onload = calculate;
