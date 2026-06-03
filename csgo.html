@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSGO 利润黑客 v4.22 | 实时计算 · 反向套利 · 记录追踪</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        
+        body {
+            font-family: 'Inter', system_ui, sans-serif;
+            background: #f8fafc;
+        }
+        
+        .font-display {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-weight: 600;
+        }
+
+        .section-header {
+            font-size: 1.35rem;
+            letter-spacing: -0.03em;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        .profit-positive {
+            color: #16a34a;
+            font-weight: 600;
+        }
+
+        .profit-negative {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .input-light {
+            background: white;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        
+        .input-light:focus {
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+            outline: none;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        }
+
+        .metric-label {
+            font-size: 0.72rem;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .csgo-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .csgo-table th {
+            background: #f1f5f9;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-weight: 500;
+            color: #475569;
+        }
+        
+        .csgo-table tr {
+            transition: background-color 0.1s ease;
+        }
+        
+        .csgo-table tr:hover:not(.edit-row) {
+            background-color: #f8fafc;
+        }
+
+        .profit-bar {
+            height: 3px;
+            background: linear-gradient(to right, #16a34a, #eab308);
+            transition: width 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .module-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #e2e8f0, transparent);
+        }
+
+        .edit-row {
+            background: #f0fdf4;
+            border-left: 4px solid #16a34a;
+        }
+
+        .edit-row input {
+            font-size: 13px;
+            padding: 4px 6px;
+            background: white;
+            border: 1px solid #86efac;
+        }
+        
+        .edit-row input:focus {
+            border-color: #16a34a;
+            box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.15);
+        }
+
+        .light-glass {
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen">
+    <!-- Header -->
+    <header class="border-b border-slate-200 bg-white/90 backdrop-blur-xl sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-x-3">
+                <div class="w-9 h-9 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-md">
+                    <i class="fa-solid fa-skull text-white text-2xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-baseline gap-x-2">
+                        <span class="font-display text-3xl font-semibold tracking-tighter text-slate-900">CSGO HACKER</span>
+                        <span class="px-2.5 py-0.5 text-[10px] font-mono bg-emerald-100 text-emerald-600 rounded-xl">v4.22</span>
+                    </div>
+                    <div class="text-[10px] text-slate-500 -mt-1 tracking-[2px]">利润计算系统</div>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-x-3">
+                <button onclick="fillExampleData()" 
+                        class="flex items-center gap-x-2 px-5 h-9 text-sm font-medium bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-2xl transition-all shadow-sm">
+                    <i class="fa-solid fa-magic mr-2 text-emerald-500"></i>
+                    <span>一键示例</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-6 pt-8 pb-24">
+        
+        <!-- Hero -->
+        <div class="mb-10">
+            <div class="inline-flex items-center gap-x-2 px-4 h-8 bg-emerald-50 border border-emerald-100 rounded-2xl text-xs tracking-[1px] mb-4 text-emerald-600">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>CS:GO 皮肤交易 · 反向套利 · 利润追踪</span>
+            </div>
+            <h1 class="font-display text-6xl tracking-tighter font-semibold text-slate-900">利润计算系统</h1>
+            <p class="text-xl text-slate-500 mt-2">两个独立模块 · 实时计算 · 本地记录 · 支持更新实际到账</p>
+        </div>
+
+        <!-- ========== 模块一：实时利润计算器 ========== -->
+        <div id="module-calculator" class="mb-16">
+            <div class="flex items-center gap-x-4 mb-6">
+                <div class="flex items-center justify-center w-9 h-9 rounded-2xl bg-emerald-100 text-emerald-600">
+                    <i class="fa-solid fa-calculator text-2xl"></i>
+                </div>
+                <div>
+                    <div class="section-header tracking-tight">模块一 · 实时利润计算器</div>
+                    <div class="text-xs text-slate-500">输入即算 · 双平台对比 · 反向推成本</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                
+                <!-- 输入参数 -->
+                <div class="lg:col-span-4">
+                    <div class="card rounded-3xl p-6 h-full">
+                        <div class="flex items-center gap-x-3 mb-5">
+                            <div class="px-3 py-1 bg-emerald-100 text-emerald-600 text-xs font-mono rounded-2xl">INPUT</div>
+                            <div class="text-sm font-semibold text-slate-700">输入参数</div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1.5">STEAM 购入价 <span class="text-orange-500">($)</span></label>
+                                <div class="relative">
+                                    <input id="steamPrice" type="number" step="0.01" value="13.50" 
+                                           class="input-light w-full h-12 px-4 rounded-2xl text-2xl font-mono font-semibold text-slate-900"
+                                           oninput="calculateAll()">
+                                    <div class="absolute right-4 top-3.5 text-xs text-slate-400">USD</div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1.5">当前卡价 <span class="text-emerald-600">(¥/$)</span></label>
+                                <div class="relative">
+                                    <input id="cardPrice" type="number" step="0.01" value="4.6" 
+                                           class="input-light w-full h-12 px-4 rounded-2xl text-2xl font-mono font-semibold text-slate-900"
+                                           oninput="calculateAll()">
+                                    <div class="absolute right-4 top-3.5 text-xs text-slate-400">CNY</div>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-slate-100">
+                                <div class="metric-label mb-1">实际购入成本</div>
+                                <div class="flex items-baseline gap-x-2">
+                                    <div id="actualCost" class="calc-value text-5xl font-display font-semibold tabular-nums text-slate-900">62.10</div>
+                                    <div class="text-3xl text-slate-400">¥</div>
+                                </div>
+                                <div class="text-[10px] text-slate-400 mt-0.5 font-mono">STEAM$ × 卡价</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BUFF -->
+                <div class="lg:col-span-4">
+                    <div class="card rounded-3xl p-6 h-full">
+                        <div class="flex items-center justify-between mb-5">
+                            <div class="flex items-center gap-x-2">
+                                <div class="px-3 py-1 bg-orange-100 text-orange-600 text-xs font-mono rounded-2xl flex items-center gap-x-1.5">
+                                    <i class="fa-solid fa-chart-line"></i>
+                                    <span class="font-semibold">BUFF</span>
+                                </div>
+                            </div>
+                            <div class="text-[10px] px-2 py-px bg-slate-100 rounded text-slate-500">费率默认 1%</div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">最低出货价 <span class="text-orange-500">(¥)</span></label>
+                                <input id="buffPrice" type="number" step="0.01" value="78.00" 
+                                       class="input-light w-full h-11 px-4 rounded-2xl font-mono text-xl text-slate-900"
+                                       oninput="calculateAll()">
+                            </div>
+                            <div class="flex gap-x-4">
+                                <div class="flex-1">
+                                    <label class="block text-xs font-medium text-slate-500 mb-1">提现费率</label>
+                                    <div class="flex items-center gap-x-2">
+                                        <input id="buffFee" type="number" step="0.1" value="1.0" 
+                                               class="input-light w-full h-11 px-4 rounded-2xl font-mono text-xl text-center text-slate-900"
+                                               oninput="calculateAll()">
+                                        <span class="text-xl text-slate-400">%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-3 border-t border-slate-100 space-y-2.5">
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-slate-500">预计到账</span>
+                                    <span id="buffReceived" class="font-mono text-xl font-semibold text-emerald-600 tabular-nums">77.22</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-500">净利润</span>
+                                    <span id="buffProfit" class="font-mono text-3xl font-semibold profit-positive tabular-nums">15.12</span>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-end mb-1">
+                                        <span class="text-xs text-slate-500">利润率</span>
+                                        <span class="flex items-baseline">
+                                            <span id="buffRate" class="font-display text-4xl font-bold profit-positive tabular-nums">24.3</span>
+                                            <span class="text-emerald-600 ml-1">%</span>
+                                        </span>
+                                    </div>
+                                    <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                        <div id="buffBar" class="profit-bar rounded-full" style="width: 24.3%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 悠悠有品 -->
+                <div class="lg:col-span-4">
+                    <div class="card rounded-3xl p-6 h-full">
+                        <div class="flex items-center justify-between mb-5">
+                            <div class="flex items-center gap-x-2">
+                                <div class="px-3 py-1 bg-sky-100 text-sky-600 text-xs font-mono rounded-2xl flex items-center gap-x-1.5">
+                                    <i class="fa-solid fa-globe"></i>
+                                    <span class="font-semibold">悠悠有品</span>
+                                </div>
+                            </div>
+                            <div class="text-[10px] px-2 py-px bg-slate-100 rounded text-slate-500">费率默认 2%</div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">最低出货价 <span class="text-sky-500">(¥)</span></label>
+                                <input id="youyouPrice" type="number" step="0.01" value="76.50" 
+                                       class="input-light w-full h-11 px-4 rounded-2xl font-mono text-xl text-slate-900"
+                                       oninput="calculateAll()">
+                            </div>
+                            <div class="flex gap-x-4">
+                                <div class="flex-1">
+                                    <label class="block text-xs font-medium text-slate-500 mb-1">提现费率</label>
+                                    <div class="flex items-center gap-x-2">
+                                        <input id="youyouFee" type="number" step="0.1" value="2.0" 
+                                               class="input-light w-full h-11 px-4 rounded-2xl font-mono text-xl text-center text-slate-900"
+                                               oninput="calculateAll()">
+                                        <span class="text-xl text-slate-400">%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-3 border-t border-slate-100 space-y-2.5">
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-slate-500">预计到账</span>
+                                    <span id="youyouReceived" class="font-mono text-xl font-semibold text-sky-600 tabular-nums">74.97</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-500">净利润</span>
+                                    <span id="youyouProfit" class="font-mono text-3xl font-semibold profit-positive tabular-nums">12.87</span>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-end mb-1">
+                                        <span class="text-xs text-slate-500">利润率</span>
+                                        <span class="flex items-baseline">
+                                            <span id="youyouRate" class="font-display text-4xl font-bold profit-positive tabular-nums">20.7</span>
+                                            <span class="text-sky-600 ml-1">%</span>
+                                        </span>
+                                    </div>
+                                    <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                        <div id="youyouBar" class="profit-bar rounded-full" style="width: 20.7%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 反向计算器 -->
+                <div class="lg:col-span-12 mt-2">
+                    <div class="card rounded-3xl p-6 border border-emerald-100">
+                        <div class="flex flex-col md:flex-row md:items-center gap-y-4 md:gap-x-8">
+                            <div class="flex items-center gap-x-3 md:w-64">
+                                <div class="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-sync-alt"></i>
+                                </div>
+                                <div>
+                                    <div class="font-semibold text-slate-800">反向利润计算器</div>
+                                    <div class="text-xs text-slate-500">已知出货价 + 目标利润率 → 反推最高可买价</div>
+                                </div>
+                            </div>
+
+                            <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 mb-1">目标利润率</label>
+                                    <div class="flex items-center gap-x-2">
+                                        <input id="reverseRate" type="number" step="0.1" value="25" 
+                                               class="input-light w-full h-11 px-4 rounded-2xl font-mono text-2xl text-center text-slate-900"
+                                               oninput="calculateAll()">
+                                        <span class="text-2xl text-emerald-600">%</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 mb-1">目标最低出货价 <span class="text-emerald-600">(¥)</span></label>
+                                    <input id="reverseSell" type="number" step="0.01" value="85.00" 
+                                           class="input-light w-full h-11 px-4 rounded-2xl font-mono text-2xl text-slate-900"
+                                           oninput="calculateAll()">
+                                </div>
+                                <div class="bg-emerald-50 border border-emerald-100 rounded-2xl px-5 flex flex-col justify-center">
+                                    <div class="text-xs text-emerald-600">建议最高 STEAM 购入价</div>
+                                    <div class="flex items-baseline gap-x-2 mt-0.5">
+                                        <div id="reverseSteam" class="font-display text-4xl font-bold tabular-nums text-emerald-600">14.76</div>
+                                        <div class="text-2xl text-slate-400">$</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分隔 -->
+        <div class="module-divider my-8"></div>
+
+        <!-- ========== 模块二：盈利记录黑盒 ========== -->
+        <div id="module-records">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-x-4">
+                    <div class="flex items-center justify-center w-9 h-9 rounded-2xl bg-emerald-100 text-emerald-600">
+                        <i class="fa-solid fa-table text-2xl"></i>
+                    </div>
+                    <div>
+                        <div class="section-header tracking-tight">模块二 · 盈利记录黑盒</div>
+                        <div class="text-xs text-slate-500">本地持久化 · 可更新实际到账 · 自动重算利润</div>
+                    </div>
+                </div>
+                
+                <button onclick="addNewRecordRow()" 
+                        class="flex items-center gap-x-2 px-6 h-10 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-2xl transition-all shadow-md">
+                    <i class="fa-solid fa-plus mr-2"></i>
+                    <span>新增空白记录</span>
+                </button>
+            </div>
+
+            <!-- 统计摘要 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div class="card rounded-2xl p-4">
+                    <div class="text-xs text-slate-500">总充值金额</div>
+                    <div id="sumRecharge" class="font-display text-3xl font-semibold tabular-nums mt-1 text-slate-900">0</div>
+                </div>
+                <div class="card rounded-2xl p-4">
+                    <div class="text-xs text-slate-500">总实际成本</div>
+                    <div id="sumCost" class="font-display text-3xl font-semibold tabular-nums mt-1 text-slate-900">0.00</div>
+                </div>
+                <div class="card rounded-2xl p-4">
+                    <div class="text-xs text-slate-500">累计实际利润</div>
+                    <div id="sumProfit" class="font-display text-3xl font-semibold tabular-nums mt-1 profit-positive">0.00</div>
+                </div>
+                <div class="card rounded-2xl p-4">
+                    <div class="text-xs text-slate-500">平均利润率</div>
+                    <div class="flex items-baseline gap-x-1 mt-1">
+                        <div id="avgRate" class="font-display text-3xl font-semibold tabular-nums profit-positive">0.0</div>
+                        <div class="text-emerald-600">%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 表格区域 -->
+            <div class="card rounded-3xl border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="csgo-table w-full min-w-[1180px]">
+                        <thead>
+                            <tr class="text-xs border-b border-slate-200">
+                                <th class="px-5 py-3.5 text-left font-medium w-44">账号/周期</th>
+                                <th class="px-4 py-3.5 text-left font-medium w-36">时间</th>
+                                <th class="px-4 py-3.5 text-right font-medium">充值($)</th>
+                                <th class="px-4 py-3.5 text-right font-medium">卡价</th>
+                                <th class="px-4 py-3.5 text-right font-medium">成本(¥)</th>
+                                <th class="px-4 py-3.5 text-right font-medium">预估卖出(¥)</th>
+                                <th class="px-4 py-3.5 text-right font-medium">实际卖出(¥)</th>
+                                <th class="px-4 py-3.5 text-right font-medium">手续费(¥)</th>
+                                <th class="px-4 py-3.5 text-right font-medium">预估利润(¥)</th>
+                                <th class="px-4 py-3.5 text-right font-medium">实际利润(¥)</th>
+                                <th class="px-4 py-3.5 text-center font-medium w-[68px]">预估率</th>
+                                <th class="px-4 py-3.5 text-center font-medium w-[68px]">实际率</th>
+                                <th class="px-3 py-3.5 w-9"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsTable" class="text-sm divide-y divide-slate-100">
+                            <!-- 动态内容 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="emptyState" class="hidden px-8 py-14 text-center">
+                    <i class="fa-solid fa-folder-open text-4xl text-slate-300 mb-4"></i>
+                    <div class="text-slate-400">暂无交易记录</div>
+                    <div class="text-xs text-slate-400 mt-1">点击右上角「新增空白记录」开始记录</div>
+                </div>
+            </div>
+            
+            <div class="mt-4 flex justify-between items-center text-[10px] text-slate-400 font-mono px-1">
+                <div>数据存于浏览器本地 • 可随时更新实际卖出金额</div>
+                <button onclick="exportToCSV()" 
+                        class="flex items-center gap-x-1.5 px-4 h-7 text-xs font-medium bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-all">
+                    <i class="fa-solid fa-download"></i>
+                    <span>导出 CSV</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatNum(num, digits = 2) {
+            if (isNaN(num) || num === null || num === undefined) return '0.00';
+            return Number(num).toFixed(digits);
+        }
+
+        function animateValue(element, start, end, duration = 500) {
+            if (!element) return;
+            const startTime = performance.now();
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const current = start + (end - start) * eased;
+                
+                if (element.id.includes('Rate')) {
+                    element.textContent = formatNum(current, 1);
+                } else {
+                    element.textContent = formatNum(current);
+                }
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    element.textContent = element.id.includes('Rate') ? formatNum(end, 1) : formatNum(end);
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        function calculateAll() {
+            const steam = parseFloat(document.getElementById('steamPrice').value) || 0;
+            const card = parseFloat(document.getElementById('cardPrice').value) || 0;
+            const buffPrice = parseFloat(document.getElementById('buffPrice').value) || 0;
+            const buffFee = parseFloat(document.getElementById('buffFee').value) || 0;
+            const youyouPrice = parseFloat(document.getElementById('youyouPrice').value) || 0;
+            const youyouFee = parseFloat(document.getElementById('youyouFee').value) || 0;
+
+            const actualCost = steam * card;
+            const actualCostEl = document.getElementById('actualCost');
+            const oldCost = parseFloat(actualCostEl.textContent.replace(/,/g, '')) || 0;
+            animateValue(actualCostEl, oldCost, actualCost);
+
+            // BUFF
+            const buffReceived = buffPrice * (1 - buffFee / 100);
+            const buffProfit = buffReceived - actualCost;
+            const buffRate = actualCost > 0 ? (buffProfit / actualCost) * 100 : 0;
+
+            document.getElementById('buffReceived').textContent = formatNum(buffReceived);
+            
+            const buffProfitEl = document.getElementById('buffProfit');
+            const oldBuffP = parseFloat(buffProfitEl.textContent.replace(/,/g, '')) || 0;
+            animateValue(buffProfitEl, oldBuffP, buffProfit);
+            buffProfitEl.className = `font-mono text-3xl font-semibold tabular-nums ${buffProfit >= 0 ? 'profit-positive' : 'profit-negative'}`;
+            
+            const buffRateEl = document.getElementById('buffRate');
+            const oldBuffR = parseFloat(buffRateEl.textContent) || 0;
+            animateValue(buffRateEl, oldBuffR, buffRate);
+            buffRateEl.className = `font-display text-4xl font-bold tabular-nums ${buffRate >= 0 ? 'profit-positive' : 'profit-negative'}`;
+            
+            document.getElementById('buffBar').style.width = Math.min(Math.max(buffRate, 0), 120) + '%';
+
+            // 悠悠
+            const youyouReceived = youyouPrice * (1 - youyouFee / 100);
+            const youyouProfit = youyouReceived - actualCost;
+            const youyouRate = actualCost > 0 ? (youyouProfit / actualCost) * 100 : 0;
+
+            document.getElementById('youyouReceived').textContent = formatNum(youyouReceived);
+            
+            const youyouProfitEl = document.getElementById('youyouProfit');
+            const oldYouP = parseFloat(youyouProfitEl.textContent.replace(/,/g, '')) || 0;
+            animateValue(youyouProfitEl, oldYouP, youyouProfit);
+            youyouProfitEl.className = `font-mono text-3xl font-semibold tabular-nums ${youyouProfit >= 0 ? 'profit-positive' : 'profit-negative'}`;
+            
+            const youyouRateEl = document.getElementById('youyouRate');
+            const oldYouR = parseFloat(youyouRateEl.textContent) || 0;
+            animateValue(youyouRateEl, oldYouR, youyouRate);
+            youyouRateEl.className = `font-display text-4xl font-bold tabular-nums ${youyouRate >= 0 ? 'profit-positive' : 'profit-negative'}`;
+            
+            document.getElementById('youyouBar').style.width = Math.min(Math.max(youyouRate, 0), 120) + '%';
+
+            // 反向
+            const reverseRate = parseFloat(document.getElementById('reverseRate').value) || 0;
+            const reverseSell = parseFloat(document.getElementById('reverseSell').value) || 0;
+            let reverseSteam = 0;
+            if (reverseSell > 0 && card > 0 && reverseRate >= 0) {
+                reverseSteam = reverseSell / (1 + reverseRate / 100) / card;
+            }
+            const reverseEl = document.getElementById('reverseSteam');
+            const oldRev = parseFloat(reverseEl.textContent.replace(/,/g, '')) || 0;
+            animateValue(reverseEl, oldRev, reverseSteam);
+        }
+
+        function fillExampleData() {
+            document.getElementById('steamPrice').value = '13.50';
+            document.getElementById('cardPrice').value = '4.6';
+            document.getElementById('buffPrice').value = '78.00';
+            document.getElementById('buffFee').value = '1.0';
+            document.getElementById('youyouPrice').value = '76.50';
+            document.getElementById('youyouFee').value = '2.0';
+            document.getElementById('reverseRate').value = '25';
+            document.getElementById('reverseSell').value = '85.00';
+            calculateAll();
+        }
+
+        // ========== 记录系统 ==========
+        let records = [];
+
+        function loadRecords() {
+            const saved = localStorage.getItem('csgo_profit_records_v3');
+            if (saved) {
+                records = JSON.parse(saved);
+            } else {
+                records = [
+                    {
+                        id: Date.now() - 1000 * 60 * 60 * 24 * 5,
+                        account: '主账号-第2周期',
+                        time: '2026-05-28T14:22',
+                        recharge: 1000,
+                        card: 4.6,
+                        cost: 4600,
+                        estSell: 1320,
+                        actualSell: 1298,
+                        fee: 46.2,
+                        estProfit: 815.8,
+                        actualProfit: 840,
+                        estRate: 61.8,
+                        actualRate: 64.7
+                    }
+                ];
+                saveRecords();
+            }
+            renderRecords();
+            updateSummary();
+        }
+
+        function saveRecords() {
+            localStorage.setItem('csgo_profit_records_v3', JSON.stringify(records));
+        }
+
+        function renderRecords() {
+            const tbody = document.getElementById('recordsTable');
+            const emptyState = document.getElementById('emptyState');
+            tbody.innerHTML = '';
+
+            if (records.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            records.forEach((record, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50';
+                
+                const estClass = record.estProfit >= 0 ? 'profit-positive' : 'profit-negative';
+                const actClass = record.actualProfit >= 0 ? 'profit-positive' : 'profit-negative';
+                
+                const actualSellDisplay = record.actualSell > 0 ? record.actualSell : '<span class="text-slate-400">-</span>';
+                
+                tr.innerHTML = `
+                    <td class="px-5 py-3.5 font-medium text-slate-800">${record.account}</td>
+                    <td class="px-4 py-3.5 text-xs text-slate-500 font-mono">${new Date(record.time).toLocaleDateString('zh-CN', {month:'2-digit',day:'2-digit'}) + ' ' + new Date(record.time).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}</td>
+                    <td class="px-4 py-3.5 text-right font-mono tabular-nums text-slate-700">${record.recharge}</td>
+                    <td class="px-4 py-3.5 text-right font-mono tabular-nums text-slate-500">${record.card}</td>
+                    <td class="px-4 py-3.5 text-right font-mono tabular-nums text-slate-700">${formatNum(record.cost)}</td>
+                    <td class="px-4 py-3.5 text-right font-mono tabular-nums text-amber-600">${record.estSell}</td>
+                    <td class="px-4 py-3.5 text-right font-mono tabular-nums text-sky-600 cursor-pointer group" onclick="startEditActualSell(${index}, this)">
+                        <span class="group-hover:underline">${actualSellDisplay}</span>
+                        <i class="fa-solid fa-pen ml-1 text-[10px] text-slate-400 opacity-0 group-hover:opacity-100"></i>
+                    </td>
+                    <td class="px-4 py-3.5 text-right font-mono tabular-nums text-orange-600">${formatNum(record.fee)}</td>
+                    <td class="px-4 py-3.5 text-right font-mono tabular-nums font-medium ${estClass}">${formatNum(record.estProfit)}</td>
+                    <td class="px-4 py-3.5 text-right font-mono tabular-nums font-medium ${actClass}">${formatNum(record.actualProfit)}</td>
+                    <td class="px-4 py-3.5 text-center">
+                        <span class="inline-block min-w-[52px] px-2 py-px text-[10px] font-mono rounded ${record.estRate >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}">${formatNum(record.estRate,1)}%</span>
+                    </td>
+                    <td class="px-4 py-3.5 text-center">
+                        <span class="inline-block min-w-[52px] px-2 py-px text-[10px] font-mono rounded ${record.actualRate >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}">${formatNum(record.actualRate,1)}%</span>
+                    </td>
+                    <td class="px-2 py-3.5 text-center">
+                        <button onclick="deleteRecord(${index})" class="w-7 h-7 flex items-center justify-center text-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 内联编辑实际卖出
+        function startEditActualSell(index, cell) {
+            const record = records[index];
+            const currentValue = record.actualSell > 0 ? record.actualSell : '';
+            
+            cell.innerHTML = `
+                <input type="number" value="${currentValue}" class="w-24 px-2 py-1 text-right border border-emerald-300 rounded-lg font-mono text-sm" 
+                       onblur="saveActualSell(${index}, this)" onkeydown="if(event.key==='Enter') this.blur()">
+            `;
+            
+            const input = cell.querySelector('input');
+            input.focus();
+            input.select();
+        }
+
+        function saveActualSell(index, input) {
+            const newValue = parseFloat(input.value);
+            const record = records[index];
+            
+            // 允许留白（清空或0）
+            record.actualSell = (isNaN(newValue) || newValue <= 0) ? 0 : newValue;
+            
+            // 重新计算实际利润和利润率
+            record.actualProfit = record.actualSell - record.cost;
+            record.actualRate = record.actualSell > 0 ? (record.actualProfit / record.actualSell) * 100 : 0;
+            
+            saveRecords();
+            renderRecords();
+            updateSummary();
+        }
+
+        function updateSummary() {
+            if (records.length === 0) {
+                document.getElementById('sumRecharge').textContent = '0';
+                document.getElementById('sumCost').textContent = '0.00';
+                document.getElementById('sumProfit').textContent = '0.00';
+                document.getElementById('avgRate').textContent = '0.0';
+                return;
+            }
+
+            let totalRecharge = 0, totalCost = 0, totalProfit = 0, totalRate = 0;
+            records.forEach(r => {
+                totalRecharge += r.recharge || 0;
+                totalCost += r.cost || 0;
+                totalProfit += r.actualProfit || 0;
+                if (r.actualSell > 0) totalRate += r.actualRate || 0;
+            });
+
+            const avg = records.length > 0 ? totalRate / records.filter(r => r.actualSell > 0).length || 0 : 0;
+
+            document.getElementById('sumRecharge').textContent = totalRecharge.toFixed(0);
+            document.getElementById('sumCost').textContent = formatNum(totalCost);
+            
+            const profitEl = document.getElementById('sumProfit');
+            profitEl.textContent = formatNum(totalProfit);
+            profitEl.className = `font-display text-3xl font-semibold tabular-nums mt-1 ${totalProfit >= 0 ? 'profit-positive' : 'profit-negative'}`;
+            
+            document.getElementById('avgRate').textContent = formatNum(avg || 0, 1);
+        }
+
+        function deleteRecord(index) {
+            if (!confirm('确定删除这条记录？')) return;
+            records.splice(index, 1);
+            saveRecords();
+            renderRecords();
+            updateSummary();
+        }
+
+        // ========== Inline 新增空白记录 ==========
+        function addNewRecordRow() {
+            const tbody = document.getElementById('recordsTable');
+            const existing = tbody.querySelector('.edit-row');
+            if (existing) existing.remove();
+
+            const tr = document.createElement('tr');
+            tr.className = 'edit-row';
+            
+            tr.innerHTML = `
+                <td class="px-3 py-2">
+                    <input type="text" value="主账号-新周期" class="w-full px-2 py-1.5 rounded-xl text-sm font-medium border border-emerald-300">
+                </td>
+                <td class="px-2 py-2">
+                    <input type="datetime-local" value="${new Date().toISOString().slice(0,16)}" class="w-full px-2 py-1.5 text-xs rounded-xl border border-emerald-300">
+                </td>
+                <td class="px-2 py-2">
+                    <input type="number" value="1000" class="w-20 px-2 py-1.5 text-right rounded-xl font-mono border border-emerald-300">
+                </td>
+                <td class="px-2 py-2">
+                    <input type="number" value="4.6" step="0.01" class="w-16 px-2 py-1.5 text-right rounded-xl font-mono border border-emerald-300">
+                </td>
+                <td class="px-4 py-2 text-center text-xs text-emerald-600/70 font-mono">自动计算</td>
+                <td class="px-2 py-2">
+                    <input type="number" value="1300" class="w-20 px-2 py-1.5 text-right rounded-xl font-mono border border-emerald-300">
+                </td>
+                <td class="px-2 py-2">
+                    <input type="number" value="" placeholder="留白" class="w-20 px-2 py-1.5 text-right rounded-xl font-mono border border-emerald-300">
+                </td>
+                <td class="px-4 py-2 text-center text-xs text-emerald-600/70 font-mono">自动</td>
+                <td class="px-4 py-2 text-center text-xs text-emerald-600/70 font-mono">自动</td>
+                <td class="px-4 py-2 text-center text-xs text-emerald-600/70 font-mono">自动</td>
+                <td class="px-4 py-2 text-center text-xs text-emerald-600/70 font-mono">自动</td>
+                <td class="px-4 py-2 text-center text-xs text-emerald-600/70 font-mono">自动</td>
+                <td class="px-2 py-2">
+                    <div class="flex gap-x-1.5 justify-center">
+                        <button onclick="saveInlineRecord(this)" class="px-4 py-1 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all">保存</button>
+                        <button onclick="cancelInlineRecord(this)" class="px-3 py-1 text-xs bg-slate-200 hover:bg-slate-300 rounded-xl transition-all">取消</button>
+                    </div>
+                </td>
+            `;
+            
+            tbody.insertBefore(tr, tbody.firstChild);
+            setTimeout(() => {
+                tr.querySelector('input').focus();
+                tr.querySelector('input').select();
+            }, 50);
+        }
+
+        function saveInlineRecord(btn) {
+            const tr = btn.closest('tr');
+            const inputs = tr.querySelectorAll('input');
+            
+            const account = inputs[0].value.trim() || '未命名周期';
+            const time = inputs[1].value || new Date().toISOString().slice(0,16);
+            const recharge = parseFloat(inputs[2].value) || 0;
+            const card = parseFloat(inputs[3].value) || 0;
+            const estSell = parseFloat(inputs[4].value) || 0;
+            const actualSell = parseFloat(inputs[5].value) || 0;
+
+            if (recharge <= 0 || card <= 0) {
+                alert('充值金额和卡价必须大于 0');
+                return;
+            }
+
+            const cost = recharge * card;
+            const fee = estSell * 0.035;
+            const estProfit = estSell - cost - fee;
+            const actualProfit = actualSell - cost;
+            const estRate = estSell > 0 ? (estProfit / estSell) * 100 : 0;
+            const actualRate = actualSell > 0 ? (actualProfit / actualSell) * 100 : 0;
+
+            const newRecord = {
+                id: Date.now(),
+                account,
+                time,
+                recharge,
+                card,
+                cost,
+                estSell,
+                actualSell,
+                fee,
+                estProfit,
+                actualProfit,
+                estRate,
+                actualRate
+            };
+
+            records.unshift(newRecord);
+            saveRecords();
+            tr.remove();
+            renderRecords();
+            updateSummary();
+        }
+
+        function cancelInlineRecord(btn) {
+            btn.closest('tr').remove();
+        }
+
+        function exportToCSV() {
+            if (records.length === 0) {
+                alert('没有记录可以导出');
+                return;
+            }
+
+            const headers = ['账号/周期','时间','充值金额(¥)','卡价','成本(¥)','预估卖出(¥)','实际卖出(¥)','手续费(¥)','预估利润(¥)','实际利润(¥)','预估利润率(%)','实际利润率(%)'];
+            let csv = headers.join(',') + '\n';
+            
+            records.forEach(r => {
+                csv += [
+                    `"${r.account}"`, r.time, r.recharge, r.card,
+                    formatNum(r.cost), r.estSell, r.actualSell || '', formatNum(r.fee),
+                    formatNum(r.estProfit), formatNum(r.actualProfit),
+                    formatNum(r.estRate,1), formatNum(r.actualRate,1)
+                ].join(',') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `CSGO利润记录_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function init() {
+            // 绑定计算器输入
+            const calcInputs = ['steamPrice','cardPrice','buffPrice','buffFee','youyouPrice','youyouFee','reverseRate','reverseSell'];
+            calcInputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', calculateAll);
+                    el.addEventListener('change', calculateAll);
+                }
+            });
+
+            setTimeout(calculateAll, 120);
+            loadRecords();
+
+            // 键盘快捷键
+            document.addEventListener('keydown', function(e) {
+                if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+                    e.preventDefault();
+                    addNewRecordRow();
+                }
+                if (e.key === 'Escape') {
+                    const editRow = document.querySelector('.edit-row');
+                    if (editRow) editRow.remove();
+                }
+            });
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
