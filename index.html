@@ -514,6 +514,7 @@
                 }
             });
         } else if(type === 'pur') {
+            // ⭐ 恢复：得物订单表(pur) 严格按列名 '货号' 查找，不强制改 E列
             lastPurLines = lines; lastPurHead = head; renderPur(lines, head);
         } else if(type === 'profit') {
             const iOid = head.indexOf('订单号'), iN = 13;
@@ -530,7 +531,7 @@
         } else if(type === 'pending_match') {
             dataStore.pendingMatchSkus.clear();
             lines.slice(1).forEach(cols => {
-                // ⭐ 彻底修正：拼多多【剩余待匹配】表的货号从 D列(3) 改为 E列(4)
+                // ⭐ 仅修改：剩余待匹配表的货号列强制读取为 E列 (索引4)
                 const skuE = String(cols[4] || '').trim();
                 if (skuE) {
                     dataStore.pendingMatchSkus.set(skuE, (dataStore.pendingMatchSkus.get(skuE) || 0) + 1);
@@ -800,8 +801,8 @@
 
     // ===== 采购汇总模块的解析与渲染逻辑 =====
     function renderPur(lines, head) {
-        // ⭐ 彻底修正：得物订单表也强制读取 E列(索引4) 作为货号
-        const iA = 4; 
+        // ⭐ 恢复：得物订单表保持根据标题名称查找货号列
+        const iA = head.indexOf('货号');
         const iO = head.indexOf('订单号') > -1 ? head.indexOf('订单号') : 0;
         const iM = 12; 
         const iI = 8;  
@@ -854,7 +855,6 @@
         highlightPendingSkus();
     }
 
-    // 单个货号卡片内的复制按钮，提供给不需要过滤已采购的常规单号复制
     window.copyOriginalListOnly = function(btn, sku) {
         const card = btn.closest('.pur-card');
         const oids = [];
