@@ -24,9 +24,9 @@
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-      
+        
         * { margin:0; padding:0; box-sizing:border-box; }
-      
+        
         body {
             font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             background: var(--bg);
@@ -34,21 +34,21 @@
             padding: 24px;
             min-height: 100vh;
         }
-      
+        
         .container { max-width: 1440px; width: 100%; margin: 0 auto; }
-      
+        
         .nav-tabs { display:flex; gap:6px; margin-bottom:24px; background:var(--card); padding:8px; border-radius:16px; box-shadow:var(--shadow); flex-wrap:wrap; }
-      
+        
         .nav-btn { padding:12px 20px; border:none; background:transparent; border-radius:10px; cursor:pointer; font-weight:600; font-size:0.9rem; color:var(--text-light); transition:all 0.3s ease; display:flex; align-items:center; gap:8px; }
-      
+        
         .nav-btn:hover { background:var(--primary-light); color:var(--primary); }
         .nav-btn.active { background:var(--primary); color:white; box-shadow:0 4px 12px rgba(99,102,241,0.3); }
-      
+        
         .module-content { display:none; animation:fadeIn 0.3s ease; }
         .module-content.active { display:block; }
-      
+        
         @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-      
+        
         .card { 
             background:var(--card); 
             border-radius:16px; 
@@ -60,50 +60,50 @@
             position:relative; 
         }
         .card:hover { box-shadow:var(--shadow-lg); }
-      
+        
         h2 { margin:0 0 20px 0; color:var(--text); font-size:1.25rem; font-weight:700; display:flex; justify-content:space-between; align-items:center; padding-bottom:16px; border-bottom:2px solid var(--primary-light); }
-      
+        
         #scanIn { width:100%; padding:18px 20px; font-size:1.2rem; border:2px solid var(--primary); border-radius:12px; font-weight:600; background:var(--primary-light); }
-      
+        
         .file-box { border:2px dashed var(--border); border-radius:12px; padding:32px 24px; text-align:center; cursor:pointer; position:relative; background:var(--card); transition:all 0.3s ease; font-weight:600; color:var(--text-light); }
         .file-box:hover { border-color:var(--primary); background:var(--primary-light); color:var(--primary); transform:translateY(-2px); }
         .file-box input { position:absolute; inset:0; opacity:0; cursor:pointer; }
-      
+        
         .status { font-size:0.85rem; color:var(--text-light); margin-top:12px; font-weight:500; }
-      
+        
         .res-item { display:flex; align-items:center; gap:20px; padding:20px; border:1px solid var(--border); border-radius:12px; margin-bottom:12px; background:var(--card); transition:all 0.3s ease; }
         .res-item:hover { box-shadow:var(--shadow); }
-      
+        
         .res-img { width:100px; height:100px; border-radius:10px; object-fit:cover; border:2px solid var(--border); }
-      
+        
         .pdd-oid { font-family:'SF Mono',Monaco,monospace; font-size:0.85rem; color:var(--text-light); background:var(--bg); padding:6px 12px; border-radius:8px; font-weight:600; }
-      
+        
         .dw-input { flex:1; padding:14px 16px; border:2px solid var(--border); border-radius:10px; font-size:1rem; font-weight:500; transition:all 0.3s ease; background:var(--bg); }
         .dw-input:focus { border-color:var(--primary); outline:none; background:var(--primary-light); box-shadow:0 0 0 3px rgba(99,102,241,0.1); }
-      
+        
         .recent-box { margin-top:20px; background:var(--bg); padding:16px; border-radius:12px; border:1px solid var(--border); }
-      
+        
         .recent-item { font-size:0.85rem; color:var(--text-light); display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--border); }
         .recent-item:last-child { border-bottom:none; }
-      
+        
         .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
-      
+        
         .stat-item { background:var(--card); padding:20px; border-radius:12px; border:1px solid var(--border); text-align:center; transition:all 0.3s ease; }
         .stat-item:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); }
-      
+        
         .stat-value { font-size:1.5rem; font-weight:700; color:var(--primary); margin-bottom:8px; }
         .stat-value.profit { color: var(--success); }
         .stat-value.cost { color: var(--danger); }
-      
+        
         table { width:100%; border-collapse:collapse; font-size:0.9rem; }
         th, td { padding:14px 16px; border:1px solid var(--border); text-align:left; vertical-align: middle; }
         th { background:var(--bg); color:var(--text-light); font-weight:600; text-transform:uppercase; font-size:0.8rem; letter-spacing:0.5px; }
         tr:hover td { background:var(--primary-light); }
-      
+        
         .warn-row { background-color: var(--warning-light) !important; }
         .warn-row td { color: #92400E; font-weight: 600; }
         .row-return { background-color: #FEF2F2 !important; }
-      
+        
         .btn { padding:10px 20px; border-radius:10px; border:none; cursor:pointer; font-weight:600; font-size:0.9rem; transition:all 0.3s ease; display:inline-flex; align-items:center; gap:6px; }
         .btn:hover { transform:translateY(-2px); box-shadow:var(--shadow); }
         .btn-primary { background:var(--primary); color:white; }
@@ -113,26 +113,26 @@
         .btn-danger { background:var(--danger); color:white; }
         .btn-danger:hover { background:#DC2626; }
         .btn-outline { background:white; border:1px solid var(--border); color:var(--text-light); font-size:0.8rem; padding:6px 12px; }
-      
+        
         .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(17, 24, 39, 0.9); color:white; padding:12px 30px; border-radius:8px; font-size:15px; font-weight:bold; z-index:9999; opacity:0; transition:all 0.3s ease; pointer-events:none; text-align:center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: -20px; }
         .toast.show { opacity:1; margin-top: 0; }
-      
+        
         .manual-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 10000; align-items: center; justify-content: center; }
         .manual-content { background: var(--card); width: 92%; max-width: 620px; border-radius: 16px; box-shadow: var(--shadow-lg); padding: 24px; }
-      
+        
         .pending-input-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; background: var(--card); padding: 24px; border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); }
         .pending-input-grid input, .pending-input-grid select { padding: 14px 16px; border-radius: 10px; border: 2px solid var(--border); font-size: 0.95rem; font-weight: 500; transition: all 0.3s ease; background: var(--bg); }
         .pending-input-grid input:focus, .pending-input-grid select:focus { border-color: var(--primary); outline: none; background: var(--primary-light); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
-      
+        
         #pendingArea table { width: 100%; table-layout: fixed; border-collapse: collapse; }
         #pendingArea th, #pendingArea td { padding: 14px 16px; border: 1px solid var(--border); word-break: break-word; vertical-align: middle; }
         #pendingArea th { background: var(--bg); color: var(--text-light); font-weight: 600; }
-      
+        
         .state-arrived { background: var(--success-light); color: #065F46; font-weight: 600; padding: 4px 12px; border-radius: 6px; }
         .state-transit { background: var(--warning-light); color: #92400E; font-weight: 600; padding: 4px 12px; border-radius: 6px; }
         .state-return { background: var(--danger-light); color: #991B1B; font-weight: 600; padding: 4px 12px; border-radius: 6px; }
         .state-matched { background: var(--bg); color: var(--text-light); font-weight: 600; padding: 4px 12px; border-radius: 6px; }
-      
+        
         .btn-copy-modern { background: var(--bg); color: var(--text-light); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 4px; }
         .btn-copy-modern:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
         .btn-copy-modern.copied { background: var(--success); color: white; border-color: var(--success); }
@@ -221,7 +221,7 @@
                 </div>
             </div>
         </div>
-      
+        
         <div class="card">
             <h2>快递扫码匹配</h2>
             <div style="display:flex; gap:12px; align-items:center;">
@@ -530,12 +530,13 @@
         } else if(type === 'pending_match') {
             dataStore.pendingMatchSkus.clear();
             lines.slice(1).forEach(cols => {
-                const skuC = String(cols[2] || '').trim();
-                const skuD = String(cols[3] || '').trim();
-                if (skuC) dataStore.pendingMatchSkus.set(skuC, (dataStore.pendingMatchSkus.get(skuC) || 0) + 1);
-                if (skuD) dataStore.pendingMatchSkus.set(skuD, (dataStore.pendingMatchSkus.get(skuD) || 0) + 1);
+                // ⭐ 彻底修正：拼多多【剩余待匹配】表的货号从 D列(3) 改为 E列(4)
+                const skuE = String(cols[4] || '').trim();
+                if (skuE) {
+                    dataStore.pendingMatchSkus.set(skuE, (dataStore.pendingMatchSkus.get(skuE) || 0) + 1);
+                }
             });
-            highlightPendingSkus(); showToast(`✅ 待匹配库解析完成，发现 ${dataStore.pendingMatchSkus.size} 款货号库存（C列 + D列）`);
+            highlightPendingSkus(); showToast(`✅ 待匹配库解析完成，发现 ${dataStore.pendingMatchSkus.size} 款货号库存（取自E列）`);
         }
     }
 
@@ -799,7 +800,12 @@
 
     // ===== 采购汇总模块的解析与渲染逻辑 =====
     function renderPur(lines, head) {
-        const iA = head.indexOf('货号'), iO = head.indexOf('订单号'), iM = 12, iI = 8; 
+        // ⭐ 彻底修正：得物订单表也强制读取 E列(索引4) 作为货号
+        const iA = 4; 
+        const iO = head.indexOf('订单号') > -1 ? head.indexOf('订单号') : 0;
+        const iM = 12; 
+        const iI = 8;  
+        
         const gs = new Map();
         lines.slice(1).forEach(c => {
             if(c[iA]) {
@@ -875,19 +881,16 @@
         if (lastPurLines.length > 0) renderPur(lastPurLines, lastPurHead);
     }
 
-    // 💡 优化更新后的一键复制核心代码（过滤已采购卡片、且只抓取纯得物单号）
     function copyAllSingleOrders() {
         const singleOids = [];
         let skippedCount = 0;
 
         document.querySelectorAll('#purResultArea .res-item').forEach(card => {
-            // 如果该货号卡片已经勾选了“已完成采购”，则直接跳过，不复制
             if (card.classList.contains('is-purchased')) {
                 skippedCount++;
                 return; 
             }
             
-            // 只有当该货号只有1单时，抓取其纯得物订单号文本（排除样式和规格标签）
             if (card.querySelector('.count-badge')?.textContent.includes('1 单')) {
                 const oidEl = card.querySelector('.oid-text');
                 if (oidEl) {
