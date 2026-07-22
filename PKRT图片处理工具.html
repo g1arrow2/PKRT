@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电商图片处理工作台</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f6f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        /* 选项卡样式 */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 900px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            background: #e9ecef;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s;
+        }
+        .tab-btn.active {
+            background: #fff;
+            color: #007bff;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.05);
+        }
+        
+        .module-container {
+            background: #fff;
+            width: 100%;
+            max-width: 900px;
+            padding: 25px;
+            border-radius: 0 8px 8px 8px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            display: none;
+            box-sizing: border-box;
+        }
+        .module-container.active {
+            display: block;
+        }
+
+        /* 控件区域样式 */
+        .controls {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            min-width: 250px;
+        }
+        .control-group label {
+            font-weight: bold;
+            font-size: 14px;
+            color: #444;
+        }
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .slider-group input[type="range"] {
+            flex: 1;
+        }
+        .slider-value {
+            font-size: 13px;
+            color: #666;
+            width: 40px;
+            text-align: right;
+        }
+        input[type="file"] {
+            font-size: 14px;
+            padding: 5px;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+        
+        button.action-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+            width: 100%;
+        }
+        button.action-btn:hover {
+            background-color: #0056b3;
+        }
+        button.action-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 10px;
+            overflow: auto;
+            text-align: center;
+        }
+        canvas {
+            max-width: 100%;
+            height: auto;
+            background: #fff;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+        }
+        #canvas1 { cursor: default; }
+
+        .instructions {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('module1', this)">1. 图片组合升级</button>
+        <button class="tab-btn" onclick="switchTab('module2', this)">2. 全图批量水印</button>
+    </div>
+
+    <!-- 模块 1：图片组合升级 -->
+    <div id="module1" class="module-container active">
+        <div class="controls">
+            <div class="control-group">
+                <label for="bgUpload1">上传主体图 (作为背景)</label>
+                <input type="file" id="bgUpload1" accept="image/*">
+            </div>
+            <div class="control-group">
+                <label for="fgUpload1">上传前置图 (附加元素)</label>
+                <input type="file" id="fgUpload1" accept="image/*">
+            </div>
+        </div>
+        <div class="canvas-wrapper">
+            <canvas id="canvas1" width="800" height="500"></canvas>
+        </div>
+        <div class="instructions">
+            💡 提示：两张图片加载后，按住前置图片可<strong>拖拽位置</strong>，按住前置图片<strong>右下角蓝点</strong>可等比例<strong>缩放大小</strong>。
+        </div>
+        <button id="downloadBtn1" class="action-btn" disabled>保存并下载单张图片</button>
+    </div>
+
+    <!-- 模块 2：全图批量水印 -->
+    <div id="module2" class="module-container">
+        <div class="controls">
+            <div class="control-group">
+                <label for="batchUpload2">上传待加水印图片 (支持多选)</label>
+                <input type="file" id="batchUpload2" accept="image/*" multiple>
+            </div>
+            <div class="control-group">
+                <label for="wmUpload2">上传水印图片</label>
+                <input type="file" id="wmUpload2" accept="image/*">
+            </div>
+            
+            <div class="control-group" style="width: 100%;">
+                <label>方向 (旋转角度)</label>
+                <div class="slider-group">
+                    <input type="range" id="wmAngle" min="-180" max="180" value="-30">
+                    <span class="slider-value" id="valAngle">-30°</span>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>水印大小比例</label>
+                <div class="slider-group">
+                    <input type="range" id="wmScale" min="0.1" max="3" step="0.1" value="0.5">
+                    <span class="slider-value" id="valScale">0.5x</span>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>水印数量/密度 (间距)</label>
+                <div class="slider-group">
+                    <input type="range" id="wmSpacing" min="10" max="500" value="150">
+                    <span class="slider-value" id="valSpacing">150px</span>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>水印透明度</label>
+                <div class="slider-group">
+                    <input type="range" id="wmOpacity" min="0.1" max="1" step="0.05" value="0.4">
+                    <span class="slider-value" id="valOpacity">0.4</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper">
+            <canvas id="canvas2" width="800" height="500"></canvas>
+        </div>
+        <div class="instructions">
+            💡 提示：此区域为您上传的第一张图片的实时预览。调整上方参数，满意后点击下方按钮批量处理。
+        </div>
+        <button id="batchDownloadBtn2" class="action-btn" disabled>批量导出所有加水印图片</button>
+    </div>
+
+    <script>
+        // --- 通用选项卡切换逻辑 ---
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.module-container').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btnElement.classList.add('active');
+        }
+
+        // ==========================================
+        // 模块 1：图片组合升级逻辑
+        // ==========================================
+        const canvas1 = document.getElementById('canvas1');
+        const ctx1 = canvas1.getContext('2d');
+        const bgUpload1 = document.getElementById('bgUpload1');
+        const fgUpload1 = document.getElementById('fgUpload1');
+        const downloadBtn1 = document.getElementById('downloadBtn1');
+
+        let bgImg1 = null, fgImg1 = null;
+        let fg1 = { x: 0, y: 0, width: 0, height: 0, aspectRatio: 1 };
+        let isDragging = false, isResizing = false;
+        let dragOffsetX = 0, dragOffsetY = 0;
+        const handleSize = 15;
+
+        bgUpload1.addEventListener('change', (e) => loadSingleImage(e, 'bg1'));
+        fgUpload1.addEventListener('change', (e) => loadSingleImage(e, 'fg1'));
+
+        function loadSingleImage(event, type) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    if (type === 'bg1') {
+                        bgImg1 = img;
+                        canvas1.width = img.width;
+                        canvas1.height = img.height;
+                    } else {
+                        fgImg1 = img;
+                        fg1.aspectRatio = img.width / img.height;
+                    }
+                    initLayout1();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function initLayout1() {
+            if (bgImg1 && fgImg1) {
+                fg1.width = canvas1.width * 0.25;
+                fg1.height = fg1.width / fg1.aspectRatio;
+                const padding = canvas1.width * 0.02;
+                fg1.x = canvas1.width - fg1.width - padding;
+                fg1.y = padding;
+                downloadBtn1.disabled = false;
+            } else {
+                ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+                if(bgImg1) ctx1.drawImage(bgImg1, 0, 0, canvas1.width, canvas1.height);
+            }
+            draw1();
+        }
+
+        function draw1() {
+            if(!bgImg1) return;
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            ctx1.drawImage(bgImg1, 0, 0, canvas1.width, canvas1.height);
+
+            if (fgImg1) {
+                ctx1.drawImage(fgImg1, fg1.x, fg1.y, fg1.width, fg1.height);
+                // 辅助线
+                ctx1.strokeStyle = '#007bff'; ctx1.lineWidth = 2; ctx1.setLineDash([5, 5]);
+                ctx1.strokeRect(fg1.x, fg1.y, fg1.width, fg1.height);
+                ctx1.setLineDash([]);
+                ctx1.fillStyle = '#007bff';
+                ctx1.fillRect(fg1.x + fg1.width - handleSize, fg1.y + fg1.height - handleSize, handleSize, handleSize);
+            }
+        }
+
+        function getMousePos1(evt) {
+            const rect = canvas1.getBoundingClientRect();
+            const scaleX = canvas1.width / rect.width;
+            const scaleY = canvas1.height / rect.height;
+            return { x: (evt.clientX - rect.left) * scaleX, y: (evt.clientY - rect.top) * scaleY };
+        }
+
+        canvas1.addEventListener('mousedown', (e) => {
+            if (!bgImg1 || !fgImg1) return;
+            const pos = getMousePos1(e);
+            if (pos.x >= fg1.x + fg1.width - handleSize && pos.x <= fg1.x + fg1.width &&
+                pos.y >= fg1.y + fg1.height - handleSize && pos.y <= fg1.y + fg1.height) {
+                isResizing = true; canvas1.style.cursor = 'nwse-resize'; return;
+            }
+            if (pos.x >= fg1.x && pos.x <= fg1.x + fg1.width && pos.y >= fg1.y && pos.y <= fg1.y + fg1.height) {
+                isDragging = true; dragOffsetX = pos.x - fg1.x; dragOffsetY = pos.y - fg1.y; canvas1.style.cursor = 'move';
+            }
+        });
+
+        canvas1.addEventListener('mousemove', (e) => {
+            if (!bgImg1 || !fgImg1) return;
+            const pos = getMousePos1(e);
+            if (!isDragging && !isResizing) {
+                if (pos.x >= fg1.x + fg1.width - handleSize && pos.x <= fg1.x + fg1.width && pos.y >= fg1.y + fg1.height - handleSize && pos.y <= fg1.y + fg1.height) {
+                    canvas1.style.cursor = 'nwse-resize';
+                } else if (pos.x >= fg1.x && pos.x <= fg1.x + fg1.width && pos.y >= fg1.y && pos.y <= fg1.y + fg1.height) {
+                    canvas1.style.cursor = 'move';
+                } else {
+                    canvas1.style.cursor = 'default';
+                }
+            }
+            if (isDragging) {
+                fg1.x = pos.x - dragOffsetX; fg1.y = pos.y - dragOffsetY; draw1();
+            } else if (isResizing) {
+                let newWidth = pos.x - fg1.x;
+                if (newWidth > 30) { fg1.width = newWidth; fg1.height = fg1.width / fg1.aspectRatio; draw1(); }
+            }
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; isResizing = false; canvas1.style.cursor = 'default'; });
+
+        downloadBtn1.addEventListener('click', () => {
+            if (!bgImg1 || !fgImg1) return;
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            ctx1.drawImage(bgImg1, 0, 0, canvas1.width, canvas1.height);
+            ctx1.drawImage(fgImg1, fg1.x, fg1.y, fg1.width, fg1.height);
+            
+            const link = document.createElement('a');
+            link.download = 'upgraded_' + Date.now() + '.png';
+            link.href = canvas1.toDataURL('image/png');
+            link.click();
+            draw1(); // 恢复带辅助线的状态
+        });
+
+        // ==========================================
+        // 模块 2：全图批量水印逻辑
+        // ==========================================
+        const canvas2 = document.getElementById('canvas2');
+        const ctx2 = canvas2.getContext('2d');
+        const batchUpload2 = document.getElementById('batchUpload2');
+        const wmUpload2 = document.getElementById('wmUpload2');
+        const batchDownloadBtn2 = document.getElementById('batchDownloadBtn2');
+
+        // 参数控件
+        const inpAngle = document.getElementById('wmAngle');
+        const inpScale = document.getElementById('wmScale');
+        const inpSpacing = document.getElementById('wmSpacing');
+        const inpOpacity = document.getElementById('wmOpacity');
+        
+        let batchFiles = [];
+        let previewBaseImg = null;
+        let wmImgObj = null;
+
+        // 更新滑块数值显示并重绘预览
+        [inpAngle, inpScale, inpSpacing, inpOpacity].forEach(input => {
+            input.addEventListener('input', (e) => {
+                const valTarget = document.getElementById('val' + e.target.id.replace('wm',''));
+                let suffix = '';
+                if(e.target.id === 'wmAngle') suffix = '°';
+                if(e.target.id === 'wmScale') suffix = 'x';
+                if(e.target.id === 'wmSpacing') suffix = 'px';
+                valTarget.innerText = e.target.value + suffix;
+                drawPreview2();
+            });
+        });
+
+        // 监听批量图片上传
+        batchUpload2.addEventListener('change', (e) => {
+            batchFiles = Array.from(e.target.files);
+            if (batchFiles.length > 0) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        previewBaseImg = img;
+                        canvas2.width = img.width;
+                        canvas2.height = img.height;
+                        checkBatchReady();
+                        drawPreview2();
+                    };
+                    img.src = ev.target.result;
+                };
+                reader.readAsDataURL(batchFiles[0]); // 仅预览第一张
+            }
+        });
+
+        // 监听水印图片上传
+        wmUpload2.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    wmImgObj = img;
+                    checkBatchReady();
+                    drawPreview2();
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function checkBatchReady() {
+            batchDownloadBtn2.disabled = !(batchFiles.length > 0 && wmImgObj);
+        }
+
+        // 核心渲染逻辑 (用于预览和最终导出)
+        function drawWatermarkedImage(targetCtx, baseImg, cWidth, cHeight) {
+            targetCtx.clearRect(0, 0, cWidth, cHeight);
+            targetCtx.drawImage(baseImg, 0, 0, cWidth, cHeight);
+
+            if (!wmImgObj) return;
+
+            const angle = parseFloat(inpAngle.value);
+            const scale = parseFloat(inpScale.value);
+            const spacing = parseFloat(inpSpacing.value);
+            const opacity = parseFloat(inpOpacity.value);
+
+            const wmWidth = wmImgObj.width * scale;
+            const wmHeight = wmImgObj.height * scale;
+            
+            if(wmWidth === 0 || wmHeight === 0) return;
+
+            const stepX = wmWidth + spacing;
+            const stepY = wmHeight + spacing;
+
+            // 计算对角线长度，确保旋转后水印能铺满全图角落
+            const diagonal = Math.sqrt(cWidth * cWidth + cHeight * cHeight);
+            const startX = -diagonal / 2;
+            const startY = -diagonal / 2;
+            const endX = cWidth + diagonal / 2;
+            const endY = cHeight + diagonal / 2;
+
+            targetCtx.save();
+            targetCtx.globalAlpha = opacity;
+            
+            // 将坐标系平移到中心，进行旋转
+            targetCtx.translate(cWidth / 2, cHeight / 2);
+            targetCtx.rotate(angle * Math.PI / 180);
+
+            // 循环铺满水印
+            for (let x = startX; x <= endX; x += stepX) {
+                for (let y = startY; y <= endY; y += stepY) {
+                    targetCtx.drawImage(wmImgObj, x, y, wmWidth, wmHeight);
+                }
+            }
+            targetCtx.restore();
+        }
+
+        function drawPreview2() {
+            if (!previewBaseImg) return;
+            drawWatermarkedImage(ctx2, previewBaseImg, canvas2.width, canvas2.height);
+        }
+
+        // 批量处理与下载
+        batchDownloadBtn2.addEventListener('click', async () => {
+            if (batchFiles.length === 0 || !wmImgObj) return;
+            
+            const btn = batchDownloadBtn2;
+            const originalText = btn.innerText;
+            btn.disabled = true;
+
+            // 离屏Canvas用于处理真实尺寸图片
+            const offScreenCanvas = document.createElement('canvas');
+            const offScreenCtx = offScreenCanvas.getContext('2d');
+
+            for (let i = 0; i < batchFiles.length; i++) {
+                btn.innerText = `处理中... (${i + 1}/${batchFiles.length})`;
+                
+                await new Promise((resolve) => {
+                    const file = batchFiles[i];
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            offScreenCanvas.width = img.width;
+                            offScreenCanvas.height = img.height;
+                            drawWatermarkedImage(offScreenCtx, img, img.width, img.height);
+                            
+                            const link = document.createElement('a');
+                            // 保留原文件名并加上后缀
+                            const nameArr = file.name.split('.');
+                            const ext = nameArr.pop();
+                            link.download = nameArr.join('.') + '_watermarked.' + ext;
+                            link.href = offScreenCanvas.toDataURL(file.type || 'image/jpeg', 0.95);
+                            link.click();
+                            
+                            setTimeout(resolve, 500); // 间隔500ms，防止浏览器拦截批量下载
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            btn.innerText = "处理完成！";
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
