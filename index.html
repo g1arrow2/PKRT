@@ -161,6 +161,23 @@
         .table-input:focus { border-color: var(--primary); }
         .table-select { padding: 8px; border: 2px solid var(--border); border-radius: 6px; font-size: 0.9rem; outline: none; }
 
+        .purchase-link-list{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}
+        .purchase-link{color:var(--primary);text-decoration:none;font-weight:700;background:var(--primary-light);padding:3px 8px;border-radius:6px}
+        .purchase-link:hover{text-decoration:underline}
+        .purchase-edit-btn{padding:4px 8px;border:1px solid var(--border);background:white;border-radius:6px;cursor:pointer;font-weight:600;color:var(--text-light)}
+        .purchase-form-modal{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+        .purchase-form{width:min(620px,96vw);background:#fff;border-radius:14px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+        .purchase-form-grid{display:grid;grid-template-columns:1fr;gap:14px}
+        .purchase-form label{display:block;margin-bottom:6px;font-weight:700;color:var(--text-light)}
+        .purchase-form input,.purchase-form textarea{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px}
+        .purchase-form textarea{min-height:80px;resize:vertical}
+        .purchase-form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+        .purchase-order-shanghai{background:#FEF2F2 !important;border:2px solid #EF4444 !important;box-shadow:0 0 0 2px rgba(239,68,68,.08)}
+        .purchase-order-exchange{background:#FFFBEB !important;border:2px solid #F59E0B !important;box-shadow:0 0 0 2px rgba(245,158,11,.12)}
+        .purchase-edit-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+        .order-price{display:inline-block;margin-top:5px;padding:2px 7px;border-radius:5px;background:#F1F5F9;color:#334155;font-weight:700}
+        .shanghai-alert{display:inline-block;margin-top:5px;padding:3px 7px;border-radius:5px;background:#FEE2E2;color:#B91C1C;font-weight:800}
+        .exchange-alert{display:inline-block;margin-top:5px;padding:3px 7px;border-radius:5px;background:#FEF3C7;color:#92400E;font-weight:800}
         @media (max-width: 1200px) { .pending-input-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 768px) { body { padding: 16px; } .nav-tabs { flex-direction: column; } .pending-input-grid { grid-template-columns: 1fr; } }
     </style>
@@ -200,6 +217,7 @@
         <button class="nav-btn" onclick="switchTab('commission-mod')">📊 提成对帐</button>
         <button class="nav-btn" onclick="switchTab('aftersale-mod')">⚠️ 售后信息</button>
         <button class="nav-btn" onclick="switchTab('admin-mod')">⚙️ 管理中心</button>
+        <button class="nav-btn" onclick="switchTab('purchase-manage-mod')">🔗 采购管理</button>
         <button class="nav-btn" onclick="switchTab('pending-mod')">📦 待匹配订单</button>
     </div>
 
@@ -245,7 +263,10 @@
 
     <div id="purchase-mod" class="module-content">
         <div class="card">
-            <h2>采购与库存比对数据上传</h2>
+            <h2 style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+                <span>采购与库存比对数据上传</span>
+                <a href="https://mobile.yangkeduo.com/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size:0.85rem; padding:8px 16px; white-space:nowrap; text-decoration:none;">🛒 拼多多网页版</a>
+            </h2>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                 <div class="file-box">
                     <div style="font-size:2rem; margin-bottom:8px;">📦</div>
@@ -407,6 +428,41 @@
         </div>
     </div>
 
+    <div id="purchase-manage-mod" class="module-content">
+        <div class="card">
+            <h2>🔗 采购管理 <span style="font-size:.8rem;color:var(--text-light);font-weight:500;">保存货号对应的拼多多采购链接</span></h2>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="openPurchaseForm()">➕ 新增采购链接</button>
+                <button class="btn btn-success" onclick="exportPurchaseLinks()">📥 导出采购链接表</button>
+            </div>
+        </div>
+        <div class="card">
+            <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:16px;">
+                <h2 style="margin:0;border:0;padding:0;">采购链接库</h2>
+                <input id="pmSearch" class="search-input" placeholder="🔍 搜索货号或链接" oninput="renderPurchaseManagement()">
+            </div>
+            <div style="overflow-x:auto;"><table>
+                <thead><tr><th style="width:180px;">得物货号</th><th>拼多多链接</th><th style="width:220px;">备注</th><th style="width:180px;">操作</th></tr></thead>
+                <tbody id="pmBody"></tbody>
+            </table></div>
+        </div>
+    </div>
+
+    <div id="purchase-form-modal" class="purchase-form-modal" style="display:none;" onclick="if(event.target===this)closePurchaseForm()">
+        <div class="purchase-form">
+            <h2 id="purchase-form-title" style="margin:0 0 18px;border:0;padding:0;">新增采购链接</h2>
+            <div class="purchase-form-grid">
+                <div><label>* 得物货号</label><input id="pfSku" placeholder="例如：6XS-XXTZ025-MY3"></div>
+                <div><label>* 拼多多链接</label><input id="pfLink" placeholder="https://mobile.yangkeduo.com/..."></div>
+                <div><label>备注</label><textarea id="pfRemark" placeholder="例如：黑色主链接、备用链接、已验证尺码等"></textarea></div>
+            </div>
+            <div class="purchase-form-actions">
+                <button class="btn btn-outline" onclick="closePurchaseForm()">取消</button>
+                <button class="btn btn-primary" onclick="submitPurchaseForm()">保存</button>
+            </div>
+        </div>
+    </div>
+
     <div id="pending-mod" class="module-content">
         <div class="card">
             <h2>新增待匹配订单</h2>
@@ -441,6 +497,14 @@
     let purchasedSkus = new Set();
     let lastPurLines = [];
     let lastPurHead = [];
+    const PURCHASE_MANAGE_KEY = 'purchase_manage_v1';
+    const PURCHASE_PRICE_KEY = 'purchase_order_price_v1';
+    let purchaseLinks = JSON.parse(localStorage.getItem(PURCHASE_MANAGE_KEY) || '[]').map(x => ({...x, remark: x.remark || ''}));
+    function savePurchaseLinks(){localStorage.setItem(PURCHASE_MANAGE_KEY,JSON.stringify(purchaseLinks));}
+    function getPurchaseLinks(sku){return purchaseLinks.filter(x=>x.sku===String(sku||'').trim());}
+    function normalizePurchaseUrl(url){let v=String(url||'').trim();if(!v)return '';return /^https?:\/\//i.test(v)?v:'https://'+v;}
+    function escapeHtml(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
     
     // 提成对账专用缓存
     let commissionData = [];
@@ -801,58 +865,161 @@
 
     // ===== 采购汇总模块的解析与渲染逻辑 =====
     function renderPur(lines, head) {
-        // ⭐ 恢复：得物订单表保持根据标题名称查找货号列
         const iA = head.indexOf('货号');
         const iO = head.indexOf('订单号') > -1 ? head.indexOf('订单号') : 0;
-        const iM = 12; 
-        const iI = 8;  
-        
+        // 固定列位置（与得物导出表结构一致）
+        const iM = 12, iN = 13, iI = 8, iZ = 25, iBD = 55;
+        const priceMap = JSON.parse(localStorage.getItem(PURCHASE_PRICE_KEY) || '{}');
         const gs = new Map();
+
         lines.slice(1).forEach(c => {
-            if(c[iA]) {
-                const sku = String(c[iA]).trim();
-                if(!gs.has(sku)) gs.set(sku, []);
-                gs.get(sku).push({ 
-                    oid: String(c[iO]).trim(), 
-                    money: c[iM],
-                    specInfo: String(c[iI] || '-').trim() 
-                });
-            }
+            if (!c[iA]) return;
+            const sku = String(c[iA]).trim();
+            if (!gs.has(sku)) gs.set(sku, []);
+            const oid = String(c[iO] || '').trim();
+            gs.get(sku).push({
+                oid,
+                money: c[iM],
+                priceN: c[iN],
+                specInfo: String(c[iI] || '-').trim(),
+                bdText: String(c[iBD] || '').trim(),
+                zText: String(c[iZ] || '').trim()
+            });
         });
+
         const sortedSkus = Array.from(gs.entries()).sort((a, b) => b[1].length - a[1].length);
-        const area = document.getElementById('purResultArea'); area.innerHTML = '';
-        
+        const area = document.getElementById('purResultArea');
+        area.innerHTML = '';
+
+        // 特殊地区关键词
+        const regionRegex = /上海|新疆|西藏|甘肃|内蒙古|青海|宁夏/;
+
         sortedSkus.forEach(([sku, orders]) => {
-            const orderList = orders.map(o => o.oid).join(', '); 
-            const count = orders.length, isPurchased = purchasedSkus.has(sku);
-            
+            const count = orders.length;
+            const isPurchased = purchasedSkus.has(sku);
+            const links = getPurchaseLinks(sku);
+            const linksHtml = links.length
+                ? `<div class="purchase-link-list">${links.map((x, i) => `<a class="purchase-link" href="${escapeHtml(x.url)}" target="_blank" rel="noopener noreferrer">采购链接${i + 1}</a>`).join('')}</div>`
+                : `<span style="color:var(--text-light);font-size:.82rem;">暂无采购链接</span>`;
+
             let ordersHtml = '';
             orders.forEach(o => {
-                ordersHtml += `
-                    <div class="single-order-node" data-oid="${o.oid}" style="display:inline-block; border:1px solid #E2E8F0; background:#F8FAFC; border-radius:8px; padding:6px 10px; margin-right:8px; margin-bottom:8px; text-align:left; vertical-align:top;">
-                        <div class="oid-text" style="font-weight:700; color:var(--text);">${o.oid}</div>
-                        <div style="font-size:0.75rem; color:var(--primary); font-weight:600; background:var(--primary-light); padding:2px 6px; border-radius:4px; margin-top:4px; display:inline-block;">规格: ${o.specInfo}</div>
-                    </div>`;
+                // 换新识别：仅匹配「换新」
+                const isExchange = /换新/.test(o.bdText);
+                // 特殊地区：匹配后显示Z列实际内容
+                const regionMatch = o.zText.match(regionRegex);
+                const isSpecialRegion = !!regionMatch;
+                const regionLabel = isSpecialRegion ? (o.zText || regionMatch[0]) : '';
+
+                let nodeClass = '';
+                if (isSpecialRegion) nodeClass += ' purchase-order-shanghai';
+                if (isExchange) nodeClass += ' purchase-order-exchange';
+
+                const key = o.oid + '|' + sku;
+                const displayPrice = priceMap[key] !== undefined ? priceMap[key] : o.priceN;
+
+                ordersHtml += `<div class="single-order-node ${nodeClass}" data-oid="${escapeHtml(o.oid)}" style="display:inline-block;border:1px solid #E2E8F0;background:#F8FAFC;border-radius:8px;padding:8px 10px;margin-right:8px;margin-bottom:8px;text-align:left;vertical-align:top;min-width:250px;">
+                    <div class="oid-text" style="font-weight:700;color:var(--text);">${escapeHtml(o.oid)}</div>
+                    <div style="font-size:.75rem;color:var(--primary);font-weight:600;background:var(--primary-light);padding:2px 6px;border-radius:4px;margin-top:4px;display:inline-block;">规格: ${escapeHtml(o.specInfo)}</div>
+                    <div class="order-price">¥${escapeHtml(displayPrice || '0')}</div>
+                    ${isSpecialRegion ? `<div class="shanghai-alert">⚠️ ${escapeHtml(regionLabel)}</div>` : ''}
+                    ${isExchange ? '<div class="exchange-alert">⚠️ 换新订单</div>' : ''}
+                </div>`;
             });
 
-            area.innerHTML += `
-            <div class="res-item card pur-card ${isPurchased ? 'is-purchased' : ''}" data-sku="${sku}">
+            area.innerHTML += `<div class="res-item card pur-card ${isPurchased ? 'is-purchased' : ''}" data-sku="${escapeHtml(sku)}">
                 <div class="pur-header">
-                    <div class="pur-sku-title">📦 ${sku} <span class="count-badge" style="background:var(--primary-light); color:var(--primary-dark); padding:4px 10px; border-radius:6px; font-size:0.85rem; font-weight:700;">${count} 单</span></div>
-                    <label class="custom-checkbox"><input type="checkbox" ${isPurchased ? 'checked' : ''} onchange="togglePurchased('${sku}', this.checked)"><div class="chk-box"></div><span class="chk-label">已完成采购</span></label>
+                    <div style="min-width:0">
+                        <div class="pur-sku-title">📦 ${escapeHtml(sku)}
+                            <span class="count-badge" style="background:var(--primary-light);color:var(--primary-dark);padding:4px 10px;border-radius:6px;font-size:.85rem;font-weight:700">${count} 单</span>
+                            <button class="purchase-edit-btn" onclick="openPurchaseForm('${encodeURIComponent(sku)}')">✏️ 修改采购链接</button>
+                        </div>
+                        <div style="margin-top:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                            <strong style="font-size:.82rem;color:var(--text-light)">采购链接：</strong>${linksHtml}
+                        </div>
+                    </div>
+                    <label class="custom-checkbox">
+                        <input type="checkbox" ${isPurchased ? 'checked' : ''} onchange="togglePurchased('${escapeHtml(sku)}',this.checked)">
+                        <div class="chk-box"></div>
+                        <span class="chk-label">已完成采购</span>
+                    </label>
                 </div>
                 <div class="pur-body">
-                    <div style="font-size:0.9rem; color:var(--text-light); line-height:1.5; margin-bottom:12px; word-break:break-all;">
-                        <strong style="color:var(--text);">相关订单与规格：</strong><br>
-                        <div style="margin-top:8px;">${ordersHtml}</div>
+                    <div style="font-size:.9rem;color:var(--text-light);line-height:1.5;margin-bottom:12px;word-break:break-all">
+                        <strong style="color:var(--text)">相关订单与规格：</strong><br>
+                        <div style="margin-top:8px">${ordersHtml}</div>
                     </div>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
-                        <button class="btn-copy-modern" onclick="copyText('${sku}', '货号', this)">📋 复制货号</button><button class="btn-copy-modern" onclick="copyOriginalListOnly(this, '${sku}')">📋 复制该货号单号</button>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+                        <button class="btn-copy-modern" onclick="copyText('${escapeHtml(sku)}','货号',this)">📋 复制货号</button>
+                        <button class="btn-copy-modern" onclick="copyOriginalListOnly(this,'${escapeHtml(sku)}')">📋 复制该货号单号</button>
                     </div>
                 </div>
             </div>`;
         });
         highlightPendingSkus();
+    }
+
+    function openPurchaseForm(encodedSku='', editId=''){
+        const modal=document.getElementById('purchase-form-modal');
+        if(!modal)return;
+        const sku=encodedSku?decodeURIComponent(encodedSku):'';
+        const skuLinks=sku?getPurchaseLinks(sku):[];
+        const item=editId?purchaseLinks.find(v=>v.id===editId):(skuLinks.length===1?skuLinks[0]:null);
+        document.getElementById('purchase-form-title').textContent=item?'修改采购链接':'新增采购链接';
+        document.getElementById('pfSku').value=item?.sku||sku;
+        document.getElementById('pfLink').value=item?.url||'';
+        document.getElementById('pfRemark').value=item?.remark||'';
+        modal.dataset.editId=item?.id||'';
+        modal.style.display='flex';
+        setTimeout(()=>document.getElementById('pfSku').focus(),50);
+    }
+    function closePurchaseForm(){
+        const modal=document.getElementById('purchase-form-modal');
+        if(modal)modal.style.display='none';
+    }
+    function submitPurchaseForm(){
+        const modal=document.getElementById('purchase-form-modal');
+        const sku=document.getElementById('pfSku').value.trim();
+        const url=normalizePurchaseUrl(document.getElementById('pfLink').value);
+        const remark=document.getElementById('pfRemark').value.trim();
+        const editId=modal?.dataset.editId||'';
+        if(!sku||!url)return showToast('❌ 得物货号和拼多多链接均不能为空');
+        if(editId){
+            const item=purchaseLinks.find(v=>v.id===editId);
+            if(item){item.sku=sku;item.url=url;item.remark=remark;}
+            showToast('✅ 采购链接已修改');
+        }else{
+            purchaseLinks.push({id:Date.now()+'_'+Math.random().toString(36).slice(2),sku,url,remark});
+            showToast('✅ 采购链接已保存');
+        }
+        savePurchaseLinks();closePurchaseForm();renderPurchaseManagement();
+        if(lastPurLines.length)renderPur(lastPurLines,lastPurHead);
+    }
+    function renderPurchaseManagement(){
+        const body=document.getElementById('pmBody');if(!body)return;
+        const q=(document.getElementById('pmSearch')?.value||'').trim().toLowerCase();
+        const arr=purchaseLinks.filter(x=>!q||x.sku.toLowerCase().includes(q)||x.url.toLowerCase().includes(q)||(x.remark||'').toLowerCase().includes(q));
+        body.innerHTML=arr.length?arr.map(x=>`<tr><td style="font-family:monospace;font-weight:700">${escapeHtml(x.sku)}</td><td><a class="purchase-link" href="${escapeHtml(x.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(x.url)}</a></td><td>${escapeHtml(x.remark||'-')}</td><td><button class="btn-outline" onclick="openPurchaseForm('','${x.id}')">✏️ 修改</button> <button class="btn-outline" style="color:var(--danger)" onclick="deletePurchaseLink('${x.id}')">🗑️ 删除</button></td></tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:30px">暂无采购链接</td></tr>';
+    }
+    function deletePurchaseLink(id){
+        if(!confirm('确认删除这条采购链接吗？'))return;
+        purchaseLinks=purchaseLinks.filter(x=>x.id!==id);savePurchaseLinks();renderPurchaseManagement();
+        if(lastPurLines.length)renderPur(lastPurLines,lastPurHead);showToast('✅ 已删除');
+    }
+
+    // ===== 新增：导出采购链接表 =====
+    function exportPurchaseLinks(){
+        if(purchaseLinks.length === 0) return showToast('❌ 没有采购链接可导出');
+        const exportArr = purchaseLinks.map((x, i) => ({
+            '序号': i + 1,
+            '得物货号': x.sku,
+            '拼多多链接': x.url,
+            '备注': x.remark || ''
+        }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exportArr), '采购链接库');
+        XLSX.writeFile(wb, `采购链接库_${new Date().toLocaleDateString()}.xlsx`);
+        showToast(`✅ 已导出 ${exportArr.length} 条采购链接`);
     }
 
     window.copyOriginalListOnly = function(btn, sku) {
@@ -1039,7 +1206,7 @@
         XLSX.writeFile(wb, "待匹配订单_" + new Date().toLocaleDateString() + ".xlsx");
     }
 
-    window.onload = renderLogs;
+    window.onload = function(){ renderLogs(); renderPurchaseManagement(); };
     setTimeout(renderPending, 1000);
 </script>
 </body>
