@@ -24,9 +24,7 @@
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-        
         * { margin:0; padding:0; box-sizing:border-box; }
-        
         body {
             font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             background: var(--bg);
@@ -34,68 +32,53 @@
             padding: 24px;
             min-height: 100vh;
         }
-        
         .container { max-width: 1140px; margin: 0 auto; position: relative; }
-        
         .nav-tabs {
             display: flex; gap: 6px; margin-bottom: 24px;
             background: var(--card); padding: 8px; border-radius: 16px;
             box-shadow: var(--shadow); flex-wrap: wrap;
         }
-        
         .nav-btn {
             padding: 12px 20px; border: none; background: transparent;
             border-radius: 10px; cursor: pointer; font-weight: 600;
             font-size: 0.9rem; color: var(--text-light);
             transition: all 0.3s ease;
         }
-        
         .nav-btn:hover { background: var(--primary-light); color: var(--primary); }
         .nav-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
-        
         .module-content { display: none; animation: fadeIn 0.3s ease; }
         .module-content.active { display: block; }
-        
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
         .card {
             background: var(--card); border-radius: 16px; padding: 24px;
             box-shadow: var(--shadow); border: 1px solid var(--border);
             margin-bottom: 20px; transition: all 0.3s ease;
         }
-        
         .card:hover { box-shadow: var(--shadow-lg); }
-        
         h2 {
             margin: 0 0 20px 0; font-size: 1.25rem; font-weight: 700;
             display: flex; justify-content: space-between; align-items: center;
             padding-bottom: 16px; border-bottom: 2px solid var(--primary-light);
         }
-        
         #scanIn {
             width: 100%; padding: 18px 20px; font-size: 1.2rem;
             border: 2px solid var(--primary); border-radius: 12px;
             font-weight: 600; background: var(--primary-light);
         }
-        
         .list-area {
             max-height: 460px; overflow-y: auto; margin-top: 16px;
         }
-        
         table {
             width: 100%; border-collapse: collapse; font-size: 0.95rem;
         }
-        
         th, td {
             padding: 14px 16px; border: 1px solid var(--border); text-align: left;
         }
-        
         th { background: var(--bg); font-weight: 600; color: var(--text-light); }
         tr:hover td { background: var(--primary-light); }
         tr.duplicate { background-color: var(--warning-light) !important; }
         .ignored { color: #64748B !important; text-decoration: line-through; }
         .dup-text { color: #f59e0b; font-weight: 700; }
-        
         .express-tag {
             display: inline-block; padding: 3px 6px; border-radius: 4px;
             font-size: 0.75rem; font-weight: bold; background: #F1F5F9; color: #475569;
@@ -106,7 +89,6 @@
         .company-jt { background: #FEF3C7; color: #92400E; }
         .company-st { background: #D1FAE5; color: #065F46; }
         .company-zt { background: #CFFAFE; color: #0369A1; }
-
         /* 左侧独立背景悬浮统计看板 */
         .fixed-left-sidebar {
             position: fixed;
@@ -133,48 +115,40 @@
             display: inline-block; padding: 3px 6px; border-radius: 4px;
             font-size: 0.75rem; font-weight: bold; background: #E2E8F0; color: #475569;
         }
-
         @media (min-width: 1660px) {
             .fixed-left-sidebar { display: block; left: calc(50% - 815px); } 
         }
         @media (min-width: 1400px) and (max-width: 1659px) {
             .fixed-left-sidebar { display: block; left: 10px; }
         }
-
         .summary-box {
             background: var(--primary-light); border-radius: 12px;
             padding: 20px; margin-top: 24px; border: 2px solid var(--primary);
             font-family: 'SF Mono', Monaco, monospace; font-size: 0.95rem;
             line-height: 1.5; white-space: pre-wrap; word-break: break-all;
         }
-        
         .btn {
             padding: 10px 20px; border-radius: 10px; border: none;
             cursor: pointer; font-weight: 600; font-size: 0.9rem;
             transition: all 0.3s ease;
         }
-        
         .btn-primary { background: var(--primary); color: white; }
         .btn-primary:hover { background: var(--primary-dark); }
         .btn-success { background: var(--success); color: white; }
         .btn-success:hover { background: #059669; }
         .btn-danger { background: var(--danger); color: white; }
         .btn-danger:hover { background: #DC2626; }
-        
         .stat-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 16px; margin-bottom: 20px;
         }
-        
         .stat-item {
             background: var(--card); padding: 20px; border-radius: 12px;
             border: 1px solid var(--border); text-align: center;
         }
-        
         .stat-value {
             font-size: 2rem; font-weight: 700; color: var(--primary);
         }
-        
         /* 居中弹出式 Toast 提示 */
         .toast {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -184,7 +158,6 @@
             box-shadow: var(--shadow-lg);
         }
         .toast.show { opacity: 1; }
-        
         /* ⭐ 新增：顺丰专属强光警告弹窗样式 */
         .toast.sf-warning {
             background: #FFFBEB;
@@ -200,7 +173,6 @@
             50% { transform: translate(-50%, -50%) scale(1.03); box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.4); }
             100% { transform: translate(-50%, -50%) scale(1); }
         }
-        
         .modal {
             display: none; position: fixed; top: 0; left: 0;
             width: 100%; height: 100%; background: rgba(0,0,0,0.75);
@@ -223,7 +195,17 @@
             padding: 16px 24px; border-top: 1px solid var(--border);
             text-align: right;
         }
-        
+        .setting-row {
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+            margin-bottom: 20px; padding: 14px 16px;
+            background: var(--primary-light); border-radius: 12px;
+            border: 1px solid var(--primary);
+        }
+        .setting-row label { font-weight: 600; white-space: nowrap; }
+        .setting-row select {
+            padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px;
+            font-weight: 600; font-size: 0.95rem; background: white; min-width: 180px;
+        }
         @media (max-width: 768px) {
             body { padding: 16px; }
             .nav-tabs { flex-direction: column; }
@@ -232,7 +214,6 @@
 </head>
 <body>
 <div id="toast" class="toast"></div>
-
 <div class="fixed-left-sidebar" id="leftExpressSidebar">
     <div class="sidebar-title">📊 当日快递公司汇总</div>
     <div class="sidebar-row"><span class="sidebar-label" style="background:#E0E7FF; color:#4338CA;">圆通速递 (YT)</span><span id="stat-yt" style="color:var(--primary);">0 单</span></div>
@@ -243,7 +224,6 @@
     <div class="sidebar-row"><span class="sidebar-label" style="background:#CFFAFE; color:#0369A1;">中通快递 (78)</span><span id="stat-zt" style="color:var(--primary);">0 单</span></div>
     <div class="sidebar-row" style="background:#F8FAFC;"><span class="sidebar-label">其他快递</span><span id="stat-other" style="color:var(--text-light);">0 单</span></div>
 </div>
-
 <div id="modal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -256,27 +236,38 @@
         </div>
     </div>
 </div>
-
 <div class="container">
     <div class="nav-tabs">
         <button class="nav-btn active" onclick="switchTab('record-mod')">📦 每日发货记录</button>
         <button class="nav-btn" onclick="switchTab('summary-mod')">📋 汇总导出</button>
         <button class="nav-btn" onclick="switchTab('history-mod')">🕒 历史记录</button>
     </div>
-
     <div id="record-mod" class="module-content active">
         <div class="card">
             <h2>🚚 快递单号录入（支持任意日期）</h2>
             
+            <!-- ⭐ 新增：主快递设置区域 -->
+            <div class="setting-row">
+                <label>⭐ 主快递公司：</label>
+                <select id="mainExpressSelect" onchange="saveMainExpress()">
+                    <option value="yt">圆通速递 (YT)</option>
+                    <option value="sf">顺丰速运 (SF)</option>
+                    <option value="jd">京东快递 (JD)</option>
+                    <option value="jt">极兔速递 (JT)</option>
+                    <option value="st">申通快递 (77)</option>
+                    <option value="zt">中通快递 (78)</option>
+                    <option value="other">其他快递</option>
+                </select>
+                <span style="color:var(--text-light); font-size:0.9rem;">（扫到非主快递时需确认后才可录入）</span>
+            </div>
+
             <div style="margin-bottom:24px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                 <span style="font-weight:600; white-space:nowrap;">选择日期：</span>
                 <input type="date" id="recordDate" onchange="loadSelectedDate()" 
                        style="padding:10px 14px; border:2px solid var(--border); border-radius:8px; font-weight:600;">
                 <span id="dateLabel" style="color:var(--text-light); font-size:0.95rem;"></span>
             </div>
-            
             <input type="text" id="scanIn" placeholder="🔍 扫码或输入快递单号后按回车" autofocus>
-            
             <div class="stat-grid" style="margin-top:24px;">
                 <div class="stat-item">
                     <div id="countDisplay" class="stat-value">0</div>
@@ -287,7 +278,6 @@
                     <div style="color:var(--text-light);font-weight:600;">当前查看日期</div>
                 </div>
             </div>
-
             <div class="list-area">
                 <table>
                     <thead>
@@ -302,19 +292,16 @@
                     <tbody id="recordList"></tbody>
                 </table>
             </div>
-
             <div style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap;">
                 <button class="btn btn-danger" onclick="clearCurrentDate()">🗑️ 清空当前日期记录</button>
                 <button class="btn btn-success" onclick="copySummaryFromRecord()">📋 复制汇总文本</button>
             </div>
         </div>
     </div>
-
     <div id="summary-mod" class="module-content">
         <div class="card">
             <h2>📋 当前日期发货汇总（已自动每19个换行）</h2>
             <div id="summaryText" class="summary-box" style="min-height:320px;"></div>
-            
             <div style="margin-top:16px; display:flex; gap:12px;">
                 <button class="btn btn-primary" onclick="copySummary()">📋 一键复制汇总</button>
                 <button class="btn btn-success" onclick="exportCurrentExcel()">📥 导出Excel</button>
@@ -322,7 +309,6 @@
             </div>
         </div>
     </div>
-
     <div id="history-mod" class="module-content">
         <div class="card">
             <h2>🕒 历史范围统计数据汇总</h2>
@@ -337,7 +323,6 @@
                 </div>
             </div>
         </div>
-
         <div class="card">
             <h2>🔍 跨时间发货记录查询与数据导出</h2>
             <div style="margin-bottom:20px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
@@ -362,18 +347,29 @@
         </div>
     </div>
 </div>
-
 <script>
     const STORAGE_KEY = 'daily_express_v1';
+    const MAIN_EXPRESS_KEY = 'main_express_company';
     let allHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     let currentDateKey = '';
     let currentList = [];
     let pendingDeleteIndex = -1;
+    
+    // 快递公司中文名称映射
+    const companyNames = {
+        yt: '圆通速递 (YT)',
+        sf: '顺丰速运 (SF)',
+        jd: '京东快递 (JD)',
+        jt: '极兔速递 (JT)',
+        st: '申通快递 (77)',
+        zt: '中通快递 (78)',
+        other: '其他快递'
+    };
 
     function getDateKey(dateStr) {
         return dateStr || new Date().toISOString().slice(0,10);
     }
-
+    
     function identifyExpress(num) {
         const str = String(num).trim().toUpperCase();
         if (str.startsWith('SF') || /^\d{12}$/.test(str) || /^\d{15}$/.test(str)) return 'sf';
@@ -384,44 +380,61 @@
         if (str.startsWith('78')) return 'zt';
         return 'other';
     }
-
+    
+    // ⭐ 获取当前主快递
+    function getMainExpress() {
+        return localStorage.getItem(MAIN_EXPRESS_KEY) || 'yt';
+    }
+    
+    // ⭐ 保存主快递设置
+    function saveMainExpress() {
+        const val = document.getElementById('mainExpressSelect').value;
+        localStorage.setItem(MAIN_EXPRESS_KEY, val);
+        showToast('✅ 主快递已设置为：' + companyNames[val]);
+    }
+    
+    // ⭐ 初始化主快递下拉框
+    function initMainExpressSelect() {
+        const select = document.getElementById('mainExpressSelect');
+        if (select) {
+            select.value = getMainExpress();
+        }
+    }
+    
     function loadSelectedDate() {
         currentDateKey = document.getElementById('recordDate').value;
         document.getElementById('selectedDateDisplay').textContent = currentDateKey;
         document.getElementById('dateLabel').textContent = currentDateKey === getDateKey() ? '（今日）' : '';
-        
         currentList = (allHistory[currentDateKey] || []).map(item => ({
             number: item.number,
             time: item.time,
             status: item.status || 'normal'
         }));
-        
         renderRecordList();
         renderSummary();
         updateCount();
         calculateCompanyStats();
     }
-
+    
     function saveCurrentDate() {
         allHistory[currentDateKey] = currentList;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(allHistory));
     }
-
+    
     function getNormalList() {
         return currentList.filter(it => it.status === 'normal');
     }
-
+    
     function updateCount() {
         document.getElementById('countDisplay').textContent = getNormalList().length;
     }
-
+    
     function calculateCompanyStats() {
         const stats = { yt: 0, jd: 0, jt: 0, sf: 0, st: 0, zt: 0, other: 0 };
         getNormalList().forEach(item => {
             const code = identifyExpress(item.number);
             stats[code]++;
         });
-        
         if(document.getElementById('stat-yt')) document.getElementById('stat-yt').textContent = stats.yt + ' 单';
         if(document.getElementById('stat-sf')) document.getElementById('stat-sf').textContent = stats.sf + ' 单';
         if(document.getElementById('stat-jd')) document.getElementById('stat-jd').textContent = stats.jd + ' 单';
@@ -430,21 +443,18 @@
         if(document.getElementById('stat-zt')) document.getElementById('stat-zt').textContent = stats.zt + ' 单';
         if(document.getElementById('stat-other')) document.getElementById('stat-other').textContent = stats.other + ' 单';
     }
-
+    
     function renderRecordList() {
         const tbody = document.getElementById('recordList');
         tbody.innerHTML = '';
-
         const numCount = {};
         currentList.forEach(it => numCount[it.number] = (numCount[it.number] || 0) + 1);
         const dups = new Set(Object.keys(numCount).filter(k => numCount[k] > 1));
-
         currentList.forEach((item, i) => {
             const isDup = dups.has(item.number);
             const isIgnored = item.status !== 'normal';
             const isPending = pendingDeleteIndex === i;
             const btnStyle = isPending ? 'background:#f59e0b !important;color:white;' : '';
-
             const rowHTML = `
                 <tr class="${isDup ? 'duplicate' : ''}">
                     <td>${i+1}</td>
@@ -466,7 +476,7 @@
             tbody.innerHTML += rowHTML;
         });
     }
-
+    
     function renderSummary() {
         const box = document.getElementById('summaryText');
         if(!box) return;
@@ -482,9 +492,27 @@
         }
         box.textContent = chunks.join(',\n');
     }
-
+    
+    // ⭐ 核心修改：支持主快递确认逻辑
     function addExpress(number) {
         if (!number.trim()) return;
+        
+        const code = identifyExpress(number);
+        const mainCode = getMainExpress();
+        
+        // 如果不是主快递，强制弹出确认框
+        if (code !== mainCode) {
+            const mainName = companyNames[mainCode] || mainCode;
+            const currName = companyNames[code] || code;
+            const confirmed = confirm(`⚠️ 当前主快递为【${mainName}】\n\n扫到的是【${currName}】，确定要录入吗？`);
+            if (!confirmed) {
+                // 用户取消，不录入
+                showToast('❌ 已取消录入');
+                return;
+            }
+        }
+        
+        // 通过确认（或本身就是主快递）后，正常录入
         const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
         currentList.unshift({ number: number.trim(), time, status: 'normal' });
         saveCurrentDate();
@@ -492,16 +520,15 @@
         renderSummary();
         updateCount();
         calculateCompanyStats();
-
-        // ⭐ 核心功能修改：检查是否是顺丰快递，并弹出专门的强光警示框
-        const code = identifyExpress(number);
+        
+        // 顺丰强提醒（保持原有逻辑）
         if (code === 'sf') {
             showToast('⚠️ 顺丰包裹：请先放置顺丰取件区！', true);
         } else {
             showToast('✅ 录入成功');
         }
     }
-
+    
     function changeStatus(index, newStatus) {
         currentList[index].status = newStatus;
         saveCurrentDate();
@@ -510,7 +537,7 @@
         updateCount();
         calculateCompanyStats();
     }
-
+    
     function handleDeleteClick(index) {
         if (pendingDeleteIndex === index) {
             currentList.splice(index, 1);
@@ -533,33 +560,31 @@
             }, 8000);
         }
     }
-
+    
     function clearCurrentDate() {
         if (!confirm('⚠️ 第一次确认：您确定要清空当前日期所有记录吗？')) return;
         if (!confirm('⚠️ 第二次确认：此操作不可恢复！真的要全部清空吗？')) return;
-
         delete allHistory[currentDateKey];
         localStorage.setItem(STORAGE_KEY, JSON.stringify(allHistory));
         currentList = [];
-        
         renderRecordList();
         renderSummary();
         updateCount();
         calculateCompanyStats();
         showToast('✅ 当前日期记录已全部清空');
     }
-
+    
     function copySummary() {
         const text = document.getElementById('summaryText').textContent;
         if (text === '暂无有效记录') return;
         navigator.clipboard.writeText(text).then(() => showToast('✅ 汇总文本已复制！'));
     }
-
+    
     function copySummaryFromRecord() {
         renderSummary();
         copySummary();
     }
-
+    
     function exportCurrentExcel() {
         const normal = getNormalList();
         if (normal.length === 0) return showToast('没有有效数据可导出');
@@ -571,24 +596,21 @@
         XLSX.writeFile(wb, `发货记录_${currentDateKey}.xlsx`);
         showToast('✅ Excel 已导出');
     }
-
+    
     // ⭐ 增强版：支持普通样式与顺丰强警示样式的切换提示函数
     function showToast(msg, isSfWarning = false) {
         const toast = document.getElementById('toast');
         if(!toast) return;
-
         toast.textContent = msg;
-        
         if (isSfWarning) {
-            toast.className = 'toast show sf-warning'; // 加载特殊的放大脉冲警告样式
-            // 顺丰这类强提醒建议停留久一点（这里设为 3.5 秒），方便工人看清并反应
+            toast.className = 'toast show sf-warning';
             setTimeout(() => toast.className = 'toast', 3500); 
         } else {
-            toast.className = 'toast show'; // 正常普通提示
+            toast.className = 'toast show';
             setTimeout(() => toast.className = 'toast', 1600);
         }
     }
-
+    
     function switchTab(id) {
         document.querySelectorAll('.module-content').forEach(m => m.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -596,7 +618,6 @@
             else btn.classList.remove('active');
         });
         document.getElementById(id).classList.add('active');
-        
         const sidebar = document.getElementById('leftExpressSidebar');
         if(id === 'record-mod') {
             if(sidebar) sidebar.style.display = '';
@@ -604,58 +625,47 @@
         } else {
             if(sidebar) sidebar.style.display = 'none';
         }
-        
         if (id === 'summary-mod') renderSummary();
         if (id === 'history-mod') loadHistory();
     }
-
+    
     // ====================== 历史数据 ======================
     function getFilteredHistoryData() {
         const startVal = document.getElementById('historyStartDate') ? document.getElementById('historyStartDate').value : '';
         const endVal = document.getElementById('historyEndDate') ? document.getElementById('historyEndDate').value : '';
         const searchTerm = document.getElementById('historySearch') ? document.getElementById('historySearch').value.trim().toLowerCase() : '';
-
         let filteredDates = Object.keys(allHistory).sort().reverse();
-
         if (startVal) filteredDates = filteredDates.filter(date => date >= startVal);
         if (endVal) filteredDates = filteredDates.filter(date => date <= endVal);
-
         let totalRecordsCount = 0;
         let validRecordsCount = 0;
         let finalMap = {};
-
         filteredDates.forEach(date => {
             const records = allHistory[date] || [];
             let matchedRecords = records;
             if (searchTerm) {
                 matchedRecords = records.filter(r => (r.number || '').toLowerCase().includes(searchTerm));
             }
-
             if (matchedRecords.length > 0 || !searchTerm) {
                 finalMap[date] = matchedRecords;
                 totalRecordsCount += matchedRecords.length;
                 validRecordsCount += matchedRecords.filter(r => (r.status || 'normal') === 'normal').length;
             }
         });
-
         return { finalMap, totalRecordsCount, validRecordsCount };
     }
-
+    
     function renderHistory() {
         const tbody = document.getElementById('historyBody');
         if(!tbody) return;
-        
         tbody.innerHTML = '';
         const { finalMap, totalRecordsCount, validRecordsCount } = getFilteredHistoryData();
-
         if(document.getElementById('historyRangeTotal')) document.getElementById('historyRangeTotal').textContent = totalRecordsCount;
         if(document.getElementById('historyRangeValid')) document.getElementById('historyRangeValid').textContent = validRecordsCount;
-
         Object.keys(finalMap).forEach(date => {
             const records = finalMap[date];
             const total = records.length;
             const valid = records.filter(r => (r.status || 'normal') === 'normal').length;
-
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${date}</td>
@@ -669,44 +679,38 @@
             tbody.appendChild(tr);
         });
     }
-
+    
     function loadHistory() { renderHistory(); }
-
+    
     function exportRangeExcel() {
         const { finalMap } = getFilteredHistoryData();
         const dates = Object.keys(finalMap);
         if (dates.length === 0) return showToast('当前所选范围内无可导出的有效记录');
-
         const data = [['发货日期', '序号', '快递单号', '录入时间', '状态说明']];
         let numId = 1;
-
         dates.sort().forEach(date => {
             finalMap[date].forEach(item => {
                 const statusText = item.status === 'normal' ? '正常' : (item.status === 'canceled' ? '已取消' : '已拦截');
                 data.push([date, numId++, item.number, item.time, statusText]);
             });
         });
-
         const ws = XLSX.utils.aoa_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, '历史范围发货明细');
-        
         const startVal = document.getElementById('historyStartDate').value || '起点';
         const endVal = document.getElementById('historyEndDate').value || '终点';
         XLSX.writeFile(wb, `发货历史对账单_${startVal}_到_${endVal}.xlsx`);
         showToast('✅ 范围历史对账表已导出');
     }
-
+    
     function viewHistory(date) {
         const list = allHistory[date] || [];
         if (list.length === 0) return showToast('无数据');
-
         let html = `<table style="width:100%;border-collapse:collapse;"><thead><tr>
             <th style="background:#f1f5f9;padding:10px;">快递单号</th>
             <th style="background:#f1f5f9;padding:10px;">录入时间</th>
             <th style="background:#f1f5f9;padding:10px;">状态</th>
         </tr></thead><tbody>`;
-
         list.forEach(item => {
             const statusText = item.status === 'normal' ? '正常' : (item.status === 'canceled' ? '已取消' : '已拦截');
             const style = item.status !== 'normal' ? 'color:#64748b;text-decoration:line-through;' : '';
@@ -717,14 +721,13 @@
             </tr>`;
         });
         html += '</tbody></table>';
-
         document.getElementById('modalTitle').innerHTML = `${date} 发货明细`;
         document.getElementById('modalBody').innerHTML = html;
         document.getElementById('modal').style.display = 'flex';
     }
-
+    
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
-
+    
     function copyModalContent() {
         const rows = document.querySelectorAll('#modalBody tbody tr');
         let numbers = [];
@@ -735,7 +738,7 @@
         const text = numbers.join(',');
         navigator.clipboard.writeText(text).then(() => showToast('✅ 已复制有效单号汇总'));
     }
-
+    
     document.getElementById('scanIn').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             const val = this.value.trim();
@@ -746,7 +749,7 @@
             }
         }
     });
-
+    
     window.onload = function() {
         const today = getDateKey();
         document.getElementById('recordDate').value = today;
@@ -754,6 +757,7 @@
         document.getElementById('selectedDateDisplay').textContent = today;
         loadSelectedDate();
         renderHistory();
+        initMainExpressSelect();   // ⭐ 初始化主快递选择
         setTimeout(() => document.getElementById('scanIn').focus(), 300);
     };
 </script>
