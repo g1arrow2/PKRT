@@ -221,7 +221,7 @@
     <div class="sidebar-row"><span class="sidebar-label" style="background:#FEE2E2; color:#991B1B;">京东快递 (JD)</span><span id="stat-jd" style="color:var(--primary);">0 单</span></div>
     <div class="sidebar-row"><span class="sidebar-label" style="background:#FEF3C7; color:#92400E;">极兔速递 (JT)</span><span id="stat-jt" style="color:var(--primary);">0 单</span></div>
     <div class="sidebar-row"><span class="sidebar-label" style="background:#D1FAE5; color:#065F46;">申通快递 (77)</span><span id="stat-st" style="color:var(--primary);">0 单</span></div>
-    <div class="sidebar-row"><span class="sidebar-label" style="background:#CFFAFE; color:#0369A1;">中通快递 (78)</span><span id="stat-zt" style="color:var(--primary);">0 单</span></div>
+    <div class="sidebar-row"><span class="sidebar-label" style="background:#CFFAFE; color:#0369A1;">中通快递 (73)</span><span id="stat-zt" style="color:var(--primary);">0 单</span></div>
     <div class="sidebar-row" style="background:#F8FAFC;"><span class="sidebar-label">其他快递</span><span id="stat-other" style="color:var(--text-light);">0 单</span></div>
 </div>
 <div id="modal" class="modal">
@@ -255,7 +255,7 @@
                     <option value="jd">京东快递 (JD)</option>
                     <option value="jt">极兔速递 (JT)</option>
                     <option value="st">申通快递 (77)</option>
-                    <option value="zt">中通快递 (78)</option>
+                    <option value="zt">中通快递 (73)</option>
                     <option value="other">其他快递</option>
                 </select>
                 <span style="color:var(--text-light); font-size:0.9rem;">（扫到非主快递时需确认后才可录入）</span>
@@ -362,7 +362,7 @@
         jd: '京东快递 (JD)',
         jt: '极兔速递 (JT)',
         st: '申通快递 (77)',
-        zt: '中通快递 (78)',
+        zt: '中通快递 (73)',
         other: '其他快递'
     };
 
@@ -377,7 +377,7 @@
         if (str.startsWith('JT') || /^5[0123456]\d{11}$/.test(str)) return 'jt';
         if (str.startsWith('JD')) return 'jd';
         if (str.startsWith('77')) return 'st';
-        if (str.startsWith('78')) return 'zt';
+        if (str.startsWith('73')) return 'zt';
         return 'other';
     }
     
