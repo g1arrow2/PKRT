@@ -179,6 +179,31 @@
 </div>
 
 <script>
+    // ==========================================
+    // ⚙️ 核心配置中心：在这里一键修改表格列号映射
+    // ==========================================
+    function col(letter) {
+        let step = 0, result = 0;
+        for (let i = letter.length - 1; i >= 0; i--) {
+            result += (letter.charCodeAt(i) - 64) * Math.pow(26, step); step++;
+        }
+        return result - 1; // A=0, B=1...
+    }
+
+    const CONFIG = {
+        // 1. 销售订单主表
+        sales: {
+            oid: col('B'),     // 订单号 (原先是 A，现改为 B 列)
+            sku: col('E'),     // 货号 (D 列)
+            income: col('CG')  // 结算收入金额 (原先是 CF，现改为 CG 列)
+        },
+        // 2. 销售订单子表（退货退款单）
+        returnSheet: {
+            oid: col('B')     // 退货订单号 (原先是 A，现改为 CC 列)
+            // 分析大屏不计算退款扣减额，只需订单号即可
+        }
+    };
+
     let rawSales = [];
     let returnSet = new Set(); 
     let skuAnalysisData = [];
@@ -222,30 +247,36 @@
                 if (returnSheetName) {
                     const retLines = XLSX.utils.sheet_to_json(wb.Sheets[returnSheetName], { header: 1, defval: "" });
                     retLines.forEach(row => {
-                        const oid = String(row[0] || '').trim();
-                        if(oid && !/[一-龥]/.test(oid) && oid.length > 5) returnSet.add(oid);
+                        // 使用配置中心设定的退货单号列 (CC)
+                        const oid = String(row[CONFIG.returnSheet.oid] || '').trim();
+                        // 防误读处理
+                        if(oid && !oid.includes('订单') && !oid.includes('信息') && !/[一-龥]/.test(oid) && oid.length > 5) {
+                            returnSet.add(oid);
+                        }
                     });
                 }
 
-                // 2. 读取销售表
+                // 2. 读取销售主表
                 const salesLines = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: "" });
                 rawSales = [];
                 
-                salesLines.slice(4).forEach(row => {
-                    const oid = String(row[0] || '').trim();
-                    if(oid && !/[一-龥]/.test(oid) && oid.length > 5) {
-                        rawSales.push({
-                            oid: oid,
-                            sku: String(row[3] || '未知货号').trim(), // D列货号
-                            income: parseFloat(row[83]) || 0,        // CF列收入
-                            qty: 1 
-                        });
-                    }
+                salesLines.forEach(row => {
+                    // 使用配置中心设定的单号列 (B)
+                    const oid = String(row[CONFIG.sales.oid] || '').trim();
+                    // 智能巡航防表头干扰
+                    if(!oid || oid === "undefined" || oid.includes('订单') || oid.includes('信息') || /[一-龥]/.test(oid) || oid.length < 5) return;
+
+                    rawSales.push({
+                        oid: oid,
+                        sku: String(row[CONFIG.sales.sku] || '未知货号').trim(), // D列货号
+                        income: parseFloat(row[CONFIG.sales.income]) || 0,        // CG列收入
+                        qty: 1 
+                    });
                 });
 
                 if (rawSales.length === 0) {
-                    showToast("❌ 未能在主表中提取到有效订单");
-                    document.getElementById('upload-status').innerText = "❌ 解析失败，请确认表格格式";
+                    showToast("❌ 未能在主表中提取到有效订单，请检查表头或配置");
+                    document.getElementById('upload-status').innerText = "❌ 解析失败，请确认表格格式与代码上方配置一致";
                     document.getElementById('upload-status').style.color = "var(--danger)";
                     return;
                 }
@@ -358,7 +389,7 @@
         filteredData.forEach(item => {
             const tr = document.createElement('tr');
             
-            // ✨ 全新 5 级健康状态逻辑
+            // ✨ 5 级健康状态逻辑
             let healthBadge = '';
             const rate = item.returnRate;
 
@@ -465,7 +496,7 @@
 
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exportArr), "SKU数据透视表");
-        XLSX.writeFile(wb, `DataSphere分析报表_${new Date().toLocaleDateString()}.xlsx`);
+        XLSX.writeFile(wb, `DataSphere转化报表_${new Date().toLocaleDateString()}.xlsx`);
     }
 </script>
 </body>
