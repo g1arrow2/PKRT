@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PKRT 销售对账系统 - 跨期极简全能版</title>
+    <title>PKRT 销售对账系统 - 修订版</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -26,36 +26,28 @@
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family: 'PingFang SC', system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
         
-        /* 框架宽度 */
         .container { max-width: 98%; margin: 0 auto; min-width: 1200px; }
-        
-        /* 看板样式 */
         .card { background: var(--card); border-radius: 16px; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 24px; }
         h2 { margin: 0 0 20px 0; font-size: 1.25rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary-light); padding-bottom: 16px; }
       
-        /* 看板 8等分两排 */
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
         .stat-item { background: var(--card); padding: 16px; border-radius: 12px; border: 1px solid var(--border); text-align: center; display: flex; flex-direction: column; justify-content: center;}
         .stat-value { font-size: 1.4rem; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
         .stat-label { font-size: 0.85rem; color: var(--text-light); font-weight: 600; line-height: 1.4; }
 
-        /* 多上传框布局 - 三列 */
         .upload-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
         .file-box { border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; background: #fafafa; position: relative; transition: 0.3s; }
         .file-box:hover { border-color: var(--primary); background: var(--primary-light); }
         .file-box input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
 
-        /* 选项卡样式 */
         .tab-menu { display: flex; gap: 10px; margin-bottom: 16px; border-bottom: 2px solid var(--border); padding-bottom: 0px; }
         .tab-btn { padding: 10px 20px; border: none; background: transparent; font-weight: 700; font-size: 1rem; color: var(--text-light); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: 0.3s; }
         .tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
         .tab-btn:hover { color: var(--primary); }
 
-        /* 工具栏 */
         .toolbar { display: flex; gap: 12px; justify-content: space-between; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
         .tool-btns { display: flex; gap: 8px; align-items: center; }
         
-        /* 表格样式 */
         .table-container { overflow-x: auto; padding-bottom: 15px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 1700px; }
         th, td { padding: 10px 8px; border: 1px solid var(--border); text-align: left; vertical-align: middle; white-space: nowrap; }
@@ -81,7 +73,7 @@
         .filter-checkbox { display: flex; align-items: center; gap: 6px; font-weight: bold; color: var(--warning); cursor: pointer; background: var(--warning-light); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--warning); transition: 0.3s; }
 
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1E293B; color: white; padding: 12px 30px; border-radius: 8px; opacity: 0; transition: 0.3s; z-index: 9999; pointer-events: none; font-weight: bold; }
-        .toast.show { opacity: 1; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
         .group-badge { background: #E0E7FF; color: #4F46E5; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 6px; font-weight: bold; display: inline-block; }
 
         /* 提取单号专属弹窗 */
@@ -101,13 +93,14 @@
 
 <div id="toast" class="toast"></div>
 
+<!-- 提取单号可视化弹窗 -->
 <div id="copyModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title">📋 成功提取 <span id="copyModalCount" style="color:var(--primary);">0</span> 个单号</h3>
             <button class="modal-close" onclick="closeModal()">&times;</button>
         </div>
-        <div style="font-size:0.85rem; color:var(--text-light);">已按 <strong style="color:var(--text);">[每个单号逗号隔开，每 19 个逗号换行]</strong> 的格式为您自动排版：</div>
+        <div style="font-size:0.85rem; color:var(--text-light);">已按 <strong style="color:var(--text);">[每个单号逗号隔开，满 20 单换行]</strong> 的格式为您排版：</div>
         <textarea id="copyModalTextarea" class="modal-textarea" readonly></textarea>
         <div class="modal-footer">
             <button class="btn btn-outline" onclick="closeModal()">关闭窗口</button>
@@ -127,7 +120,7 @@
             </div>
             <div class="stat-item">
                 <div id="stat-cost" class="stat-value" style="color:var(--danger);">¥0.00</div>
-                <div class="stat-label">本期总支出 (含扣减)</div>
+                <div class="stat-label">本期总支出 (含所有扣减)</div>
             </div>
             <div class="stat-item">
                 <div id="stat-profit" class="stat-value" style="color:var(--text);">¥0.00</div>
@@ -148,7 +141,7 @@
             </div>
             <div class="stat-item" style="background: #FFFBEB; border-color: #FDE68A;">
                 <div id="stat-cross-loss" class="stat-value" style="color:var(--danger);">-¥0.00</div>
-                <div class="stat-label" style="color:#B45309;">跨期退货历史损失</div>
+                <div class="stat-label" style="color:#B45309;">跨期退货总损失</div>
             </div>
             <div class="stat-item" style="background: #ECFDF5; border-color: #A7F3D0; border-left: 3px solid var(--border);">
                 <div id="stat-final-net" class="stat-value" style="color: #059669;">¥0.00</div>
@@ -160,21 +153,21 @@
             <div class="file-box">
                 <div style="font-size:2rem; margin-bottom:8px;">📁</div>
                 <div style="font-weight:bold; color:var(--text);">1. 上传《销售订单表》</div>
-                <div id="upload-status" style="font-size:0.8rem; color:var(--text-light); margin-top:8px;">智能无视表头行数，自动剥离跨期退货</div>
+                <div id="upload-status" style="font-size:0.8rem; color:var(--text-light); margin-top:8px;">智能无视干扰表头，自动剥离跨期退货</div>
                 <input type="file" accept=".xlsx, .xls, .csv" onchange="handleExcel(this)">
             </div>
             
             <div class="file-box">
                 <div style="font-size:2rem; margin-bottom:8px;">🛒</div>
                 <div style="font-weight:bold; color:var(--text);">2. 上传《聚水潭订单》</div>
-                <div id="pur-upload-status" style="font-size:0.8rem; color:var(--text-light); margin-top:8px;">匹配得物单号，自动切分 "+" 号拼多多单</div>
+                <div id="pur-upload-status" style="font-size:0.8rem; color:var(--text-light); margin-top:8px;">自动拆分 "+" 号单，精准匹配 G/H/I 列</div>
                 <input type="file" accept=".xlsx, .xls, .csv" onchange="handlePurchaseExcel(this)">
             </div>
 
             <div class="file-box">
                 <div style="font-size:2rem; margin-bottom:8px;">📈</div>
                 <div style="font-weight:bold; color:var(--text);">3. 上传《分销成本表》</div>
-                <div id="dist-upload-status" style="font-size:0.8rem; color:var(--text-light); margin-top:8px;">匹配线上订单号，直接覆盖填入销售成本</div>
+                <div id="dist-upload-status" style="font-size:0.8rem; color:var(--text-light); margin-top:8px;">自动拦截非数字，安全覆盖销售成本</div>
                 <input type="file" accept=".xlsx, .xls, .csv" onchange="handleDistCostExcel(this)">
             </div>
         </div>
@@ -223,7 +216,7 @@
                             <th style="width: 100px;">收入 (CF)</th>
                             <th style="width: 160px;">采购价 (¥) <button class="btn-batch" onclick="batchEdit('cost', 'sales')">批量</button></th>
                             <th style="width: 120px;">其他成本 <button class="btn-batch" onclick="batchEdit('otherCost', 'sales')">批量</button></th>
-                            <th style="width: 120px;">退货成本 <button class="btn-batch" onclick="batchEdit('returnCost', 'sales')">批量</button></th>
+                            <th style="width: 120px;">退货费 <button class="btn-batch" onclick="batchEdit('returnCost', 'sales')">批量</button></th>
                             <th style="width: 100px;">退货扣减</th>
                             <th style="width: 60px;">数量</th>
                             <th style="width: 100px;">毛利润 (¥)</th>
@@ -242,7 +235,7 @@
                     <button class="btn btn-primary" onclick="copyOids('cross')">📋 智能提取单号</button>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="crossSkuFilter" class="table-input" style="width: 250px;" placeholder="🔍 输入单号筛选" onkeyup="renderCrossTable()">
+                    <input type="text" id="crossSkuFilter" class="table-input" style="width: 250px;" placeholder="🔍 输入历史单号筛选" onkeyup="renderCrossTable()">
                 </div>
             </div>
 
@@ -272,15 +265,53 @@
 </div>
 
 <script>
+    // ==========================================
+    // ⚙️ 核心配置中心：在这里一键修改表格列号映射
+    // ==========================================
+    function col(letter) {
+        let step = 0, result = 0;
+        for (let i = letter.length - 1; i >= 0; i--) {
+            result += (letter.charCodeAt(i) - 64) * Math.pow(26, step); step++;
+        }
+        return result - 1; // A=0, B=1...
+    }
+
+    const CONFIG = {
+        // 1. 销售订单主表
+        sales: {
+            oid: col('B'),     // 单号
+            sku: col('E'),     // 货号
+            income: col('CG')  // 结算收入金额
+        },
+        // 2. 销售订单子表（退货退款单）
+        returnSheet: {
+            oid: col('B'),    // 退单号
+            deduction: col('CC')// 退款扣减
+        },
+        // 3. 聚水潭订单表
+        purchase: {
+            oid: col('A'),     // 线上订单号
+            pddOid: col('G'),  // 拼多多订单号
+            cost: col('H'),    // 金额
+            account: col('I')  // 账号
+        },
+        // 4. 分销成本表
+        dist: {
+            oid: col('B'),     // 线上订单号
+            cost: col('C')     // 销售成本
+        }
+    };
+
+
     let salesData = [];
-    let crossPeriodData = []; // 独立的跨期数据库
+    let crossPeriodData = []; 
     let returnDataMap = new Map();
     let purchaseDataMap = new Map();
     let distCostMap = new Map(); 
     let groupCounter = 1;
     let currentTab = 'sales';
 
-    // ===== 核心工具 =====
+    // ===== 基础工具 =====
     function round2(num) {
         if (num === '?' || num === '') return num;
         const n = parseFloat(num);
@@ -299,7 +330,6 @@
         setTimeout(() => t.classList.remove('show'), 2500);
     }
 
-    // 切换选项卡
     function switchTab(tab) {
         currentTab = tab;
         document.getElementById('tab-sales').classList.remove('active');
@@ -311,7 +341,7 @@
     }
 
     // ==========================================
-    // 1. 智能提取 (完美剥离跨期，修复表头 Bug)
+    // 1. 智能提取 (完美剥离跨期)
     // ==========================================
     function handleExcel(input) {
         const file = input.files[0];
@@ -330,10 +360,10 @@
                 if (returnSheetName) {
                     const retLines = XLSX.utils.sheet_to_json(wb.Sheets[returnSheetName], { header: 1, defval: "" });
                     retLines.forEach(row => {
-                        const oid = String(row[0] || '').trim();
+                        const oid = String(row[CONFIG.returnSheet.oid] || '').trim();
                         // 过滤干扰行
                         if(oid && !oid.includes("订单") && !oid.includes("信息") && !/[一-龥]/.test(oid) && oid.length > 5) {
-                            returnDataMap.set(oid, row[78]); 
+                            returnDataMap.set(oid, row[CONFIG.returnSheet.deduction]); 
                         }
                     });
                 }
@@ -342,14 +372,14 @@
                 let tempRawSales = [];
                 
                 salesLines.forEach(row => {
-                    const oid = String(row[0] || '').trim();
-                    // 【Bug 1 彻底修复】：只要包含订单二字或是表头字段，立刻跳过，无视具体的行数
+                    const oid = String(row[CONFIG.sales.oid] || '').trim();
+                    // 只要包含这些中文就说明是表头或统计行，直接跳过
                     if(!oid || oid === "undefined" || oid.includes("订单") || oid.includes("信息") || /[一-龥]/.test(oid) || oid.length < 5) return;
                     
                     tempRawSales.push({
                         oid: oid, 
-                        sku: String(row[3] || '').trim(), 
-                        income: parseFloat(row[83]) || 0, 
+                        sku: String(row[CONFIG.sales.sku] || '').trim(), 
+                        income: parseFloat(row[CONFIG.sales.income]) || 0, 
                         qty: 1 
                     });
                 });
@@ -361,7 +391,6 @@
                     return showToast("提取失败，请确保导入正确的销售表");
                 }
 
-                // 根据提取的纯净数据构建模型
                 buildBaseData(tempRawSales);
                 
                 document.getElementById('details-card').style.display = 'block';
@@ -396,7 +425,7 @@
 
             if (returnDataMap.has(item.oid)) {
                 isRet = '是'; 
-                retCost = 0; // 默认运费
+                retCost = 5.05; 
                 retDed = returnDataMap.get(item.oid);
                 finalCost = 0; 
             }
@@ -411,7 +440,7 @@
             });
         });
 
-        // 2. 构建纯净版跨期退货表 (去掉了不需要的 pddOid, cost 等)
+        // 2. 构建纯净版跨期退货表
         let cIdx = 0;
         returnDataMap.forEach((rawVal, key) => {
             if (!currentSalesOids.has(key)) {
@@ -419,7 +448,7 @@
                     _id: 'c_' + cIdx++, 
                     oid: key, 
                     isReturn: '是', income: 0, qty: 1, 
-                    otherCost: 0.00, returnCost: 0, returnDeduction: rawVal,
+                    otherCost: 0.00, returnCost: 5.05, returnDeduction: rawVal,
                     selected: false, groupId: null
                 });
             }
@@ -439,31 +468,27 @@
             try {
                 const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
                 const lines = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: "" });
-             const head = lines[0] || [];
-                let idxOid = head.indexOf('线上订单号') > -1 ? head.indexOf('线上订单号') : 0; // A列
-                let idxPdd = head.indexOf('订单号') > -1 ? head.indexOf('订单号') : 2;       // 改为 C列
-                let idxCost = head.indexOf('金额') > -1 ? head.indexOf('金额') : 3;         // 改为 D列
-                let idxAcc = head.indexOf('账号') > -1 ? head.indexOf('账号') : 5;         // 改为 F列
 
                 purchaseDataMap.clear();
                 let matchCount = 0;
 
                 lines.forEach(row => {
-                    const dwOid = String(row[idxOid] || '').trim();
+                    const dwOid = String(row[CONFIG.purchase.oid] || '').trim();
                     if (dwOid && !dwOid.includes('订单') && dwOid.length > 5) {
-                        let rawPdd = String(row[idxPdd] || '').trim();
+                        let rawPdd = String(row[CONFIG.purchase.pddOid] || '').trim();
                         let mainPdd = rawPdd, subPdd = '';
                         if(rawPdd.includes('+')) {
                             let parts = rawPdd.split('+');
                             mainPdd = parts[0].trim(); subPdd = parts[1].trim(); 
                         }
                         purchaseDataMap.set(dwOid, {
-                            pddOid: mainPdd, pddOid2: subPdd, cost: round2(row[idxCost]), account: String(row[idxAcc] || '').trim()
+                            pddOid: mainPdd, pddOid2: subPdd, 
+                            cost: round2(row[CONFIG.purchase.cost]), 
+                            account: String(row[CONFIG.purchase.account] || '').trim()
                         });
                     }
                 });
 
-                // 仅同步更新本期表
                 let updateFn = (item) => {
                     if (purchaseDataMap.has(item.oid)) {
                         const pur = purchaseDataMap.get(item.oid);
@@ -494,16 +519,21 @@
             try {
                 const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
                 const lines = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: "" });
-                const head = lines[0] || [];
-                let idxOid = head.indexOf('线上订单号') > -1 ? head.indexOf('线上订单号') : 0;
-                let idxCost = head.indexOf('销售成本') > -1 ? head.indexOf('销售成本') : 1;
 
                 distCostMap.clear();
                 let matchCount = 0;
 
                 lines.forEach(row => {
-                    const dwOid = String(row[idxOid] || '').trim();
-                    if (dwOid && !dwOid.includes('订单') && dwOid.length > 5) distCostMap.set(dwOid, round2(row[idxCost]));
+                    const dwOid = String(row[CONFIG.dist.oid] || '').trim();
+                    let rawCost = row[CONFIG.dist.cost];
+                    
+                    if (dwOid && !dwOid.includes('订单') && dwOid.length > 5) {
+                        let finalCost = parseFloat(rawCost);
+                        // 数据安全拦截，防止读取到单号
+                        if (!isNaN(finalCost) && String(rawCost).length < 15) {
+                            distCostMap.set(dwOid, round2(finalCost));
+                        }
+                    }
                 });
 
                 salesData.forEach(item => {
@@ -548,12 +578,12 @@
             const rawDeduction = item.returnDeduction === '?' ? 0 : Number(item.returnDeduction);
             const actualDeduction = Math.abs(rawDeduction);
             
-            // 【Bug 2 彻底修复】：本期单总成本 = 采购价 + 其他费 + 退货费 + 退款扣减额
+            // 总支出与毛利
             const rowCost = round2(Number(item.cost) + Number(item.otherCost) + Number(item.returnCost) + actualDeduction);
             const rowProfit = round2(Number(item.income) - rowCost);
 
             sInc += Number(item.income); 
-            sCost += rowCost; // 累加全项支出
+            sCost += rowCost; 
             sProf += rowProfit; 
             sQty += Number(item.qty);
             if(item.isReturn === '是') returnCount++; else successCount++;
@@ -597,7 +627,7 @@
         let totalCrossLoss = 0;
         crossPeriodData.forEach(d => {
             const actDed = Math.abs(d.returnDeduction === '?' ? 0 : Number(d.returnDeduction));
-            // 跨期损失 = 其他费 + 退货费 + CA扣减 - 对冲收入 (去掉了 cost)
+            // 跨期损失 = 其他费 + 退货费 + CA扣减 - 对冲收入
             d.actualLoss = round2(Number(d.otherCost) + Number(d.returnCost) + actDed - Number(d.income));
             totalCrossLoss += d.actualLoss;
         });
@@ -613,14 +643,14 @@
         document.getElementById('stat-final-net').innerText = '¥' + format2(sProf - totalCrossLoss);
     }
 
-    // 跨期表渲染 (纯净对账版)
+    // 跨期表渲染
     function renderCrossTable() {
         const filter = document.getElementById('crossSkuFilter').value.toUpperCase();
         const tbody = document.getElementById('crossTableBody');
         tbody.innerHTML = '';
         
         if (crossPeriodData.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:40px;">暂无跨期退货记录</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:40px;">暂无跨期退货记录</td></tr>`;
             return;
         }
 
@@ -632,7 +662,6 @@
             const dedStyle = item.returnDeduction === '?' ? 'color:var(--danger);font-weight:bold;background:#FEE2E2;' : '';
             const gBadge = item.groupId ? `<span class="group-badge">组${item.groupId}</span>` : '';
 
-            // 纯粹的资金核算视图
             tr.innerHTML = `
                 <td style="text-align:center"><input type="checkbox" ${item.selected?'checked':''} onchange="toggleRow('${item._id}', 'cross', this.checked)"></td>
                 <td style="font-size:0.8rem; color:#B45309; font-weight:bold;">${item.oid}${gBadge}</td>
@@ -650,7 +679,7 @@
     }
 
     // ==========================================
-    // 5. 通用操作体系 
+    // 5. 通用互通操作
     // ==========================================
     function updateField(id, tab, field, val) {
         const dataset = tab === 'sales' ? salesData : crossPeriodData;
@@ -666,7 +695,7 @@
         } 
         else if (field === 'isReturn' && tab === 'sales') {
             item.isReturn = val;
-            if (val === '是') { item.cost = 0; item.returnCost = 0; item.returnDeduction = returnDataMap.get(item.oid) || '?'; } 
+            if (val === '是') { item.cost = 0; item.returnCost = 5.05; item.returnDeduction = returnDataMap.get(item.oid) || '?'; } 
             else { item.returnCost = 0; item.returnDeduction = 0; }
         } 
         else if (['pddOid', 'pddOid2', 'pddAccount', 'returnDeduction'].includes(field)) {
@@ -678,7 +707,7 @@
     }
 
     window.calcMultiCost = function(id, tab, qty) {
-        const input = prompt("请输入总成本(支持算式，如 50*4):");
+        const input = prompt("请输入总金额(支持算式，如 50*4):");
         if (!input) return;
         try {
             const res = new Function('return ' + input.replace(/[×x]/g, '*').replace(/[÷]/g, '/'))();
@@ -691,7 +720,7 @@
         const selectedItems = dataset.filter(d => d.selected);
         if (selectedItems.length === 0) return showToast("⚠️ 请先在表格前方勾选需要修改的行");
 
-        const names = { 'cost': '采购价', 'otherCost': '其他费', 'returnCost': '退货费', 'returnDeduction': '退款扣减', 'income': '补充收入' };
+        const names = { 'cost': '采购价', 'otherCost': '其他费', 'returnCost': '退货费', 'returnDeduction': '退款扣减', 'income': '补偿收入' };
         const input = prompt(`批量修改 [${names[field]}]\n已选中 ${selectedItems.length} 行。请输入数值:`);
         if (input === null) return;
 
@@ -711,36 +740,28 @@
         dataset.find(d => d._id === id).selected = chk; 
     }
     
-function toggleAll(tab, chk) { 
+    function toggleAll(tab, chk) { 
         if (tab === 'sales') {
-            // 获取本期表的筛选条件
             const skuF = document.getElementById('skuFilter').value.toUpperCase();
             const retF = document.getElementById('returnStatusFilter').value;
             const zeroC = document.getElementById('filterZeroCost').checked;
             
             salesData.forEach(d => { 
                 let show = true;
-                // 逐一核对筛选条件
                 if (skuF && !d.sku.toUpperCase().includes(skuF)) show = false;
                 if (retF !== '全部' && d.isReturn !== retF) show = false;
                 if (zeroC && (d.isReturn === '是' || Number(d.cost) !== 0)) show = false;
-                
-                // 只有当前处于“可见”状态的数据，才会被全选/取消全选
                 if (show) d.selected = chk; 
             }); 
-            renderTable(); // 刷新本期视图
-            
+            renderTable(); 
         } else if (tab === 'cross') {
-            // 获取跨期表的筛选条件
             const crossF = document.getElementById('crossSkuFilter').value.toUpperCase();
-            
             crossPeriodData.forEach(d => {
                 let show = true;
                 if (crossF && !d.oid.toUpperCase().includes(crossF)) show = false;
-                
                 if (show) d.selected = chk;
             });
-            renderCrossTable(); // 刷新跨期视图
+            renderCrossTable();
         }
     }
 
@@ -761,7 +782,7 @@ function toggleAll(tab, chk) {
         processAndRender(); showToast("🚫 已解除");
     }
 
-    // ✨ 新增的高级换行排版提取单号功能 ✨
+    // ✨ 高级换行提取单号 ✨
     function copyOids(tab) {
         const dataset = tab === 'sales' ? salesData : crossPeriodData;
         const sel = dataset.filter(d => d.selected).map(d => d.oid);
@@ -771,14 +792,13 @@ function toggleAll(tab, chk) {
         
         if(oids.length === 0) return showToast("无可提取单号");
 
-        // 按要求：每 19个逗号 (即 20个单号) 间隔一个换行符
+        // 每 20 个加一个换行符
         let chunks = [];
         for (let i = 0; i < oids.length; i += 20) {
             chunks.push(oids.slice(i, i + 20).join(','));
         }
         const resultText = chunks.join('\n');
 
-        // 唤起可视化弹窗
         document.getElementById('copyModalTextarea').value = resultText;
         document.getElementById('copyModalCount').innerText = oids.length;
         document.getElementById('copyModal').style.display = 'flex';
@@ -814,9 +834,9 @@ function toggleAll(tab, chk) {
                 "是否退货": d.isReturn,
                 "收入": format2(d.income), 
                 "采购价": format2(d.cost), 
-                "其他成本": format2(d.otherCost), 
+                "其他费": format2(d.otherCost), 
                 "退货费": format2(d.returnCost),
-                "退货扣减": d.returnDeduction, 
+                "退款扣减": d.returnDeduction, 
                 "数量": d.qty, 
                 "单笔毛利": format2(Number(d.income) - rowCost)
             };
@@ -826,13 +846,13 @@ function toggleAll(tab, chk) {
             return {
                 "共用批次": d.groupId ? `组${d.groupId}` : "-",
                 "得物单号 (历史单)": d.oid,
-                "类型": "跨期历史退货",
+                "记录类型": "跨期退回",
                 "对冲收入": format2(d.income),
                 "其他补扣": format2(d.otherCost),
-                "系统退货费": format2(d.returnCost),
+                "产生退货费": format2(d.returnCost),
                 "退款扣减(CA列)": d.returnDeduction,
                 "数量": d.qty,
-                "本单实际损失": (d.actualLoss <= 0 ? "+" : "-") + format2(Math.abs(d.actualLoss))
+                "实际总损失": (d.actualLoss <= 0 ? "+" : "-") + format2(Math.abs(d.actualLoss))
             };
         });
 
@@ -844,21 +864,5 @@ function toggleAll(tab, chk) {
         XLSX.writeFile(wb, `PKRT全盘对账台账_${new Date().toLocaleDateString()}.xlsx`);
     }
 </script>
-
-<div id="copyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:10000; align-items:center; justify-content:center; backdrop-filter:blur(3px);">
-    <div style="background:#fff; width:650px; max-width:90%; border-radius:16px; padding:24px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); display:flex; flex-direction:column; gap:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3 style="margin:0; font-size:1.25rem; font-weight:800; color:var(--text);">📋 成功提取 <span id="copyModalCount" style="color:var(--primary);">0</span> 个单号</h3>
-            <button onclick="closeModal()" style="background:transparent; border:none; font-size:1.5rem; color:var(--text-light); cursor:pointer; transition:0.2s;">&times;</button>
-        </div>
-        <div style="font-size:0.85rem; color:var(--text-light);">已按 <strong style="color:var(--text);">[单号逗号隔开，每 19 个逗号换行]</strong> 的格式为您自动排版：</div>
-        <textarea id="copyModalTextarea" style="width:100%; height:220px; padding:12px; border:1px solid var(--border); border-radius:8px; font-family:monospace; font-size:0.9rem; line-height:1.6; outline:none; resize:vertical;"></textarea>
-        <div style="display:flex; justify-content:flex-end; gap:12px;">
-            <button class="btn btn-outline" onclick="closeModal()">关闭窗口</button>
-            <button class="btn btn-primary" onclick="executeCopy()">一键复制到剪贴板</button>
-        </div>
-    </div>
-</div>
-
 </body>
 </html>
